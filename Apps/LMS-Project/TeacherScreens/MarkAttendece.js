@@ -37,10 +37,9 @@ const AttendanceScreen = ({ route, navigation }) => {
   // Get data from route params
   const classData = route.params?.classData || {};
   const userData = route.params?.userData || {};
-  const Tid = userData?.id || 'No ID';
-  // const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
-  const teacherOfferedCourseId =  39;
-
+  const Tid = global.Tid;
+  const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
+ console.log("Teacher Offered Course ID: " + teacherOfferedCourseId + classData.venue);
   useEffect(() => {
     console.log("Received in Mark Attendance, T ID is == " + Tid);
     console.log("Received in Mark Attendance, Section is == " + classData.section);
@@ -68,68 +67,84 @@ const AttendanceScreen = ({ route, navigation }) => {
   const fetchStudentList = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/Teachers/section-attendance-list?teacher_offered_course_id=${teacherOfferedCourseId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-      
+      const data = {
+        teacher_offered_course_id: teacherOfferedCourseId,
+        venue_name: venue,
+      };
+  
+      const response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+  
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
+        throw new Error(errorMessage); // Ensure the Error object is correctly instantiated
       }
-      
-      const data = await response.json();
-      console.log("Students:", data?.students);
-      
-      // In fetchStudentList function, modify the data processing section:
-      if (data.students && Array.isArray(data.students)) {
-        const studentsWithAttendance = data.students.map(student => ({
-          ...student,
-          id: student.Student_Id,
-          image: student.Student_Image,
-          name: student.Student_Name,
-          roll_number: student.RegNo,
-          percentage: `${Math.floor(student.Total_Percentage)}%` || '0%',
-          attendanceStatus: student.attendance_status || ATTENDANCE_STATUS.PRESENT
-        }));
-        
-        setStudents(studentsWithAttendance);
-        setFilteredStudents(studentsWithAttendance);
+  
+      const adata = await response.json();
+      console.log("Students:", adata?.students);
+  
+      // Validate the API response
+      if (!adata.students || !Array.isArray(adata.students)) {
+        throw new Error("Invalid response format: students data missing.");
       }
+  
+      const studentsWithAttendance = adata.students.map(student => ({
+        ...student,
+        id: student.Student_Id,
+        image: student.Student_Image,
+        name: student.Student_Name,
+        roll_number: student.RegNo,
+        percentage: student.Total_Percentage
+          ? `${Math.floor(student.Total_Percentage)}%`
+          : '0%',
+        attendanceStatus: student.attendance_status || ATTENDANCE_STATUS.PRESENT,
+      }));
+  
+      setStudents(studentsWithAttendance);
+      setFilteredStudents(studentsWithAttendance);
     } catch (err) {
-      console.error('Error fetching students:', err);
+      console.error("Error fetching students:", err.message || err);
+  
       setError('Failed to load student data. Please try again.');
-      
+  
       // Mock data for testing if API fails
       const mockStudents = [
-        { id: 1, name: 'Sameer Danish', percentage: '65%', roll_number: '2021-ARID-4583', attendanceStatus: ATTENDANCE_STATUS.PRESENT },
-        // Add more mock students if needed
+        {
+          id: 1,
+          name: 'Sameer Danish',
+          percentage: '65%',
+          roll_number: '2021-ARID-4583',
+          attendanceStatus: ATTENDANCE_STATUS.PRESENT,
+        },
       ];
-      
+  
       setStudents(mockStudents);
       setFilteredStudents(mockStudents);
     } finally {
       setLoading(false);
     }
   };
-
+  
+  
   const filterStudents = () => {
     if (!searchQuery.trim()) {
       setFilteredStudents(students);
       return;
     }
-    
-    const filtered = students.filter(student => 
+  
+    const filtered = students.filter(student =>
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.roll_number.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    
+  
     setFilteredStudents(filtered);
   };
+  
  
   const toggleAttendance = async (id) => {
     // Log the starting of the function with student ID

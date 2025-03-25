@@ -13,7 +13,7 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Pendingtasks from "../StudentScreens/Pendingtasks";
-import CourseContent from "../StudentScreens/CourseContent";
+import CourseContent from "../TeacherScreens/CourseContentMarked";
 import { MyBtn, Navbar } from "../ControlsAPI/Comps";
 import CreateTaskScreen from "./Createtask";
 
@@ -66,7 +66,8 @@ const T_Home = ({ navigation, route }) => {
   // Properly extract userData from route.params
   const userData = route.params?.userData?.TeacherInfo || {};
   global.tuserid=userData.user_id;
-  console.log("this is user ID in home=="+tuserid);
+  global.Tid=userData.id;
+  console.log("this is user ID in home=="+tuserid + "this is teacher image in home=="+userData.image);
 
   const timetable = userData.Timetable ? Object.values(userData.Timetable) : [];
   const courseCount = new Set(timetable.map(item => item.coursename)).size;
@@ -83,7 +84,12 @@ const T_Home = ({ navigation, route }) => {
       
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Image source={require("../images/as.png")} style={styles.profileImage} />
+        <Image 
+    source={{ uri: userData.image }} 
+    style={styles.profileImage} 
+    resizeMode="cover" 
+ 
+  />
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>{userData.name}</Text>
             <Text style={styles.userInfo}>{userData.Username}</Text>
@@ -124,9 +130,10 @@ const T_Home = ({ navigation, route }) => {
                   const isActive = isCurrentClass(item.start_time, item.end_time);
                   return (
                     <View style={[styles.tableRow, isActive && styles.currentClass]}>
-                      <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
-                        {item.start_time} - {item.end_time}
-                      </Text>
+                    <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
+  {item.start_time.split(":").slice(0, 2).join(":")} - {item.end_time.split(":").slice(0, 2).join(":")}
+</Text>
+
                       <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
                         {item.coursename}
                       </Text>
@@ -169,6 +176,21 @@ const T_Home = ({ navigation, route }) => {
    
 
 <View style={styles.con}>
+<View style={styles.btncon}>
+    <MyBtn 
+      title={'Get Notification'} 
+      icon={ <AntDesign name="checkcircle" color="white" size={24} />} 
+      style={styles.btn} 
+      onPress={() => navigation.navigate('getnotification', { userData })} 
+    />
+    <MyBtn 
+      title={'View Student'} 
+      icon={ <FontAwesome5 name="user-graduate" color="white" size={24} />} 
+      style={styles.btn} 
+      onPress={() => navigation.navigate('Attendencelist', { userData })} 
+    />
+  </View>
+  
   <View style={styles.btncon}>
     <MyBtn 
       title={'Mark Attendance'} 
@@ -415,8 +437,8 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: colors.primaryLight,
-    paddingVertical: 12,
-    paddingHorizontal: 8
+    paddingVertical: 8,
+    paddingHorizontal: 5
   },
   headerCell: {
     flex: 1,
@@ -427,10 +449,10 @@ const styles = StyleSheet.create({
   },
   tableRow: { 
     flexDirection: "row", 
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 5,
     borderBottomWidth: 1, 
-    borderColor: colors.border,
+    borderColor: colors.black,
     alignItems: 'center'
   },
   tableCell: { 
@@ -440,10 +462,10 @@ const styles = StyleSheet.create({
     color: colors.black 
   },
   currentClass: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.blueNavy,
   },
   currentClassText: {
-    color: colors.primaryDark,
+    color: colors.white,
     fontWeight: 'bold'
   },
   noDataContainer: {

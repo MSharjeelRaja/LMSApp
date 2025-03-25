@@ -7,12 +7,14 @@ import grader from './Grader/grader';
 import loginLoader from './login/loginLoader';
 import BottomTabs from './StudentScreens/S_Home';
 import ipChange from './ControlsAPI/ipChange';
+import otpscreen from './login/otpscreen';
 import TeacherTabs from './TeacherScreens/THome';
 import SubjectAttendence from './StudentScreens/SubjectAttendence';
 import AttendeceAll from './StudentScreens/AttendeceAll';
 import AttendenceList from './TeacherScreens/AttendenceList';
 import MarkAttendece from './TeacherScreens/MarkAttendece';
 import sendNotification from './TeacherScreens/sendNotification';
+import getnotification from './TeacherScreens/getnotification';
 const Stack = createNativeStackNavigator();
 // import messaging from '@react-native-firebase/messaging';
 
@@ -41,6 +43,7 @@ const App = () => {
       <Stack.Navigator initialRouteName="Loader">
         <Stack.Screen name="Loader" component={LoaderScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="otpscreen" component={otpscreen} options={{ headerShown: false }} />
         
         <Stack.Screen name="ipChange" component={ipChange} options={{ headerShown: false }} />
         <Stack.Screen name="loginLoader" component={loginLoader} options={{ headerShown: false }} />
@@ -55,6 +58,7 @@ const App = () => {
         <Stack.Screen name="Attendencelist" component={AttendenceList} options={{ headerShown: false }} />
         <Stack.Screen name="MarkAttendence" component={MarkAttendece} options={{ headerShown: false }} />
         <Stack.Screen name="sendnotification" component={sendNotification} options={{ headerShown: false }} />
+        <Stack.Screen name="getnotification" component={getnotification} options={{ headerShown: false }} />
       {/*............STUDENT..............................  STUDENT...............STUDENT........*/}
       
       

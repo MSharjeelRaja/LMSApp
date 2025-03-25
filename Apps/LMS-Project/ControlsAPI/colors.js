@@ -9,7 +9,8 @@ const colors = {
   inactive: "rgb(178, 187, 197)",
   btn:"rgb(21, 101, 192)",
   card:"rgb(186, 205, 226)",
-    
+  highlight: "rgba(248, 153, 84, 0.96)", 
+
   primaryLight: "#dbeafe",    // Light Blue
   primaryFaint: "#f0f9ff",    // Very Light Blue
   secondary:"rgb(21, 101, 192)",

@@ -76,6 +76,7 @@ const SendNotification = ({ route, navigation }) => {
       broadcast: broadcast,
       Student_Section: broadcast ? Section : null,
       Student_id: broadcast ? null : studentId,
+      image:image
     };
 
     console.log(`Full notification payload: ${JSON.stringify(notificationData)}`);
@@ -115,7 +116,7 @@ const SendNotification = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={colors.primaryDark} barStyle="light-content" />
+     
       <Navbar
         title="Notification"
         userName={userData.name}

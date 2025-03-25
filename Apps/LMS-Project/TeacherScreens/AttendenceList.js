@@ -5,8 +5,9 @@ import colors from '../ControlsAPI/colors';
 import font from '../ControlsAPI/font';
 
 const AttendenceList = ({ navigation, route }) => {
-  const userData = route.params?.userData || {};
-  const Tid = userData.id;
+  const userData = route.params?.userData.TeacherInfo || {};
+  const classData = route.params?.userData;
+  const Tid = global.Tid;
   console.log('Tid: ', Tid);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +22,18 @@ const AttendenceList = ({ navigation, route }) => {
       setLoading(true);
       setError(null);
   
-      const response = await fetch(`http://192.168.1.15:8000/api/Teachers/classestoday/${Tid}`);
-      
+      const response = await fetch(`http://192.168.1.15:8000/api/Teachers/today?Teacher_id=${Tid}`);
+
       if (!response.ok) {
         const errorData = await response.json(); // Parse error response if available
         throw new Error(errorData.message || 'Failed to fetch classes');
       }
-  
+      
       const data = await response.json();
+      console.log(data);
+      
+  
+    
       setClasses(data);
     } catch (err) {
       console.error('Error fetching today classes:', {
@@ -54,17 +59,19 @@ const AttendenceList = ({ navigation, route }) => {
       onPress={() => handleClassPress(item)}
     >
       <View style={styles.classInfo}>
-        <Text style={styles.courseName}>{item.course_name}</Text>
-        <Text style={styles.sectionName}>{item.section} - {item.class_type}</Text>
+      
+      
+        <Text style={styles.courseName}>{item.coursename}</Text> 
+        <Text style={styles.sectionName}>{item.section}</Text>
         <View style={styles.timeVenueContainer}>
           <Text style={styles.timeVenue}>
-            {item.venue_name} | {item.start_time} - {item.end_time}
+            {item.venue} | {item.start_time} - {item.end_time}
           </Text>
         </View>
         <View style={styles.statusContainer}>
           <Text style={[
             styles.status, 
-            {color: item.attendance_status === 'Unmarked' ? colors.orange : colors.green}
+            { color: item.attendance_status === 'Unmarked' ? colors.orange : colors.green }
           ]}>
             {item.attendance_status}
           </Text>
@@ -72,6 +79,7 @@ const AttendenceList = ({ navigation, route }) => {
       </View>
     </TouchableOpacity>
   );
+  
 
   return (
     <View style={styles.container}>
@@ -99,11 +107,12 @@ const AttendenceList = ({ navigation, route }) => {
         </View>
       ) : (
         <FlatList
-          data={classes}
-          renderItem={renderClassItem}
-          keyExtractor={(item) => item.timetable_id.toString()}
-          contentContainerStyle={styles.listContainer}
-        />
+        data={classes}
+        renderItem={renderClassItem}
+        keyExtractor={(item) => item.teacher_offered_course_id.toString()} // Use a unique key from the API response
+        contentContainerStyle={styles.listContainer}
+      />
+      
       )}
       
       <View style={styles.btnContainer}>
