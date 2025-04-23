@@ -15,12 +15,28 @@ const FullTimetable = ({ route, navigation }) => {
 
   // Updated days array with Sunday
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
+  const formatTimeTo12Hour = (timeStr) => {
+    const [hour, minute] = timeStr.split(':');
+    const h = parseInt(hour);
+  
+    // Custom AM/PM logic
+    let ampm = 'AM';
+    if (h >= 12 || h <= 7) {
+      ampm = 'PM';
+    } else if (h >= 8 && h <12 ) {
+      ampm = 'AM';
+    }
+  
+    const formattedHour = h % 12 === 0 ? 12 : h % 12;
+    return `${formattedHour}:${minute} ${ampm}`;
+  };
+  
+  
   useEffect(() => {
     if (!Tid) return;
     const fetchTimetable = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/Teachers/FullTimetable?teacher_id=${Tid}`);
+        const response = await fetch(`${API_URL}/api/Students/FullTimetable?student_id=${global.sid}`);
         const data = await response.json();
         
         if (data.status === 'success' && Array.isArray(data.data)) {
@@ -64,7 +80,7 @@ const FullTimetable = ({ route, navigation }) => {
       <Navbar
                    title="Course Content"
                    userName={userData.name}
-                   des={'Teacher'}
+                   des={'Student'}
                    showBackButton={true}
                    onLogout={() => navigation.replace('Login')}
                  />
@@ -122,7 +138,8 @@ const FullTimetable = ({ route, navigation }) => {
                 />
                 <Rows
                   data={item.schedule?.map(sch => [
-                    `${sch.start_time}\n${sch.end_time}`,
+                   `${formatTimeTo12Hour(sch.start_time)}\n${formatTimeTo12Hour(sch.end_time)}`,
+
                     sch.description || 'N/A',
                     sch.venue || 'N/A',
                     sch.section || 'N/A'

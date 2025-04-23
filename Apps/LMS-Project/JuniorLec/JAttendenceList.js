@@ -5,11 +5,12 @@ import colors from '../ControlsAPI/colors';
 import font from '../ControlsAPI/font';
 import { RefreshControl } from 'react-native-gesture-handler';
 
-const AttendenceList = ({ navigation, route }) => {
+const JAttendenceList = ({ navigation, route }) => {
   const userData = route.params?.userData.TeacherInfo || {};
   const classData = route.params?.userData;
-  const Tid = global.Tid;
-  console.log('Tid: ', Tid);
+  const Jid = global.Jid;
+  
+  console.log('Tid: ', Jid);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,14 +35,15 @@ const AttendenceList = ({ navigation, route }) => {
       setLoading(true);
       setError(null);
   
-      const response = await fetch(`${API_URL}/api/Teachers/today?teacher_id=${Tid}`);
-
+      const response = await fetch(`${API_URL}/api/JuniorLec/today?teacher_id=${Jid}`);
+console.log('Response:', response);
       if (!response.ok) {
         const errorData = await response.json(); // Parse error response if available
         throw new Error(errorData.message || 'Failed to fetch classes');
       }
       
       const data = await response.json();
+      console.log('Fetched classes:', data);
       const classesWithIds = data.map((item, index) => ({
         ...item,
         uniqueId: `${item.teacher_offered_course_id}_${index}_${Date.now()}`
@@ -59,13 +61,27 @@ const AttendenceList = ({ navigation, route }) => {
       setLoading(false);
     }
   };
-  const handleClassPress = (classData) => {
-    navigation.navigate('MarkAttendence', { 
-      userData,
-      classData 
-    });
-  };
+ // In your class item press handler
+const handleClassPress = (selectedClass) => {
+  console.log("Navigating with:", { 
+    userData: userData, 
+    classData: selectedClass 
+  });
+  
+  navigation.navigate('JMarkAttendence', {
+    userData: userData,
+    classData: selectedClass  // The individual class item from the FlatList
+  });
+};
 
+// In your Mark Attendance button
+<MyBtn 
+  title={'Mark Attendance'} 
+  onPress={() => navigation.navigate('JMarkAttendence', {
+    userData: userData,
+    classData: classData  // The main class data from props
+  })} 
+/>
   const renderClassItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.classCard} 
@@ -99,7 +115,7 @@ const AttendenceList = ({ navigation, route }) => {
       <Navbar 
         title="LMS" 
         userName={userData.name||classData.name} 
-        des={'Teacher'} 
+        des={'Junior Lecturer'} 
         onLogout={() => navigation.replace('Login')}
       />
       
@@ -149,7 +165,7 @@ const AttendenceList = ({ navigation, route }) => {
       
    
 
-export default AttendenceList;
+export default JAttendenceList;
 
 const styles = StyleSheet.create({refreshContainer: {
     flex: 1,

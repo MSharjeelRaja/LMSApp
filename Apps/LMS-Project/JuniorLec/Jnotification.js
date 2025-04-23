@@ -82,10 +82,10 @@ const NotificationScreen = ({ navigation ,route}) => {
       throw error;
     }
   };
-
+console.log('Student ID:', global.Jid);
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Teachers/get/notifications?teacher_id=${global.Tid}`);
+      const response = await fetch(`${API_URL}/api/JuniorLec/get/notifications?teacher_id=${global.Jid}`);
       const data = await response.json();
       if (data.status && data.data) {
         setNotifications(data.data);
@@ -168,8 +168,8 @@ const NotificationScreen = ({ navigation ,route}) => {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('sender', 'Teacher');
-      formData.append('sender_id', global.tuserid);
+      formData.append('sender', 'JuniorLecturer');
+      formData.append('sender_id', global.Juserid);
   
       if (broadcast) {
         formData.append('Broadcast', 'true');

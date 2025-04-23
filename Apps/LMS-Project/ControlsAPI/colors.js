@@ -2,14 +2,35 @@ import { Title } from "react-native-paper";
 
 const colors = {
   // Primary Colors
-  primary: "#3498db",         // Blue
+  primary: "#1E88E5",         // Blue
   primaryDark: "#1565C0", 
   title: "#1565C0",
   title2: "rgb(79, 150, 244)",
-  inactive: "rgb(178, 187, 197)",
+  inactive: "rgb(199, 222, 248)",
   btn:"rgb(21, 101, 192)",
   card:"rgb(186, 205, 226)",
   highlight: "rgba(248, 153, 84, 0.96)", 
+  green1: '#11ec6d',
+  green2: '#0DBF5B',
+  green4: 'rgb(1, 125, 34)',
+purple:'#4361EE',
+purplelight:'#899ef7',
+
+  redb1: '#fb4d4d',
+  redb2: '#C83C3C',
+  redb3: '#FFA8A8',
+  
+  red1: '#D60000',
+  red2: '#B00000',
+  red3: '#FF6666',
+  
+  Greenborder1: '#80EFAE',
+  Greenborder2: '#5FCF8C',
+  Greenborder3: '#A8F5C4',
+  
+
+
+
 
   primaryLight: "#dbeafe",    // Light Blue
   primaryFaint: "#f0f9ff",    // Very Light Blue
@@ -51,15 +72,14 @@ const colors = {
  
   // Attendance Indicators
   green: "#27ae60",         // Bright green for 100% attendance
- Greenborder: "#80EFAE",          // Lighter green for >90% attendance
+         // Lighter green for >90% attendance
   attb70: "#f39c12",          // Orange/amber for 70-90% attendance
   att70: "#fd9b86",           // Red for <70% attendance
-  
-  light: "#ecf0f1",           // Light Grey
+
+  light: "rgba(84, 84, 84, 0.61)",           // Light Grey
   dark: "#2c3e50",            // Dark Grey
   bg: "#ecf0f1",              // Background
-  green: "#008035",           // Green
-  red: "#D60000"              // Red
+ 
 };
 
 export default colors;

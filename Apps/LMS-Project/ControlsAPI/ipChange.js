@@ -8,16 +8,20 @@ import colors from './colors';
 
 const IpChange = ({ navigation }) => {
   const [apiUrl, setApiUrl] = useState('');
-  const [fcmToken] = useState('f4ZnU4OvRImsH8B8EK5yeJ:APA91bHK4N-hoZf8mdellzZ24JfGxBRTOtahf7MA167s88QBMBERy0cpqcGrYQJowOG_RLRq8Qet0BWLKFfH9ENr9X0jSlkMQlgCqhHN1hQCg3F0iEqPhyo');
+  const [fcmToken] = useState('caSQe2YySYua0dsjfLPmed:APA91bHMu7DNB41GiWvvNOnjpZRSVHpH4Sp2zhdFyjEjP2ipMXWUzWnsJZOEktNH_2GVcmu5y7JMTcilrHWHndKJWMwqcQvkO5zHxbpvTo9aTLkhcSm9vsw');
 
   useEffect(() => {
     const loadApiUrl = async () => {
       
-      const storedUrl = await AsyncStorage.getItem('api_url');
-      if (storedUrl) setApiUrl(storedUrl);
+  const storedUrl = await AsyncStorage.getItem('api_url');
+      if (storedUrl) 
+        setApiUrl(storedUrl);
+      else
+        setApiUrl('http://192.168.1.5:8000'); // Set a default URL if none is stored
     };
     loadApiUrl();
   }, []);
+
 
   const handleSaveApiUrl = async () => {
     await AsyncStorage.setItem('api_url', apiUrl);
@@ -31,7 +35,7 @@ const IpChange = ({ navigation }) => {
   };
   const handleCopyip = () => {
     Clipboard.setString(apiUrl);
-    Alert.alert('Copied', 'FCM token copied to clipboard!');
+    Alert.alert('Copied', 'IP copied to clipboard!');
   };
   return (
     <View style={styles.container}>
@@ -71,7 +75,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: colors.dark,
+    backgroundColor: colors.black,
   },
   label: {
     fontSize: 16,

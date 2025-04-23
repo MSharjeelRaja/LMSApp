@@ -15,8 +15,8 @@ import {
 } from "react-native";
 
 import { createStackNavigator } from "@react-navigation/stack";
-import { API_URL,Navbar } from "../ControlsAPI/Comps";
-
+import { API_URL, Navbar } from "../ControlsAPI/Comps";
+import submittask from "./submittask";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { ScrollView } from "react-native-gesture-handler";
 import colors from "../ControlsAPI/colors";
@@ -86,7 +86,7 @@ const AnimatedButton = ({ onPress, style, children, icon }) => {
   );
 };
 
-// Task Card component with animations
+// Task Card component with animations and submit button
 const TaskCard = ({ item, category, onPress }) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -129,6 +129,8 @@ const TaskCard = ({ item, category, onPress }) => {
     iconName = "check-circle";
   }
 
+ 
+
   return (
     <Animated.View
       style={[
@@ -139,45 +141,46 @@ const TaskCard = ({ item, category, onPress }) => {
         },
       ]}
     >
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.taskCardInner,
-          { backgroundColor: pressed ? COLORS.primaryLight + '20' : 'transparent' }
-        ]}
-        android_ripple={{ color: COLORS.primaryLight, borderless: false }}
-      >
-        <View style={styles.taskIconContainer}>
-          <Icon name={iconName} size={26} color={
-            category === "Active Tasks" ? COLORS.accent :
-            category === "Upcoming Tasks" ? COLORS.warning : COLORS.success
-          } />
-        </View>
-        <View style={styles.taskContent}>
-          <Text style={styles.taskTitle}>{item.title}</Text>
-          <View style={styles.taskInfoRow}>
-            <Icon name="book" size={14} color={COLORS.gray} />
-            <Text style={styles.taskSubtitle}>{item.course_name}</Text>
+      <View style={styles.taskCardInner}>
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [
+            styles.taskPressableContent,
+            { backgroundColor: pressed ? COLORS.primaryLight + '20' : 'transparent' }
+          ]}
+          android_ripple={{ color: COLORS.primaryLight, borderless: false }}
+        >
+          <View style={styles.taskIconContainer}>
+            <Icon name={iconName} size={26} color={
+              category === "Active Tasks" ? COLORS.accent :
+              category === "Upcoming Tasks" ? COLORS.warning : COLORS.success
+            } />
           </View>
-          <View style={styles.taskInfoRow}>
-            <Icon name="label" size={14} color={COLORS.gray} />
-            <Text style={styles.taskSubtitle}>{item.type}</Text>
-          </View>
-          {item.due_date && (
+          <View style={styles.taskContent}>
+            <Text style={styles.taskTitle}>{item.title}</Text>
             <View style={styles.taskInfoRow}>
-              <Icon name="event" size={14} color={COLORS.gray} />
-              <Text style={styles.taskSubtitle}>Due: {new Date(item.due_date).toLocaleDateString()}</Text>
+              <Icon name="book" size={14} color={COLORS.gray} />
+              <Text style={styles.taskSubtitle}>{item.course_name}</Text>
             </View>
-          )}
-        </View>
-        <Icon name="chevron-right" size={24} color={COLORS.gray} />
-      </Pressable>
+            <View style={styles.taskInfoRow}>
+              <Icon name="label" size={14} color={COLORS.gray} />
+              <Text style={styles.taskSubtitle}>{item.type}</Text>
+            </View>
+            {item.due_date && (
+              <View style={styles.taskInfoRow}>
+                <Icon name="event" size={14} color={COLORS.gray} />
+                <Text style={styles.taskSubtitle}>Due: {new Date(item.due_date).toLocaleDateString()}</Text>
+              </View>
+            )}
+          </View>
+          <Icon name="chevron-right" size={24} color={COLORS.gray} />
+        </Pressable>
+      </View>
     </Animated.View>
   );
 };
+
 const Stack = createStackNavigator();
-
-
 
 const TaskDetailsScreen = ({ route, navigation }) => {
   const { task, category } = route.params;
@@ -222,7 +225,8 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   };
   
   const timeRemaining = getTimeRemaining();
-  
+  const userData = route.params?.userData || {}; 
+  console.log(userData.name+'hiiiiii subitt')
   return (
     <View style={styles.detailsContainer}>
       <StatusBar backgroundColor={COLORS.primaryDark} barStyle="light-content" />
@@ -311,7 +315,9 @@ const TaskDetailsScreen = ({ route, navigation }) => {
             
             {isActive && (
               <AnimatedButton 
-                onPress={() => alert("Task Submitted Successfully!")}
+              onPress={() => navigation.navigate('submittask', { userData, task  })}
+
+                
                 style={styles.submitButton}
                 icon="send"
               >
@@ -333,10 +339,9 @@ const TaskDetailsScreen = ({ route, navigation }) => {
   );
 };
 
-
-
 const TaskListScreen = ({ navigation, route }) => {
-  const userData = route.params?.userData?.StudentInfo || {}; 
+  const userData = route.params?.userData || {}; 
+  console.log(userData.name+'hiiiiii')
   const [tasks, setTasks] = useState({ "Active Tasks": [], "Upcoming Tasks": [], "Completed Tasks": [] });
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Active Tasks");
@@ -351,13 +356,14 @@ const TaskListScreen = ({ navigation, route }) => {
       duration: 800,
       useNativeDriver: true,
     }).start();
-    
-    // Fetch tasks
-    fetch(`${API_URL}/api/Students/task/details?student_id=${userData.id}`)
-      .then((response) => response.text())
-      .then((text) => JSON.parse(text))
+    console.log(global.sid)
+    fetch(`${API_URL}/api/Students/task/details?student_id=${global.sid}`)
+      .then((response) => response.json())
       .then((data) => {
-        setTasks(data.TaskDetails);
+        console.log("API Response:", data); // Log the full API response
+        if (data.success && data.TaskDetails) {
+          setTasks(data.TaskDetails);
+        }
         setLoading(false);
       })
       .catch((error) => {
@@ -408,38 +414,39 @@ const TaskListScreen = ({ navigation, route }) => {
         <Text style={styles.headerSubtitle}>Manage your assignments, quizzes and more</Text>
       </View>
       
-      <ScrollView 
-  horizontal 
-  showsHorizontalScrollIndicator={false}
-  style={styles.categoryScrollView}
-  contentContainerStyle={styles.categoryTabsContainer}
->
-  {Object.keys(tasks).map((category) => renderCategoryTab(category))}
-</ScrollView>
+      <View style={styles.categoryTabsWrapper}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryTabsContainer}
+        >
+          {Object.keys(tasks).map((category) => renderCategoryTab(category))}
+        </ScrollView>
+      </View>
 
-<FlatList
-  data={tasks[activeCategory] || []}
-  keyExtractor={(item) => item.task_id.toString()}
-  contentContainerStyle={{ flexGrow: 1, paddingBottom: 8 }} // Adjusted padding
-  showsVerticalScrollIndicator={false}
-  renderItem={({ item }) => (
-    <TaskCard
-      item={item}
-      category={activeCategory}
-      onPress={() => navigation.navigate("TaskDetails", { task: item, category: activeCategory })}
-    />
-  )}
-  ListEmptyComponent={
-    <View style={styles.emptyContainer}>
-      <Icon name="assignment" size={60} color={COLORS.gray} />
-      <Text style={styles.emptyText}>No {activeCategory.toLowerCase()} found</Text>
-    </View>
-  }
-/>
-
+      <FlatList
+        data={tasks[activeCategory] || []}
+        keyExtractor={(item) => item.task_id.toString()}
+        contentContainerStyle={styles.listContentContainer}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <TaskCard
+            item={item}
+            category={activeCategory}
+            onPress={() => navigation.navigate("TaskDetails", { task: item, category: activeCategory })}
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Icon name="assignment" size={60} color={COLORS.gray} />
+            <Text style={styles.emptyText}>No {activeCategory.toLowerCase()} found</Text>
+          </View>
+        }
+      />
     </Animated.View>
   );
 };
+
 export default function App({route, navigation}) {
   return (
     <Stack.Navigator>
@@ -451,19 +458,23 @@ export default function App({route, navigation}) {
       />
       <Stack.Screen 
         name="TaskDetails" 
+        initialParams={route.params} 
         component={TaskDetailsScreen} 
         options={{ 
           headerShown: false,
           cardStyle: { backgroundColor: COLORS.light }
         }}
+        
       />
+      
+       <Stack.Screen  initialParams={route.params}  name="submittask" component={submittask} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
   container: { 
-   
+    flex: 1,
     backgroundColor: COLORS.light,
   },
   loadingContainer: {
@@ -479,7 +490,11 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   headerTitle: {
     fontSize: 24,
@@ -491,21 +506,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.gray,
   },
+  // FIXED: Category tabs container styling
+  categoryTabsWrapper: {
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    elevation: 2,
+    height: 48, // FIXED: Reduced height to remove extra bottom space
+  },
   categoryTabsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,height:60,
-    paddingVertical: 8, // Add some vertical padding
-    alignItems: 'center', // Center items vertically
-  },categoryScrollView: {
-    height: 50, // Adjust this height as needed
-    flexDirection: 'row',backgroundColor:colors.grayLight,height:60
+    paddingHorizontal: 16,
+    height: 48, // FIXED: Match height to wrapper for consistency
   },
   categoryTab: {
-    paddingVertical: 12,
+    paddingVertical: 8, // FIXED: Reduced vertical padding
     paddingHorizontal: 16,
     marginRight: 8,
     borderRadius: 8,
-    position: 'relative',
+    height: 40, // FIXED: Explicit height to control space
+    justifyContent: 'center', // FIXED: Center content vertically
+    alignItems: 'center', // FIXED: Center content horizontally
+    alignSelf: 'center', // FIXED: Center in parent container
   },
   activeCategoryTab: {
     backgroundColor: COLORS.primaryLight,
@@ -529,14 +551,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 1.5,
   },
-  taskList: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  // Improved list container
+  listContentContainer: {
+    flexGrow: 1, 
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   taskCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     marginVertical: 6,
+    marginHorizontal: 16,
     elevation: 2,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -547,6 +572,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   taskCardInner: {
+    flexDirection: 'column',
+    padding: 0,
+    overflow: 'hidden',
+  },
+  taskPressableContent: {
     flexDirection: 'row',
     padding: 16,
     alignItems: 'center',
@@ -579,17 +609,27 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginLeft: 6,
   },
+  // Improved empty state
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
+    backgroundColor: COLORS.white,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
   },
   emptyText: {
     fontSize: 16,
     color: COLORS.gray,
     marginTop: 16,
+    textAlign: 'center',
   },
-  // Details Screen Styles
+  // Task details screen
   detailsContainer: {
     flex: 1,
     backgroundColor: COLORS.light,
@@ -608,15 +648,18 @@ const styles = StyleSheet.create({
   },
   detailsHeader: {
     padding: 20,
-    backgroundColor: COLORS.primaryLight + '40', // 40% opacity
+    backgroundColor: COLORS.primaryLight + '60', // Improved transparency
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   detailsBadge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
+    paddingVertical: 6, // Slightly taller
+    borderRadius: 20, // More rounded
     marginBottom: 12,
+    elevation: 1, // Subtle shadow
   },
   detailsBadgeText: {
     color: COLORS.white,
@@ -643,11 +686,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.grayLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6, // Slightly taller
+    borderRadius: 20, // More rounded
     alignSelf: 'flex-start',
     marginTop: 12,
+    elevation: 1, // Subtle shadow
   },
   overdue: {
     backgroundColor: COLORS.danger,
@@ -693,10 +737,12 @@ const styles = StyleSheet.create({
   actionsContainer: {
     marginTop: 8,
   },
+  // Improved button styling
   animatedButtonContainer: {
     overflow: 'hidden',
     marginVertical: 8,
-    borderRadius: 8,
+    borderRadius: 10,
+    elevation: 2,
   },
   animatedButtonInner: {
     flexDirection: 'row',
@@ -712,6 +758,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   downloadButton: {
     backgroundColor: COLORS.secondary,
@@ -722,6 +769,8 @@ const styles = StyleSheet.create({
   backButton: {
     backgroundColor: COLORS.grayLight,
     marginTop: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   backButtonText: {
     color: COLORS.dark,

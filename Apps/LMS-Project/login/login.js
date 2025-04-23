@@ -12,7 +12,8 @@ import CheckBox from '@react-native-community/checkbox';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../ControlsAPI/Comps';
 import { Image } from 'react-native';
-
+import { getApiUrl } from '../ControlsAPI/Comps';
+import colors from '../ControlsAPI/colors';
 const LMS = ({ navigation, route }) => {
   const [u, setU] = useState('');
   const [password, setPassword] = useState('');
@@ -30,9 +31,10 @@ const LMS = ({ navigation, route }) => {
   // Load saved credentials and update API_URL on mount
   useEffect(() => {
     const loadApiUrl = async () => {
-      await AsyncStorage.setItem('api_url', API_URL);
+ await AsyncStorage.getItem('api_url');
     };
     loadApiUrl();
+    getApiUrl();
   
     const loadCredentials = async () => {
       try {
@@ -103,8 +105,9 @@ const LMS = ({ navigation, route }) => {
     ]).start();
   }, []);
 
+ 
   const handleLogin = async () => {
-    // Animate button press with subtle feedback
+    
     Animated.sequence([
       Animated.timing(buttonOpacity, {
         toValue: 0.8,
@@ -251,7 +254,7 @@ const LMS = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#fff', 
+    backgroundColor: colors.white, 
     paddingHorizontal: 20, 
     justifyContent: 'center' 
   },

@@ -7,41 +7,24 @@ import {
   TouchableOpacity, 
   ScrollView,
   FlatList,
-  StatusBar,
-  BackHandler
+  StatusBar
 } from "react-native";
+import JAddContent from "./JAddContent";
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import Pendingtasks from "../StudentScreens/Pendingtasks";
-import CourseSections from "./CourseSections";
+import CourseContent from "../TeacherScreens/CourseContentMarked";
 import { MyBtn, Navbar } from "../ControlsAPI/Comps";
-
-import { Title } from "react-native-paper";
-import MarkAttendece from "./MarkAttendece";
+import JCreatetask from "./JCreatetask";
+import MarkAttendece from "../TeacherScreens/MarkAttendece";
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import AttendenceList from "./AttendenceList";
-import Courses from "./Courses";
+import JCourseSections from "./JCourseSections";
+import JCourses from "./JCourses";
+
 import colors from "../ControlsAPI/colors";
-import Createtask from "./Createtask";
-import taskget from "./taskget";
-const T_Home = ({ navigation, route }) => {
-  useEffect(() => {
-    const handleBackPress = () => {
-      if (navigation.isFocused()) {
-        navigation.replace('Login');
-        return true;
-      }
-      return false;
-    };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      handleBackPress
-    );
-
-    return () => backHandler.remove();
-  }, [navigation]);
+const J_Home = ({ navigation, route }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -95,7 +78,7 @@ const T_Home = ({ navigation, route }) => {
       icon: "notification",
       iconType: "AntDesign",
       color: colors.primary,
-      onPress: () => navigation.navigate("getnotification", { userData })
+      onPress: () => navigation.navigate("Jnotification", { userData })
     },
     {
       id: 2,
@@ -103,7 +86,7 @@ const T_Home = ({ navigation, route }) => {
       icon: "book",
       iconType: "AntDesign",
       color: colors.info,
-      onPress: () => navigation.navigate("Courses", { userData })
+      onPress: () => navigation.navigate("JCourses", { userData })
     },
     {
       id: 3,
@@ -111,15 +94,15 @@ const T_Home = ({ navigation, route }) => {
       icon: "exclamation-triangle",
       iconType: "FontAwesome5",
       color: colors.warning,
-      onPress: () => navigation.navigate("Contestattendence", { userData })
+      onPress: () => navigation.navigate("JContestattendence", { userData })
     },
     {
       id: 4,
-      title: "Students",
+      title: "Mark Attendence",
       icon: "users",
       iconType: "FontAwesome5",
       color: colors.success,
-      onPress: () => navigation.navigate("Attendencelist", { userData })
+      onPress: () => navigation.navigate("JAttendencelist", { userData })
     },
     
     {
@@ -128,24 +111,17 @@ const T_Home = ({ navigation, route }) => {
       icon: "assignment",
       iconType: "MaterialIcons",
       color: colors.orange,
-      onPress: () => navigation.navigate("taskget", { userData })
+      onPress: () => navigation.navigate("Jtaskget", { userData })
     },   {
       id: 6,
-      title: "Assign task",
+      title: "Assign tasks",
       icon: "assignment",
       iconType: "MaterialIcons",
       color: colors.orange,
-      onPress: () => navigation.navigate("Createtask", { userData })
+      onPress: () => navigation.navigate("JCreatetask", { userData })
     }
   ];
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      navigation.replace('Login');
-      return true; // Prevent default back behavior
-    });
-  
-    return () => backHandler.remove(); // Cleanup on unmount
-  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={colors.primaryDark} barStyle="light-content" />
@@ -153,7 +129,7 @@ const T_Home = ({ navigation, route }) => {
       <Navbar 
         title="LMS" 
         userName={userData.name} 
-        des={'Teacher'} 
+        des={'Junior Lecturer'} 
         onLogout={() => navigation.navigate('Login')}
       />
       
@@ -189,7 +165,7 @@ const T_Home = ({ navigation, route }) => {
             <TouchableOpacity 
               style={styles.accountButton}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("Details", { userData })}
+              onPress={() => navigation.navigate("JDetails", { userData })}
             >
               <Text style={styles.buttonText}>Account Details</Text>
               <Icon name="arrow-forward" size={16} color={colors.white} />
@@ -226,7 +202,7 @@ const T_Home = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Today's Schedule</Text>
             <TouchableOpacity 
               style={styles.seeAllButton}
-              onPress={() => navigation.navigate("FullTimetable", { userData })}
+              onPress={() => navigation.navigate("JTimetable", { userData })}
             >
 
               <Text style={styles.seeAllText}>See All</Text>
@@ -355,8 +331,12 @@ const T_Home = ({ navigation, route }) => {
 };
 
 
+
 import {  Animated } from 'react-native';
-import AddContent from "./AddContent";
+
+import CourseSections from "../TeacherScreens/CourseSections";
+import Courses from "../TeacherScreens/Courses";
+import JAttendenceList from "./JAttendenceList";
 
 const Tab = createBottomTabNavigator();
 
@@ -383,9 +363,14 @@ const TabBarIcon = ({ focused, name, size, color, iconFamily }) => {
   );
 };
 
-const TeacherTabs = ({ navigation, route }) => {
+const JTabs = ({ navigation, route }) => {
   const userData = route.params?.userData || {};
 console.log('id is ='+userData.id)
+console.log('user id is ='+userData.user_id)
+  global.Juserid = userData.user_id;
+  global.Jid = userData.id;
+  console.log('global user id is ='+global.tuserid)
+  console.log('global id is ='+global.Tid)
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -396,7 +381,7 @@ console.log('id is ='+userData.id)
           if (route.name === "Home") {
             iconName = "home";
             iconFamily = "AntDesign";
-          } else if (route.name === "Attendencelist") {
+          } else if (route.name === "JAttendencelist") {
             iconName = "clipboard-check";
             iconFamily = "FontAwesome5";
           } else if (route.name === "Course Content") {
@@ -423,17 +408,17 @@ console.log('id is ='+userData.id)
         tabBarLabelStyle: styles.tabBarLabelStyle,
       })}
     >
-      <Tab.Screen name="Home" component={T_Home} initialParams={route.params} />
+      <Tab.Screen name="Home" component={J_Home} initialParams={route.params} />
       <Tab.Screen
-        name="Attendencelist"
-        component={AttendenceList}
+        name="JAttendencelist"
+        component={JAttendenceList}
         initialParams={route.params}
       />
 
       {/* Center Floating Button */}
       <Tab.Screen
-        name="AddContent"
-        component={AddContent}
+        name="JAddContent"
+        component={JAddContent}
      
         options={{
           tabBarLabel: "",
@@ -442,7 +427,7 @@ console.log('id is ='+userData.id)
             <TouchableOpacity
               {...props}
               style={styles.floatingButtonContainer}
-              onPress={() => navigation.navigate("AddContent", { userData })}
+              onPress={() => navigation.navigate("JAddContent", { userData })}
             >
               <View style={styles.floatingIcon}>
                 <AntDesign name="plus" size={26} color={colors.white} />
@@ -454,19 +439,21 @@ console.log('id is ='+userData.id)
 
       <Tab.Screen
         name="Course Content"
-        component={CourseSections}
+        component={JCourseSections}
         initialParams={route.params}
       /> 
        <Tab.Screen
       name="Courses"
-      component={Courses}
+      component={JCourses}
       initialParams={route.params}
     />
     </Tab.Navigator>
   );
 };
 
-export default TeacherTabs;
+export default JTabs;
+
+
 
 const styles = StyleSheet.create({
   tabBarStyle: {

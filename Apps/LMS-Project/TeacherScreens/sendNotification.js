@@ -30,22 +30,8 @@ const SendNotification = ({ route, navigation }) => {
   const [broadcast, setBroadcast] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Mock data for sections and students
-  const sectionData = [
-    { key: '17', value: '17' },
-    { key: '18', value: '18' },
-    { key: '19', value: '19' },
-    { key: '64', value: '20' }
-  ];
-  
-  const students = [
-    { id: '38', name: 'John Doe', section: 17},
-    { id: '39', name: 'Jane Smith', section: 18 },
-    { id: '40', name: 'Robert Johnson', section: 19 },
-    { id: '41', name: 'Emily Davis', section: 20},
-  ];
 
-  // Filter students based on search query
+  
   const filteredStudents = students.filter(
     student => student.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -270,14 +256,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg, // Gray background
     flex: 1,
   },
-  formContainer: {
-    padding: 16,
-  },
+ 
   segmentContainer: {
     flexDirection: 'row',
     backgroundColor: '#c0c0c0',
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   segmentButton: {

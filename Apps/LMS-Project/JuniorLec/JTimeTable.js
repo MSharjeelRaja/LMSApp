@@ -4,7 +4,7 @@ import { API_URL, Navbar } from '../ControlsAPI/Comps';
 import { Table, Row, Rows } from 'react-native-table-component';
 import colors from '../ControlsAPI/colors';
 
-const FullTimetable = ({ route, navigation }) => {
+const JTimetable = ({ route, navigation }) => {
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState('');
@@ -20,9 +20,9 @@ const FullTimetable = ({ route, navigation }) => {
     if (!Tid) return;
     const fetchTimetable = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/Teachers/FullTimetable?teacher_id=${Tid}`);
+        const response = await fetch(`${API_URL}/api/JuniorLec/full-timetable?jl_id=${Tid}`);
         const data = await response.json();
-        
+        console.log(data)
         if (data.status === 'success' && Array.isArray(data.data)) {
           setTimetable(data.data);
           const current = getCurrentDay();
@@ -64,7 +64,7 @@ const FullTimetable = ({ route, navigation }) => {
       <Navbar
                    title="Course Content"
                    userName={userData.name}
-                   des={'Teacher'}
+                   des={'Junior Lecturer'}
                    showBackButton={true}
                    onLogout={() => navigation.replace('Login')}
                  />
@@ -237,4 +237,4 @@ currentDayText: {
   },
 });
 
-export default FullTimetable;
+export default JTimetable;

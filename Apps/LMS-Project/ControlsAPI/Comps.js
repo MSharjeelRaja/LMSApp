@@ -1,14 +1,22 @@
-import React, { useEffect, useState } from 'react';
-
-import { Pressable, myStyleheet, Text, View , TouchableOpacity, Dimensions, StyleSheet} from "react-native";
+import React from 'react';
+import { 
+  Pressable, 
+  Text, 
+  View, 
+  TouchableOpacity, 
+  Dimensions, 
+  StyleSheet 
+} from "react-native";
 import colors from './colors';
 import { TextInput } from 'react-native-gesture-handler';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import AsyncStorage from '@react-native-async-storage/async-storage';
-global.tuserid=0;
+import { useNavigation } from '@react-navigation/native';
 
-// Default IP (used only if AsyncStorage has no stored value)
-export let API_URL = 'http://192.168.1.15:8000';
+global.tuserid = 0;
+
+export let API_URL = 'http://192.168.1.5:8000';
 export let IMG_URL = `${API_URL}/LMS-APIv2/api/Images`;
 
 export const getApiUrl = async () => {
@@ -18,58 +26,68 @@ export const getApiUrl = async () => {
     IMG_URL = `${API_URL}/LMS-APIv2/api/Images`;
   }
 };
+
 export const MyBtn = ({ title, onPress, icon, style }) => {
   return (
-    <TouchableOpacity onPress={onPress} style={[myStyle.btn, style]}>
-      <View style={myStyle.btnContent}>
-        {icon && <View style={myStyle.icon}>{icon}</View>}
-        <Text style={myStyle.text}>{title}</Text>
+    <TouchableOpacity onPress={onPress} style={[styles.btn, style]}>
+      <View style={styles.btnContent}>
+        {icon && <View style={styles.icon}>{icon}</View>}
+        <Text style={styles.text}>{title}</Text>
       </View>
     </TouchableOpacity>
   );
 };
 
-
-
-
-
-
-
-
-export const input = ({ placeholder, onChangeText, value, style }) => {
-    return (
-        <TextInput
-            mode="outlined"
-            placeholder={placeholder}
-            onChangeText={onChangeText}
-            value={value}
-            style={[myStyle.input, style]}
-        />
-    );
+export const Input = ({ placeholder, onChangeText, value, style }) => {
+  return (
+    <TextInput
+      mode="outlined"
+      placeholder={placeholder}
+      onChangeText={onChangeText}
+      value={value}
+      style={[styles.input, style]}
+    />
+  );
 };
 
-export const Navbar = ({ title, userName, des, onLogout }) => {
-  
+export const Navbar = ({ title, userName, des, onLogout, showBackButton = false }) => {
+  const navigation = useNavigation();
+
   return (
-      <View style={myStyle.navbar}>
-        {/* LMS Title (Left Side) */}
-        <Text style={myStyle.title}>{title}</Text>
-  
-        {/* Name & Type (Right Side) */}
-        <View style={myStyle.userContainer}>
-          <Text style={myStyle.studentName}>{userName}</Text>
-          <Text style={myStyle.student}>{des}</Text>
+    <View style={styles.navbar}>
+      {/* Left Section - Back Button & Title */}
+      <View style={styles.leftSection}>
+        {showBackButton && (
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <AntDesign name="arrowleft" size={24} color="white" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.title}>
+          {title}
+        </Text>
+      </View>
+
+      {/* Right Section - User Info and Logout */}
+      <View style={styles.rightSection}>
+        <View style={styles.userContainer}>
+          <Text style={styles.studentName}>{userName}</Text>
+          <Text style={styles.student}>{des}</Text>
         </View>
-  
-        {/* Logout Button (Right Side) */}
-        <TouchableOpacity style={myStyle.logoutButton} onPress={onLogout}>
-        <AntDesign name="logout" color="red" size={24} />
+        
+        <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+          <MaterialIcons name="logout" backgroundColor="rgba(195, 3, 3, 0.88)" 
+         style={{borderRadius:8,padding:2}} color='white' size={24} />
         </TouchableOpacity>
       </View>
-    );
-  };
-  
-  const myStyle = StyleSheet.create({  btn: {
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  btn: {
     width: 150,
     height: 60,
     backgroundColor: colors.btn,
@@ -79,83 +97,62 @@ export const Navbar = ({ title, userName, des, onLogout }) => {
     marginHorizontal: 10,
   },
   btnContent: {
-    flexDirection: 'column', // Stack icon and text vertically
+    flexDirection: 'column',
     alignItems: 'center',
   },
   icon: {
     marginBottom: 5,
   },
   text: {
-    color: '#fff',fontSize:16
-   
+    color: '#fff',
+    fontSize: 16,
   },
-    navbar: {
-      width: '100%',  // Ensures full width
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: colors.primaryDark,
-      paddingHorizontal: 15,
-      paddingVertical: 12,
-    },logoutButton: {
-       
-        borderColor: "red",      // Red border for emphasis
-        borderRadius: 5,             // Slightly rounded corners
-        padding: 4,                  // Padding for better spacing
-        alignItems: "center", 
-        justifyContent: "center",
-      }
-,    
-titleText: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: colors.black || '#000000',
-  marginBottom: 4,
-},
-messageText: {
-  fontSize: 14,
-  color: colors.text || '#343a40',
-},
-closeButton: {
-  padding: 4,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-    title: {
-      fontSize: 29,
-      fontWeight: 'bold',
-      color: 'white',
-    },
-    userContainer: {
-      flex: 1,  // Pushes logout button to the right
-      alignItems: 'flex-end',
-      marginRight: 10, // Ensures spacing from logout button
-    },
-    studentName: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: 'white',
-    },
-    student: {
-      fontSize: 14,
-      color: 'lightgray',
-      marginTop: -2, // Slight adjustment to keep it close to name
-    },
-  
-    btn: {
-        backgroundColor: colors.secondary,
-        borderRadius: 10,
-        margin: 7,
-        padding: 7,width:200
-    },
-    txtStyle: {
-        textAlign: 'center',
-        fontSize: 18,
-        color: colors.white,
-        
-    },
-    input: {
-        margin: 10,
-        backgroundColor: colors.light,
-    },
+  input: {
+    margin: 10,
+    backgroundColor: colors.light,
+  },
+  navbar: {
+    width: '100%',
+    height: 55,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryDark,
+    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+  },
+  leftSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 2,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userContainer: {
+    marginRight: 3,
+    alignItems: 'flex-end',
+  },
+  studentName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  student: {
+    fontSize: 14,
+    color: 'lightgray',
+  },
+  logoutButton: {
+    padding: 3,
+  },
 });

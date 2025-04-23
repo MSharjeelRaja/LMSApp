@@ -34,14 +34,18 @@ const AttendanceScreen = ({ route, navigation }) => {
   });
   const alertContext = useAlert();
   
-  // Get data from route params
-  const classData = route.params?.classData || {};
-fd=classData.fixed_date;
-  console.log('class data is '+classData )
-  console.log('fd '+fd )
-  const Tid = global.Tid;
+
+  console.log("Route params:", route.params);
+  
+  // Destructure properly
+ 
+  const classData = route.params?.classData || {};  // Changed from userData to classData
+  
+ 
+  console.log("Class data:", classData);
+  const Tid = global.Jid;
   const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
- console.log("Teacher Offered Course ID: " + teacherOfferedCourseId + classData.venue);
+ console.log("Teacher Offered Course ID is: " + teacherOfferedCourseId +' and '+ classData.venue);
   useEffect(() => {
 
   
@@ -71,7 +75,7 @@ fd=classData.fixed_date;
         teacher_offered_course_id: teacherOfferedCourseId,
         venue_name: classData.venue,
       };
-  console.log( 'fetched list '+data)
+  console.log( 'fetched list '+data.venue_name)
       const response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
         method: 'POST',
         headers: {
@@ -79,7 +83,7 @@ fd=classData.fixed_date;
         },
         body: JSON.stringify(data),
       });
-      console.log(response)
+      console.log('rep is = '+response)
       if (!response.ok) {
         const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
         throw new Error(errorMessage); // Ensure the Error object is correctly instantiated
@@ -202,7 +206,7 @@ fd=classData.fixed_date;
         const notificationData = {
           "title": "Absence Notification",
           "description": "You have been marked absent in today's class",
-          "sender": "Teacher",
+          "sender": "JuniorLecturer",
           "Student_id": id,
           "sender_id": global.tuserid, // Using the teacher ID from route params
         };
@@ -254,58 +258,56 @@ fd=classData.fixed_date;
   
   const submitAttendance = async () => {
     try {
-      // Show loading state
       setLoading(true);
-      console.log('Submitting attendance '+fd);
       
-      // Prepare attendance data in the required format
+      // Validate required data
+      if (!teacherOfferedCourseId || !classData?.venue_id) {
+        throw new Error("Missing required course or venue data");
+      }
+  
       const attendanceRecords = students.map(student => ({
         student_id: student.Student_Id || student.id,
         teacher_offered_course_id: teacherOfferedCourseId,
-        status: student.attendanceStatus.toLowerCase(), // Convert P/A to p/a
+        status: student.attendanceStatus.toLowerCase(),
         date_time: fd,
-        isLab: classData.class_type === "Supervised Lab", // Set based on class type
-        venue_id: classData.venue_id || 25 // Use actual venue ID from class data
+        isLab: classData.class_type === "Supervised Lab",
+        venue_id: classData.venue_id
       }));
-      
-      // Create the payload structure
-      const payload = {
-        attendance_records: attendanceRecords
-      };
-      
-      console.log('Submitting attendance data:', payload);
-      
-      // Make the actual API call
+  
       const response = await fetch(`${API_URL}/api/Teachers/attendance/mark-bulk`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attendance_records: attendanceRecords })
       });
+  
+      const responseText = await response.text();
       
+      // Handle non-JSON responses
       if (!response.ok) {
-        throw new Error('Failed to submit attendance');
+        console.error('Server Error Response:', responseText);
+        throw new Error(`Attendance submission failed: ${response.statusText}`);
+      }
+  
+      try {
+        const result = JSON.parse(responseText);
+        alertContext.showAlert('success', 'Attendance Marked Successfully');
+        setTimeout(() => navigation.goBack(), 1500);
+      } catch (parseError) {
+        throw new Error("Invalid server response format");
       }
       
-      const result = await response.json();
-      console.log('Attendance submission result:', result);
-      
-      alertContext.showAlert('success', 'Attendance Marked Successfully');
-      
-      // Navigate back after successful submission
-      setTimeout(() => {
-        navigation.goBack();
-      }, 1500);
-      
     } catch (error) {
-      alertContext.showAlert('error', 'Failed to Submit Attendance');
-      console.error('Submit attendance error:', error);
+      console.error('Attendance Error:', error);
+      alertContext.showAlert(
+        'error', 
+        error.message.includes('JSON') 
+          ? 'Server response error - contact support'
+          : error.message
+      );
     } finally {
       setLoading(false);
     }
   };
-
   const getPercentageColor = (percentage) => {
     const percentageNum = parseInt(percentage);
     if (percentageNum >= 90) return colors.green4;

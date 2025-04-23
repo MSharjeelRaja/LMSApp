@@ -53,8 +53,12 @@ const Createtask = ({ navigation, route }) => {
 
   const fetchUnassignedTasks = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Teachers/task/un-assigned?teacher_id=${userData.id}`);
+      console.log('Fetching unassigned tasks...');
+      const response = await fetch(`${API_URL}/api/JuniorLec/task/un-assigned?teacher_id=${userData.id}`);
       const data = await response.json();
+      console.log('response:', response);
+      console.log('Unassigned tasks:', data);
+      console.log('Status:', data.status);
       if (data.status) {
         setCourses(Object.values(data.data).flat());
       }
@@ -122,8 +126,16 @@ const Createtask = ({ navigation, route }) => {
 
     setLoading(true);
     try {
+     
+      console.log('Request Body:', {  
+        teacher_offered_course_id: assignmentState.selectedSections[0].teacher_offered_course_id,
+        coursecontent_id: selectedTask.id,
+        points: parseInt(assignmentState.points),
+        start_date: formatDateTime(assignmentState.startDate),
+        due_date: formatDateTime(assignmentState.dueDate),
+      });
       const requests = assignmentState.selectedSections.map(section => 
-        fetch(`${API_URL}/api/Teachers/create/task`, {
+        fetch(`${API_URL}/api/Juniorlec/create/task`, {
           method: 'POST',
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -135,7 +147,7 @@ const Createtask = ({ navigation, route }) => {
           }),
         })
       );
-
+console.log(requests)
       await Promise.all(requests);
       Alert.alert('Success', 'Task assigned successfully');
       setSelectedTask(null);
@@ -200,7 +212,7 @@ const Createtask = ({ navigation, route }) => {
       <Navbar
         title="LMS"
         userName={userData.name}
-        des={'Teacher'}
+        des={'Junior lecturer'}
         showBackButton={true}
         onLogout={() => navigation.replace('Login')}
         textColor="#000"

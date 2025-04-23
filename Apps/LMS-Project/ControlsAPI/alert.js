@@ -150,7 +150,7 @@ const CustomAlert = ({
       title: title || 'Warning'
     },
     info: {
-      icon: 'infocirlce',
+      icon: 'infocircle',
       color: colors.infoLight || '#ccfbf1',
       borderColor: colors.info || '#1abc9c',
       iconColor: colors.info || '#1abc9c',
