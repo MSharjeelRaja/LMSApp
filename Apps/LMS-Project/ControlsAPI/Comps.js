@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   title: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: 'white',
     textAlign: 'left',

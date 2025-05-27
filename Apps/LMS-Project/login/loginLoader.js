@@ -48,7 +48,7 @@ const Loader = ({ navigation, route }) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => {
         controller.abort();
-      }, 9000); 
+      }, 21000); 
     
       try {
         const response = await fetch(
@@ -62,7 +62,7 @@ const Loader = ({ navigation, route }) => {
             signal: controller.signal
           }
         );
-    
+    console.log('reppp ='+response);
         clearTimeout(timeout);
     
         const data = await response.json();
@@ -119,7 +119,7 @@ const Loader = ({ navigation, route }) => {
   
     // Developer bypass - grant access if OTP is 111111
     if (otpString === '111111') {
-      alertContext.showAlert('success', 'Developer access granted');
+      alertContext.showAlert('success', 'Access Granted');
       if (user === "Student") {
         navigation.replace("BottomTabs", { userData: data });
       } else if (user === "Teacher" ) {

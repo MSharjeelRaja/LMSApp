@@ -179,7 +179,7 @@ const ContestListScreen = ({ navigation, route }) => {
     return (
       <View style={styles.container}>
        <Navbar
-  title="LMS"
+  title="Contested Attendance"
   userName={userData?.name || ''}
   des={'Teacher'}
   onLogout={() => navigation.replace('Login')}

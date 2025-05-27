@@ -78,10 +78,10 @@ const T_Home = ({ navigation, route }) => {
   global.Tid = userData.id;
 
   const timetable = userData.Timetable ? Object.values(userData.Timetable) : [];
-  const courseCount = new Set(timetable.map(item => item.coursename)).size;
-  const secCount = new Set(timetable.map(item => item.section)).size;
+  // const courseCount = new Set(timetable.map(item => item.coursename)).size;
+  // const secCount = new Set(timetable.map(item => item.section)).size;
 
-  // Format date for header
+
   const formatDate = () => {
     const options = { weekday: 'long', month: 'long', day: 'numeric' };
     return currentTime.toLocaleDateString('en-US', options);
@@ -136,7 +136,24 @@ const T_Home = ({ navigation, route }) => {
       iconType: "MaterialIcons",
       color: colors.orange,
       onPress: () => navigation.navigate("Createtask", { userData })
+    },   {
+      id: 7,
+      title: "Consider Tasks",
+      icon: "assignment",
+      iconType: "MaterialIcons",
+      color: colors.orange,
+      onPress: () => navigation.navigate("ConsiderTask", { userData })
+    },   {
+      id: 8,
+      title: "Graders",
+      icon: "assignment",
+      iconType: "MaterialIcons",
+      color: colors.blueNavy,
+      onPress:() => navigation.navigate("Grader", { userData })
     }
+    
+           
+            
   ];
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -157,10 +174,8 @@ const T_Home = ({ navigation, route }) => {
         onLogout={() => navigation.navigate('Login')}
       />
       
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Date Header */}
+  
        
-        {/* Profile Card */}
         <View style={styles.profileCard}>
           
           <View style={styles.profileImageContainer}>
@@ -198,7 +213,7 @@ const T_Home = ({ navigation, route }) => {
         </View>
         
         {/* Course Stats Cards */}
-        <View style={styles.statsCardsContainer}>
+        {/* <View style={styles.statsCardsContainer}>
           <View style={styles.statsCard}>
             <View style={styles.statsIconContainer}>
               <FontAwesome5 name="book" size={24} color={colors.primary} />
@@ -219,7 +234,7 @@ const T_Home = ({ navigation, route }) => {
             </View>
           </View>
         </View>
-        
+         */}
       
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
@@ -272,7 +287,7 @@ const T_Home = ({ navigation, route }) => {
           </View>
         </View>
        
-        {/* Quick Actions Section - UPDATED */}
+      
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsContainer}>
@@ -308,48 +323,8 @@ const T_Home = ({ navigation, route }) => {
           </View>
         </View>
       
-        {/* Manage Graders Section */}
-        <View style={[styles.section,{marginBottom:80}]}>
-          <Text style={styles.sectionTitle}>Manage Graders</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.graderButtonsScrollContainer}
-          >
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("Grader", { userData })}
-            >
-              <FontAwesome5 name="user-plus" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Add Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("Grader", { userData })}
-            >
-              <FontAwesome5 name="user-plus" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Add Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("GraderList")}
-            >
-              <FontAwesome5 name="list-ol" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>View Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("GraderReports")}
-            >
-              <FontAwesome5 name="chart-bar" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Reports</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </ScrollView>
+      
+     
     </View>
   );
 };
@@ -624,7 +599,7 @@ left:-120,
   statsCard: {
     backgroundColor: colors.white,
     borderRadius: 16,
-    padding: 10,
+    padding: 5,
     width: '48%',
     elevation: 4,
     flexDirection: 'row',
@@ -643,7 +618,8 @@ left:-120,
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.title2,
-    marginBottom: 2,marginLeft:5
+   textAlign: 'center',
+   marginRight: 45,
   },
   statsLabel: {
     fontSize: 14,
@@ -658,6 +634,7 @@ left:-120,
     borderRadius: 16,
     padding: 14,
     elevation: 4,
+ 
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -742,10 +719,11 @@ left:-120,
     marginHorizontal: 10,
     marginBottom: 16,
     elevation: 4,
+    
   },
   quickActionsContainer: {
     marginTop: 10,
-    height: 200, // Fixed height for the scrollable container
+    height: 240, // Fixed height for the scrollable container
   },
   quickActionsScroll: {
     flex: 1,

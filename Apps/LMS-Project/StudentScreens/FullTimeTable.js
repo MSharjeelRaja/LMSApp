@@ -10,6 +10,7 @@ const FullTimetable = ({ route, navigation }) => {
   const [selectedDay, setSelectedDay] = useState('');
   const userData = route.params?.userData;
   const Tid = userData?.id;
+  console.log('User Data: in timetable ', userData); // Debugging line
   const daysScrollRef = useRef(null);
   const ITEM_WIDTH = 90;
 
@@ -36,9 +37,9 @@ const FullTimetable = ({ route, navigation }) => {
     if (!Tid) return;
     const fetchTimetable = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/Students/FullTimetable?student_id=${global.sid}`);
+        const response = await fetch(`${API_URL}/api/Students/FullTimetable?student_id=${Tid}`);
         const data = await response.json();
-        
+        console.log('Fetched timetable data:', data); // Debugging line
         if (data.status === 'success' && Array.isArray(data.data)) {
           setTimetable(data.data);
           const current = getCurrentDay();
@@ -78,7 +79,7 @@ const FullTimetable = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Navbar
-                   title="Course Content"
+                   title="TimeTable"
                    userName={userData.name}
                    des={'Student'}
                    showBackButton={true}

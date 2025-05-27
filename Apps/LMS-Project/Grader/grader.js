@@ -375,9 +375,7 @@ const Grader = ({ navigation, route }) => {
                       <Icon name="history-edu" size={20} color="#4361EE" />
                       <Text style={styles.sessionTitle}>Previous Session</Text>
                     </View>
-                    <View style={[styles.sessionBadge, styles.previousSessionBadge]}>
-                      <Text style={styles.sessionBadgeText}>Fall-2024</Text>
-                    </View>
+                   
                   </View>
                   
                   {filteredPreviousTeachers.length > 0 ? (
@@ -761,8 +759,8 @@ const styles = StyleSheet.create({
   statusBadge: {
     position: 'absolute',
     top: -5,
-    right: -4,
-    paddingHorizontal: 10,
+    right: -39,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
   },
@@ -775,6 +773,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2',
     borderColor: '#EF4444',
     borderWidth: 1,
+   
   },
   activeText: {
     color: '#166534',

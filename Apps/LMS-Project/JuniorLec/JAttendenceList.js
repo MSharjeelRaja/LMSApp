@@ -4,11 +4,19 @@ import { API_URL, MyBtn, Navbar } from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 import font from '../ControlsAPI/font';
 import { RefreshControl } from 'react-native-gesture-handler';
+import { useIsFocused } from '@react-navigation/native';
 
 const JAttendenceList = ({ navigation, route }) => {
   const userData = route.params?.userData.TeacherInfo || {};
   const classData = route.params?.userData;
   const Jid = global.Jid;
+    const isFocused = useIsFocused();
+  
+    useEffect(() => {
+      if (isFocused) {
+        fetchTodayClasses();
+      }
+    }, [isFocused]);
   
   console.log('Tid: ', Jid);
   const [classes, setClasses] = useState([]);
@@ -209,7 +217,7 @@ const styles = StyleSheet.create({refreshContainer: {
     paddingBottom: 20,
   },
   classCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     borderRadius: 10,
     marginBottom: 16,
     padding: 16,

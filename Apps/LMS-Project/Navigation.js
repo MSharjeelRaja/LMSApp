@@ -46,6 +46,7 @@ import Jnotification from './JuniorLec/Jnotification';
 import JAttendenceList from './JuniorLec/JAttendenceList';
 import JContestattendence from './JuniorLec/JContestattendence';
 import JMarkAttendence from './JuniorLec/JMarkAttendece';
+import AddseatingPlan from './JuniorLec/AddseatingPlan';
 
 import JDetails from './JuniorLec/JDetails';
 import JCreatetask from './JuniorLec/JCreatetask';
@@ -60,6 +61,9 @@ import notification from './StudentScreens/Notification';
 import Tasksubmit from './StudentScreens/Tasksubmit'
 import SCourses from './StudentScreens/Courses';
 import Exam from './StudentScreens/Exam';
+import Task from './StudentScreens/Task';
+import ConsiderTask from './TeacherScreens/ConsiderTask';
+import ConsideredTasks from './StudentScreens/ConsideredTasks';
 const App = () => {
 
  
@@ -91,7 +95,8 @@ const App = () => {
         <Stack.Screen name="getnotification" component={getnotification} options={{ headerShown: false }} />
 
         <Stack.Screen name="AddContent" component={AddContent} options={{ headerShown: false }} />
-        
+    
+        <Stack.Screen name="ConsiderTask" component={ConsiderTask} options={{ headerShown: false }} />  
         <Stack.Screen name="ViewSubmissions" component={ViewSubmissions} options={{ headerShown: false }} />
         <Stack.Screen name="taskget" component={taskget} options={{ headerShown: false }} />
         <Stack.Screen name="Jtaskget" component={Jtaskget} options={{ headerShown: false }} />
@@ -107,15 +112,18 @@ const App = () => {
 
       {/*............STUDENT..............................  STUDENT...............STUDENT........*/}
       <Stack.Screen name="submitask" component={submittask} options={{ headerShown: false }} />
-      {/* <Stack.Screen name="FullTimetables" component={FullTimetables} options={{ headerShown: false }} /> */}
-
+      <Stack.Screen name="FullTimetables" component={FullTimetables} options={{ headerShown: false }} />
+     
+      <Stack.Screen name="ConsideredTasks" component={ConsideredTasks} options={{ headerShown: false }} />
       <Stack.Screen name="notification" component={notification} options={{ headerShown: false }} />
       <Stack.Screen name="Tasksubmit" component={Tasksubmit} options={{ headerShown: false }} />
       <Stack.Screen name="CourseContent" component={CourseContent} options={{ headerShown: false }} />
       
+      <Stack.Screen name="sTask" component={Task} options={{ headerShown: false }} />
       
       <Stack.Screen name="Exam" component={Exam} options={{ headerShown: false }} />
       <Stack.Screen name="SCourses" component={SCourses} options={{ headerShown: false }} />
+
        {/*...........GRADER..............................GRADER...............GRADER.......*/}
       <Stack.Screen name="Tasks" component={Tasks} options={{ headerShown: false }} />
       
@@ -131,7 +139,8 @@ const App = () => {
        <Stack.Screen name="JTimetable" component={JTimetable} options={{ headerShown: false }} />
        <Stack.Screen name="JTabs" component={JTabs} options={{ headerShown: false }} />
        <Stack.Screen name="Jnotification" component={Jnotification} options={{ headerShown: false }} />
-       
+      
+        <Stack.Screen name="AddseatingPlan" component={AddseatingPlan} options={{ headerShown: false }} />
 
         <Stack.Screen name="JAttendenceList" component={JAttendenceList} options={{ headerShown: false }} />
       

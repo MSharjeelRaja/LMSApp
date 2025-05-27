@@ -27,7 +27,7 @@ const MarkTask = ({ navigation, route }) => {
   const totalMarks = route?.params?.totalMarks || 20;
   const [pdfVisible, setPdfVisible] = useState(false);
   const [pdfUri, setPdfUri] = useState('');
-  
+ var  userData = route.params?.userData || {};
   // State management
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -276,16 +276,17 @@ const MarkTask = ({ navigation, route }) => {
     </View>
   );
 
-  // Loading state
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <Navbar
-          title="Mark Task"
-          onLogout={() => navigation.replace('Login')}
-          showBackButton={true}
-          onBack={() => navigation.goBack()}
-        />
+         <Navbar
+               title="Mark Task"
+               userName={userData?.name || ''}
+               des={'Teacher Dashboard'}
+               onLogout={() => navigation.replace('Login')}
+               showBackButton={true}
+             />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
           <Text style={styles.loadingText}>Loading students...</Text>
@@ -321,13 +322,13 @@ const MarkTask = ({ navigation, route }) => {
   // Main render
   return (
     <SafeAreaView style={styles.container}>
-      <Navbar
-        title="Mark Task"
-        onLogout={() => navigation.replace('Login')}
-        showBackButton={true}
-        onBack={() => navigation.goBack()}
-      />
-      
+        <Navbar
+              title="Teacher Tasks"
+              userName={userData?.name || ''}
+              des={'Teacher Dashboard'}
+              onLogout={() => navigation.replace('Login')}
+              showBackButton={true}
+            />
       <ScrollView>
         <FlatList
           data={filteredStudents}

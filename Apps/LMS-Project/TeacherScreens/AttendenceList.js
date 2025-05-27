@@ -29,7 +29,7 @@ const AttendenceList = ({ navigation, route }) => {
     }
   };
   const fetchTodayClasses = async () => {
-    console.log('im classes today ')
+   
     try {
       setLoading(true);
       setError(null);
@@ -42,6 +42,7 @@ const AttendenceList = ({ navigation, route }) => {
       }
       
       const data = await response.json();
+      console.log('Fetched classes:', data);
       const classesWithIds = data.map((item, index) => ({
         ...item,
         uniqueId: `${item.teacher_offered_course_id}_${index}_${Date.now()}`
@@ -97,7 +98,7 @@ const AttendenceList = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <Navbar 
-        title="LMS" 
+        title="Mark Attendance" 
         userName={userData.name||classData.name} 
         des={'Teacher'} 
         onLogout={() => navigation.replace('Login')}
@@ -137,12 +138,7 @@ const AttendenceList = ({ navigation, route }) => {
         />
       )}
       
-      <View style={styles.btnContainer}>
-        <MyBtn 
-          title={'Mark Attendance'} 
-          onPress={() => navigation.navigate('MarkAttendence', {userData:classData})} 
-        />
-      </View>
+   
     </View>
   );
 };
@@ -193,7 +189,7 @@ const styles = StyleSheet.create({refreshContainer: {
     paddingBottom: 20,
   },
   classCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     borderRadius: 10,
     marginBottom: 16,
     padding: 16,
@@ -201,7 +197,7 @@ const styles = StyleSheet.create({refreshContainer: {
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 22,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
   },
@@ -233,7 +229,7 @@ const styles = StyleSheet.create({refreshContainer: {
     alignSelf: 'flex-end',
   },
   status: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   loaderContainer: {

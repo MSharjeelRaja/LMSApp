@@ -239,7 +239,7 @@ const AddContent = ({ navigation, route }) => {
   return (
    <View style={styles.mcontainer}>
       <Navbar
-        title="LMS"
+        title="Add Content"
         userName={userData.name}
         des={'Teacher'}
         showBackButton={true}

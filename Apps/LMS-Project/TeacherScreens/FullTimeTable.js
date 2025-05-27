@@ -62,7 +62,7 @@ const FullTimetable = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Navbar
-                   title="Course Content"
+                   title="TimeTable"
                    userName={userData.name}
                    des={'Teacher'}
                    showBackButton={true}

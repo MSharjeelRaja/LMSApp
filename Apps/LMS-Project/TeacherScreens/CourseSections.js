@@ -290,7 +290,7 @@ const CourseSections = ({ route }) => {
         
         {/* Course Selector */}
         <View style={styles.pickerContainer}>
-          <Text style={styles.pickerTitle}>Select Course:</Text>
+          <Text style={styles.pickerTitle}>Course:</Text>
           <FlatList
             horizontal
             data={Object.keys(courseData)}
@@ -301,9 +301,9 @@ const CourseSections = ({ route }) => {
           />
         </View>
 
-        {/* Sections Picker */}
+       
         <View style={styles.pickerContainer}>
-          <Text style={styles.pickerTitle}>Select Section:</Text>
+          <Text style={styles.pickerTitle}> Section Progress :</Text>
           <FlatList
             horizontal
             data={sections}
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   pageTitle: {
     fontSize: 28,
@@ -432,12 +432,10 @@ const styles = StyleSheet.create({
   pickerContainer: {
     marginBottom: 20,
     backgroundColor: colors.white,
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  
     elevation: 3,
   },
   pickerTitle: {
@@ -459,9 +457,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  selectedCourseItem: {
-    backgroundColor: colors.primary,
-  },
+ 
   courseText: {
     color: colors.blueNavy,
     fontSize: 15,
@@ -476,16 +472,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary,
   },
-  selectedSectionItem: {
-    backgroundColor: colors.primary,
-  },
+ 
   sectionText: {
     color: colors.blueNavy,
     fontSize: 15,
     fontWeight: '600',
   },
   weekItem: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.blueLight,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -495,14 +489,16 @@ const styles = StyleSheet.create({
   },
   selectedWeekItem: {
     backgroundColor: colors.primary,
+
   },
   weekText: {
-    color: colors.blueNavy,
+    color: colors.white,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   contentContainer: {
     marginTop: 10,
+    marginBottom: 40,
   },
   contentCard: {
     backgroundColor: colors.white,
@@ -510,9 +506,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 10,
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+   
     elevation: 4,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
@@ -624,14 +618,12 @@ const styles = StyleSheet.create({
     borderTopColor: colors.primaryLight,
   },
   noContentContainer: {
-    padding: 30,
+    padding: 20,
     alignItems: 'center',
     backgroundColor: colors.white,
     borderRadius: 10,
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+
     elevation: 3,
   },
   noContentText: {

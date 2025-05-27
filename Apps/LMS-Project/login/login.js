@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: colors.white, 
     paddingHorizontal: 20, 
-    justifyContent: 'center' 
+    justifyContent: 'center'
   },
   logo: {
     width: 80,

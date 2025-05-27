@@ -31,7 +31,7 @@ import {
       try {
         const response = await fetch(`${API_URL}/api/Students/task/details?student_id=${Tid}`);
         const data = await response.json();
-        console.log(data)
+        console.log('task data'+data.TaskDetails.Active_Tasks)
         
         setTasks({
           ongoing: data.TaskDetails.Active_Tasks,

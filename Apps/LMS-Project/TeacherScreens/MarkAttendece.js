@@ -193,18 +193,18 @@ fd=classData.fixed_date;
       console.log(`Updated filtered students array`);
     }
     
-    // Only send notification if status is changed to ABSENT
+  
     if (newStatus === ATTENDANCE_STATUS.ABSENT) {
       console.log(`Preparing to send absence notification for student ${student.name}`);
       
       try {
-        // Create notification payload
+      
         const notificationData = {
           "title": "Absence Notification",
           "description": "You have been marked absent in today's class",
           "sender": "Teacher",
           "Student_id": id,
-          "sender_id": global.tuserid, // Using the teacher ID from route params
+          "sender_id": global.tuserid, 
         };
         
         console.log(`Notification payload created with:`);
@@ -213,7 +213,7 @@ fd=classData.fixed_date;
         console.log(`- Teacher ID: ${Tid}`);
         console.log(`Full notification payload: ${JSON.stringify(notificationData)}`);
         
-        // Send the notification
+      
         console.log(`Sending notification to API...`);
         const response = await fetch(`${API_URL}/api/student/notification`, {
           method: 'POST',
@@ -224,7 +224,7 @@ fd=classData.fixed_date;
           body: JSON.stringify(notificationData)
         });
         
-        // Handle the response
+        
         if (response.ok) {
           const responseData = await response.json();
           console.log(`Notification API success response:`, responseData);
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     borderColor: colors.green4,
   },
   red: {
-    backgroundColor: colors.red3,
+    backgroundColor: colors.redb3,
     borderColor: colors.redb2,
   },
   statusIndicator: {

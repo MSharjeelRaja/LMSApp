@@ -29,16 +29,17 @@ const AddContent = ({ navigation, route }) => {
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const userData = route.params?.userData || {};
+  console.log('User Data:', userData.id);
   const MCQ_STORAGE_KEY = `mcqs_${selectedCourse}_${week}`;
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          `${API_URL}/api/Teachers/your-courses?teacher_id=${global.Tid}`
+          `${API_URL}/api/JuniorLec/your-courses?teacher_id=${userData.id}`
         );
         const data = await response.json();
-
+console.log('Fetched courses:', data);
         if (data.status === "success") {
           setCourses(data.data.active_courses);
         } else {
@@ -271,7 +272,7 @@ const AddContent = ({ navigation, route }) => {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Content Type</Text>
           <View style={styles.typeContainer}>
-            {["Notes", "Assignment", "Quiz", "MCQS"].map((type) => (
+            {["Notes", "Assignment", "Quiz","LabTask", "MCQS"].map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[

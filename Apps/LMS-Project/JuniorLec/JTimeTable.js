@@ -62,7 +62,7 @@ const JTimetable = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Navbar
-                   title="Course Content"
+                   title="TimeTable"
                    userName={userData.name}
                    des={'Junior Lecturer'}
                    showBackButton={true}

@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { API_URL } from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 import { useAlert } from '../ControlsAPI/alert';
+import { useIsFocused } from '@react-navigation/native';
 
 const ATTENDANCE_STATUS = {
   PRESENT: 'P',
@@ -43,6 +44,8 @@ const AttendanceScreen = ({ route, navigation }) => {
   
  
   console.log("Class data:", classData);
+  const [apiResponse, setApiResponse] = useState(null);
+
   const Tid = global.Jid;
   const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
  console.log("Teacher Offered Course ID is: " + teacherOfferedCourseId +' and '+ classData.venue);
@@ -60,7 +63,16 @@ const AttendanceScreen = ({ route, navigation }) => {
     
     fetchStudentList();
   }, []);
+  const isFocused = useIsFocused();
 
+  useEffect(() => {
+    if (isFocused) {
+      fetchStudentList();
+    }
+  }, [isFocused]);
+
+
+  
   // Only filter when searchQuery changes, not when students changes
   useEffect(() => {
     if (students.length > 0) {
@@ -91,7 +103,8 @@ const AttendanceScreen = ({ route, navigation }) => {
   
       const adata = await response.json();
       console.log("Students:", adata?.students);
-  
+      
+      setApiResponse(adata);
       // Validate the API response
       if (!adata.students || !Array.isArray(adata.students)) {
         throw new Error("Invalid response format: students data missing.");
@@ -414,12 +427,10 @@ const AttendanceScreen = ({ route, navigation }) => {
       <View style={styles.actionButtonsRow}>
         <TouchableOpacity 
           style={[styles.actionButton, styles.actionButtonLast]}
-          onPress={() => {
-            const sorted = [...filteredStudents].sort((a, b) => 
-              a.name.localeCompare(b.name)
-            );
-            setFilteredStudents(sorted);
-          }}
+          onPress={() => navigation.navigate('AddseatingPlan', { 
+    classData,
+   apiResponse
+  })}
         >
           <Icon name="sort" size={18} color={colors.primary} />
           <Text style={styles.actionButtonText}>Sort</Text>

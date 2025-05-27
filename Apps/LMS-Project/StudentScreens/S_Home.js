@@ -148,7 +148,7 @@ const S_Home = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Today's Schedule</Text>
             <TouchableOpacity 
               style={styles.seeAllButton}
-              onPress={() => navigation.navigate("FullTimetable", { userData })}
+              onPress={() => navigation.navigate("FullTimetables", { userData })}
             >
 
               <Text style={styles.seeAllText}>See All</Text>
@@ -276,7 +276,7 @@ const S_Home = ({ navigation, route }) => {
   <View style={styles.buttonRow}>
     <TouchableOpacity 
       style={[styles.actionButton, styles.tasksButton]}
-      onPress={() => navigation.navigate('Tasks', { userData })}
+      onPress={() => navigation.navigate('sTask', { userData })}
     >
       <Icon name="check-circle" size={24} color="white" />
       <Text style={styles.actionButtonText}>Tasks</Text>
@@ -288,6 +288,13 @@ const S_Home = ({ navigation, route }) => {
     >
       <Icon name="menu-book" size={24} color="white" />
       <Text style={styles.actionButtonText}>Materials</Text>
+    </TouchableOpacity>
+    <TouchableOpacity 
+      style={[styles.actionButton, styles.materialsButton]}
+      onPress={() => navigation.navigate('ConsideredTasks', { userData })}
+    >
+      <Icon name="menu-book" size={24} color="white" />
+      <Text style={styles.actionButtonText}>Considered Tasks</Text>
     </TouchableOpacity>
   </View>
 </View>
@@ -308,10 +315,10 @@ const BottomTabs = ({ navigation, route }) => {
           let iconName;
           
           if (route.name === "Home") iconName = "home";
-          else if (route.name === "Tasks") iconName = "assignment";
+          else if (route.name === "Task") iconName = "assignment";
           else if (route.name === "Courses") iconName = "menu-book";
           else if (route.name === "Attendance") iconName = "library-books";
-          else if (route.name === "Task") iconName = "class";
+
           
           return (
             <View style={{ alignItems: "center", justifyContent: "center" }}>
@@ -327,7 +334,7 @@ const BottomTabs = ({ navigation, route }) => {
       })}
     >
       <Tab.Screen name="Home" component={S_Home} initialParams={route.params}/>
-      <Tab.Screen name="Tasks" component={pendingtaskss} initialParams={route.params} />
+     
       <Tab.Screen name="Courses" component={Courses} initialParams={route.params}/>
       <Tab.Screen name="Attendance" component={AttendeceAll} initialParams={route.params}/>
       <Tab.Screen name="Task" component={Task} initialParams={route.params}/>

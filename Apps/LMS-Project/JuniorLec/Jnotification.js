@@ -566,7 +566,7 @@ console.log('Student ID:', global.Jid);
       <Navbar
                    title="Notifications"
                    userName={userData.name}
-                   des={'Teacher'}
+                   des={'Junior Lecturer'}
                    showBackButton={true}
                    onLogout={() => navigation.replace('Login')}
                  />

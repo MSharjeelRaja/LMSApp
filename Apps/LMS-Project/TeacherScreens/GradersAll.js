@@ -98,8 +98,31 @@ const Grader = ({navigation, route}) => {
       setFeedbackLoading(false);
     }
   };
-  const handleRemove = (grader) => {
-    console.log('Remove grader:', grader.grader_id);
+
+ 
+  const handleRequestGrader = async (grader) => {
+    try {
+      const response = await fetch(`${API_URL}/api/Admin/grader_req/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          grader_id: grader.grader_id,
+          teacher_id: userData.id
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        Alert.alert('Success', 'Grader request sent successfully');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to send request');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to send request');
+    }
   };
 
   const renderGraderCard = (grader) => (
@@ -139,11 +162,11 @@ const Grader = ({navigation, route}) => {
       )}
 
       <View style={styles.feedbackSection}>
-        <Text style={styles.feedbackLabel}>Feedback:</Text>
-        <Text style={styles.feedbackText}>
-          {grader.feedback.trim() || 'No feedback available'}
-        </Text>
-      </View>
+  <Text style={styles.feedbackLabel}>Feedback:</Text>
+  <Text style={styles.feedbackText}>
+    {grader.feedback?.trim() || 'No feedback available'}
+  </Text>
+</View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
@@ -153,12 +176,19 @@ const Grader = ({navigation, route}) => {
           <Text style={styles.buttonText}>Feedback</Text>
         </TouchableOpacity>
 
-        {activeTab === 'current' && (
+        {activeTab === 'current' ? (
           <TouchableOpacity 
-            style={styles.removeButton}
-            onPress={() => handleRemove(grader)}
+          
+           
           >
-            <Text style={styles.buttonText}>Remove</Text>
+          
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={styles.requestButton}
+            onPress={() => handleRequestGrader(grader)}
+          >
+            <Text style={styles.buttonText}>Request</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -190,7 +220,7 @@ const Grader = ({navigation, route}) => {
           style={[styles.tab, activeTab === 'previous' && styles.activeTab]}
           onPress={() => setActiveTab('previous')}
         >
-          <Text style={styles.tabText}>Previous Graders {Object.values(graders.previous).flat().length}</Text>
+          <Text style={styles.tabText}>Previous Graders ({Object.values(graders.previous).flat().length})</Text>
         </TouchableOpacity>
       </View>
 
@@ -290,7 +320,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    color:colors.black,
+    color: colors.black,
     padding: 10,
     minHeight: 100,
     textAlignVertical: 'top',
@@ -421,6 +451,12 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     backgroundColor: '#dc3545',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  requestButton: {
+    backgroundColor: '#ffc107',
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 5,

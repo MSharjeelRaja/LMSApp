@@ -89,18 +89,10 @@ const TaskGetScreen = ({ navigation, route }) => {
   };
 
   const handleViewSubmissions = (taskId) => {
-   navigation.navigate('ViewSubmissions', { taskId });
+   navigation.navigate('ViewSubmissions', { taskId ,userData});
   };
 
-  const handleViewQuestions = (taskId) => {
-    Alert.alert("View Questions", `View questions for task ${taskId}`);
-    // Implement your view questions logic here
-  };
-
-  const handleMarkTask = (taskId) => {
-    Alert.alert("Mark Task", `Mark task ${taskId}`);
-    // Implement your mark task logic here
-  };
+ 
 
   const renderTaskButtons = (task) => {
     switch (activeTab) {
@@ -179,7 +171,7 @@ const TaskGetScreen = ({ navigation, route }) => {
             
             <TouchableOpacity 
               style={[styles.button, styles.markButton]}
-              onPress={() => handleMarkTask(task.task_id)}
+               onPress={() => handleViewSubmissions(task.task_id)}
             >
               <Icon name="check-circle" size={16} color="white" />
               <Text style={styles.buttonText}>Mark Task</Text>
@@ -401,7 +393,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
     marginVertical: 6, // Center vertically
     borderRadius: 16,
-    backgroundColor: colors.gray,
+    elevation: 2,
+    shadowColor: colors.black,
+    backgroundColor: colors.white,
     height: 40, // Fixed height
   },
   activeTab: {

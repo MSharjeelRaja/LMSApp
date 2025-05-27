@@ -147,7 +147,7 @@ import {
     return (
       <View style={styles.container}>
         <Navbar
-          title="LMS"
+          title="Courses Info"
           userName={userData.name}
           des={'Teacher'}
           showBackButton={true}
