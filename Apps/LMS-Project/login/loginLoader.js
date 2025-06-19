@@ -14,7 +14,7 @@ const Loader = ({ navigation, route }) => {
   const [data, setLoginData] = useState(null);
   const otpInputs = useRef([]);
 
-  // Create smoother pulsing animation for the image
+ 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -77,7 +77,10 @@ const Loader = ({ navigation, route }) => {
         } else if (data.Type === "JuniorLecturer") {
           setUser('Jlec');
           setLoginData(data.TeacherInfo);
-        } else {
+        }  else if (data.Type === "Parent") {
+          setUser('Parent');
+          setLoginData(data.ParentInfo);
+        }else {
           alertContext.showAlert('warning', "Access Denied! Invalid credentials");
           navigation.replace("Login");
         }
@@ -100,8 +103,7 @@ const Loader = ({ navigation, route }) => {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
-    // Auto focus to next input
+  
     if (value && index < 5) {
       otpInputs.current[index + 1].focus();
     }
@@ -128,7 +130,9 @@ const Loader = ({ navigation, route }) => {
       else if (  user === "Jlec" ) {
         navigation.replace("JTabs", { userData: data });
       }
-    
+    else if (user === "Parent" ) {
+        navigation.replace("parent_home", { userData: data });
+      }
       return;
     }
     if (otpString.length !== 6) {

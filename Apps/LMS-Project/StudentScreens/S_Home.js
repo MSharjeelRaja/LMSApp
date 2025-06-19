@@ -251,12 +251,12 @@ const S_Home = ({ navigation, route }) => {
           <Text style={styles.cardNumber}>{userData.CGPA || "N/A"}</Text>
         </View>
       </View>
-     {/* Action Buttons Section */}
+
 <View style={styles.actionButtonsContainer}>
-  {/* First Row */}
+
   <View style={styles.buttonRow}>
     <TouchableOpacity 
-      style={[styles.actionButton, styles.examButton]}
+      style={{ ...styles.actionButton,  }}
       onPress={() => navigation.navigate('Exam', { userData })}
     >
       <Icon name="assignment" size={24} color="white" />
@@ -264,18 +264,42 @@ const S_Home = ({ navigation, route }) => {
     </TouchableOpacity>
 
     <TouchableOpacity 
-      style={[styles.actionButton, styles.attendanceButton]}
+      style={{ ...styles.actionButton,  }}
+      onPress={() => navigation.navigate('calender', { userData })}
+    >
+      <Icon name="calendar-today" size={24} color="white" />
+      <Text style={styles.actionButtonText}>Calendar</Text>
+    </TouchableOpacity>
+ 
+    <TouchableOpacity 
+      style={{ ...styles.actionButton,  }}
       onPress={() => navigation.navigate('Attendance', { userData })}
     >
-      <Icon name="library-books" size={24} color="white" />
+      <Icon name="event-available" size={24} color="white" />
       <Text style={styles.actionButtonText}>Attendance</Text>
     </TouchableOpacity>
   </View>
 
-  {/* Second Row */}
+    <View style={styles.buttonRow}>
+   <TouchableOpacity 
+      style={{ ...styles.actionButton,  }}
+      onPress={() => navigation.navigate('CourseContent', { userData })}
+    >
+      <Icon name="calendar-today" size={24} color="white" />
+      <Text style={styles.actionButtonText}>Caourse content</Text>
+    </TouchableOpacity>
+   <TouchableOpacity 
+      style={{ ...styles.actionButton,  }}
+      onPress={() => navigation.navigate('AllCourses_Content', { userData })}
+    >
+      <Icon name="calendar-today" size={24} color="white" />
+      <Text style={styles.actionButtonText}>All Courses</Text>
+    </TouchableOpacity>
+</View>
+
   <View style={styles.buttonRow}>
     <TouchableOpacity 
-      style={[styles.actionButton, styles.tasksButton]}
+      style={{ ...styles.actionButton }}
       onPress={() => navigation.navigate('sTask', { userData })}
     >
       <Icon name="check-circle" size={24} color="white" />
@@ -283,21 +307,25 @@ const S_Home = ({ navigation, route }) => {
     </TouchableOpacity>
 
     <TouchableOpacity 
-      style={[styles.actionButton, styles.materialsButton]}
+      style={{ ...styles.actionButton }}
       onPress={() => navigation.navigate('Courses', { userData })}
     >
-      <Icon name="menu-book" size={24} color="white" />
+      <Icon name="school" size={24} color="white" />
       <Text style={styles.actionButtonText}>Materials</Text>
     </TouchableOpacity>
+
     <TouchableOpacity 
-      style={[styles.actionButton, styles.materialsButton]}
+      style={{ ...styles.actionButton }}
       onPress={() => navigation.navigate('ConsideredTasks', { userData })}
     >
-      <Icon name="menu-book" size={24} color="white" />
-      <Text style={styles.actionButtonText}>Considered Tasks</Text>
+      <Icon name="task" size={24} color="white" />
+      <Text style={styles.actionButtonText}>Considered</Text>
     </TouchableOpacity>
   </View>
+
 </View>
+
+
     </View>
     </ScrollView>
   );
@@ -360,13 +388,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
+    padding: 15,
     borderRadius: 12,
     elevation: 3,
+backgroundColor: '#007bff',
     marginHorizontal: 5,
   },
   examButton: {
-    backgroundColor: '#FF6B6B', // Coral red
+    backgroundColor: '#FF6B6B', 
   },
   attendanceButton: {
     backgroundColor: '#4ECDC4', // Teal
@@ -381,7 +410,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: 13,
   },
   container: { 
     flex: 1, 

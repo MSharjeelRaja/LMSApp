@@ -52,7 +52,7 @@ const AttendanceScreen = ({ route, navigation }) => {
   useEffect(() => {
 
   
-    // Set section info from the classData
+   
     if (classData) {
       setSectionInfo({
         section: classData.section || '',
@@ -87,7 +87,7 @@ const AttendanceScreen = ({ route, navigation }) => {
         teacher_offered_course_id: teacherOfferedCourseId,
         venue_name: classData.venue,
       };
-  console.log( 'fetched list '+data.venue_name)
+
       const response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
         method: 'POST',
         headers: {

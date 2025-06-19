@@ -46,7 +46,7 @@ const JAttendenceList = ({ navigation, route }) => {
       const response = await fetch(`${API_URL}/api/JuniorLec/today?teacher_id=${Jid}`);
 console.log('Response:', response);
       if (!response.ok) {
-        const errorData = await response.json(); // Parse error response if available
+        const errorData = await response.json(); 
         throw new Error(errorData.message || 'Failed to fetch classes');
       }
       
@@ -121,7 +121,7 @@ const handleClassPress = (selectedClass) => {
   return (
     <View style={styles.container}>
       <Navbar 
-        title="LMS" 
+        title="Mark Attendence" 
         userName={userData.name||classData.name} 
         des={'Junior Lecturer'} 
         onLogout={() => navigation.replace('Login')}

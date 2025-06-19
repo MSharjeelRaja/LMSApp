@@ -7,15 +7,14 @@ import { DataTable } from 'react-native-paper'
 import RNFetchBlob from 'react-native-blob-util'
 import { useAlert } from '../ControlsAPI/alert'
 
-
 const Exam = ({route, navigation}) => {
     const userData = route.params.userData
     const [transcriptData, setTranscriptData] = useState([])
     const [loading, setLoading] = useState(true)
     const [failedCoursesCount, setFailedCoursesCount] = useState(0)
-    const alertContext = useAlert() // Get alert context for notifications
+    const [failedCourses, setFailedCourses] = useState([]) // Track failed courses for re-enrollment
+    const alertContext = useAlert()
 
-    // Fetch transcript data from API
     const fetchTranscriptData = async () => {
         try {
             const response = await fetch(`${API_URL}/api/Students/Transcript?student_id=${userData.id}`)
@@ -23,11 +22,22 @@ const Exam = ({route, navigation}) => {
             
             if (response.ok) {
                 setTranscriptData(data)
-                // Calculate failed courses
-                const failed = data.reduce((count, session) => {
-                    return count + session.subjects.filter(subject => subject.grade === 'F').length
-                }, 0)
-                setFailedCoursesCount(failed)
+                // Calculate failed courses and collect them
+                const failed = [];
+                const failedCount = data.reduce((count, session) => {
+                    const sessionFailed = session.subjects.filter(subject => 
+                        subject.grade === 'F' || subject.grade === 'D'
+                    );
+                    failed.push(...sessionFailed.map(course => ({
+                        ...course,
+                        session_name: session.session_name,
+                        student_offered_course_id: course.overall?.student_offered_course_id
+                    })));
+                    return count + sessionFailed.length;
+                }, 0);
+                
+                setFailedCoursesCount(failedCount);
+                setFailedCourses(failed);
             } else {
                 throw new Error(data.message || 'Failed to fetch transcript')
             }
@@ -39,19 +49,63 @@ const Exam = ({route, navigation}) => {
         }
     }
 
+    const handleReEnroll = (course) => {
+        Alert.alert(
+            'Re-enroll Confirmation',
+            `Are you sure you want to re-enroll in ${course.course_name} (${course.course_code})?`,
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Yes',
+                    onPress: () => confirmReEnroll(course)
+                }
+            ]
+        );
+    };
+
+    const confirmReEnroll = async (course) => {
+        if (!course.student_offered_course_id) {
+            alertContext.showAlert('error', 'Invalid course ID for re-enrollment', 'Error', 3000);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/Insertion/re_enroll/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_offered_course_id: course.student_offered_course_id.toString()
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alertContext.showAlert('success', 'Successfully re-enrolled in the course', 'Success', 3000);
+                // Refresh the transcript data
+                fetchTranscriptData();
+            } else {
+                throw new Error(result.message || 'Failed to re-enroll');
+            }
+        } catch (error) {
+            console.error('Re-enroll error:', error);
+            alertContext.showAlert('error', error.message, 'Re-enroll Failed', 3000);
+        }
+    };
+
     const handleDownloadTranscript = async () => {
         try {
-            // 1. Prepare download path
             const downloadsPath = RNFetchBlob.fs.dirs.DownloadDir;
             const fileName = `Transcript_${userData.id}_${Date.now()}.pdf`;
             const filePath = `${downloadsPath}/${fileName}`;
         
-            console.log('Preparing download to:', filePath);
-        
-            // 2. Show confirmation dialog
             alertContext.showAlert('info', 'Starting download...', 'Transcript', 3000);
         
-            // 3. Start download with progress tracking
             let downloadStarted = false;
             const downloadTask = RNFetchBlob.config({
                 fileCache: false,
@@ -72,35 +126,28 @@ const Exam = ({route, navigation}) => {
                 { 'Content-Type': 'application/pdf' }
             );
         
-            // 4. Set timeout for download
             const timeout = setTimeout(() => {
                 if (!downloadStarted) {
                     downloadTask.cancel();
                     throw new Error('Download timed out - server not responding');
                 }
-            }, 15000); // 15 seconds timeout
+            }, 15000);
         
-            // 5. Track download progress
             downloadTask.progress((received, total) => {
                 downloadStarted = true;
                 console.log(`Progress: ${received}/${total}`);
             });
         
-            // 6. Handle download completion
             const res = await downloadTask;
             clearTimeout(timeout);
         
-            console.log('Download completed with status:', res.info().status);
-            console.log('File saved to:', res.path());
-        
-            // 7. Verify the downloaded file
             const fileExists = await RNFetchBlob.fs.exists(res.path());
             if (!fileExists) {
                 throw new Error('File not found after download');
             }
         
             const stats = await RNFetchBlob.fs.stat(res.path());
-            if (stats.size < 100) { // Check if file is too small (likely invalid)
+            if (stats.size < 100) {
                 await RNFetchBlob.fs.unlink(res.path());
                 throw new Error('Downloaded file is too small (possibly invalid)');
             }
@@ -108,12 +155,7 @@ const Exam = ({route, navigation}) => {
             alertContext.showAlert('success', 'Transcript downloaded successfully', 'Download Complete', 3000);
         
         } catch (error) {
-            console.error('Download failed:', {
-                error: error.message,
-                stack: error.stack,
-                code: error.code
-            });
-        
+            console.error('Download failed:', error);
             let errorMessage = 'Download failed';
             if (error.message.includes('timed out')) {
                 errorMessage = 'Server took too long to respond';
@@ -134,14 +176,14 @@ const Exam = ({route, navigation}) => {
     if (loading) {
         return (
             <View style={styles.container}>
-                <Navbar
-                    title="Transcript"
-                    userName={userData.name}
-                    des={'Student'}
-                    onLogout={() => navigation.replace('Login')}
-                    showBackButton={true}
-                    onBack={() => navigation.goBack()}
-                />
+               <Navbar
+                title="Exam Result"
+                userName={userData.name}
+                des={'Student'}
+                onLogout={() => navigation.replace('Login')}
+                showBackButton={true}
+                onBack={() => navigation.goBack()}
+            />
                 <Text style={styles.loadingText}>Loading transcript...</Text>
             </View>
         )
@@ -150,7 +192,7 @@ const Exam = ({route, navigation}) => {
     return (
         <ScrollView style={styles.container}>
             <Navbar
-                title="Transcript"
+                title="Exam Result"
                 userName={userData.name}
                 des={'Student'}
                 onLogout={() => navigation.replace('Login')}
@@ -201,13 +243,34 @@ const Exam = ({route, navigation}) => {
                 </TouchableOpacity>
             </View>
             
-            {/* Session-wise Results with improved table layout */}
+            {/* Failed Courses Section (if any) */}
+            {failedCoursesCount > 0 && (
+                <View style={styles.failedCoursesContainer}>
+                    <Text style={styles.sectionHeader}>Courses Eligible for Re-enrollment</Text>
+                    {failedCourses.map((course, index) => (
+                        <View key={index} style={styles.failedCourseItem}>
+                            <View style={styles.courseInfo}>
+                                <Text style={styles.courseCode}>{course.course_code}</Text>
+                                <Text style={styles.courseName}>{course.course_name}</Text>
+                                <Text style={styles.courseSession}>{course.session_name}</Text>
+                            </View>
+                            <TouchableOpacity 
+                                style={styles.reEnrollButton}
+                                onPress={() => handleReEnroll(course)}
+                            >
+                                <Text style={styles.reEnrollButtonText}>Re-enroll</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+            )}
+            
+            {/* Session-wise Results */}
             {transcriptData.map((session, index) => (
                 <View key={index} style={styles.sessionContainer}>
                     <Text style={styles.sessionHeader}>{session.session_name}</Text>
                     
                     <View style={styles.tableContainer}>
-                        {/* Custom Table Header */}
                         <View style={styles.tableHeader}>
                             <View style={styles.codeColumn}><Text style={styles.headerText}>Code</Text></View>
                             <View style={styles.courseColumn}><Text style={styles.headerText}>Course</Text></View>
@@ -215,13 +278,12 @@ const Exam = ({route, navigation}) => {
                             <View style={styles.gradeColumn}><Text style={styles.headerText}>Grade</Text></View>
                         </View>
                         
-                        {/* Table Rows */}
                         {session.subjects.map((subject, subIndex) => (
                             <View 
                                 key={subIndex} 
                                 style={[
                                     styles.tableRow,
-                                    subject.grade === 'F' && styles.failedRow
+                                    (subject.grade === 'F' || subject.grade === 'D') && styles.failedRow
                                 ]}
                             >
                                 <View style={styles.codeColumn}>
@@ -239,6 +301,7 @@ const Exam = ({route, navigation}) => {
                                     <Text style={[
                                         styles.gradeText,
                                         subject.grade === 'F' ? styles.failedGrade : 
+                                        subject.grade === 'D' ? styles.warningGrade :
                                         subject.grade === 'A' ? styles.excellentGrade :
                                         styles.normalGrade
                                     ]}>
@@ -248,7 +311,6 @@ const Exam = ({route, navigation}) => {
                             </View>
                         ))}
                         
-                        {/* Session Summary Row */}
                         <View style={styles.sessionSummaryRow}>
                             <View style={styles.codeColumn}>
                                 <Text style={styles.summaryRowText}>Session GPA:</Text>
@@ -271,171 +333,222 @@ const Exam = ({route, navigation}) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.bg,
+        backgroundColor: '#f5f5f5',
     },
     loadingText: {
         textAlign: 'center',
         marginTop: 20,
-        color: colors.dark,
+        fontSize: 16,
+        color: '#666',
     },
     summaryCard: {
-        backgroundColor: colors.primary,
-        borderRadius: 12,
-        padding: 11,
-        margin: 10,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 15,
+        margin: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
         elevation: 3,
     },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 12,
+        marginBottom: 10,
     },
     summaryItem: {
         flex: 1,
-        alignItems: 'center',
+        padding: 5,
     },
     summaryLabel: {
-        color: 'rgba(255,255,255,0.8)',
         fontSize: 14,
-        marginBottom: 4,
+        color: '#666',
+        marginBottom: 5,
     },
     summaryValue: {
-        color: 'white',
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
+        color: '#333',
     },
     gpaText: {
-        color: '#4CAF50',
+        color: '#2e7d32', // Dark green for GPA
     },
     failedText: {
-        color: '#F44336',
+        color: '#c62828', // Red for failed courses
     },
     passedText: {
-        color: '#4CAF50',
+        color: '#2e7d32', // Green for passed
     },
     downloadButton: {
         flexDirection: 'row',
-        backgroundColor: colors.secondary,
-        borderRadius: 8,
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        backgroundColor: '#1565c0',
+        padding: 10,
+        borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 8,
-       
+        marginTop: 10,
     },
     downloadButtonText: {
         color: 'white',
+        marginLeft: 10,
         fontWeight: 'bold',
-        marginLeft: 8,
     },
     sessionContainer: {
-        marginHorizontal: 16,
-        marginBottom: 24,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        margin: 15,
+        padding: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     sessionHeader: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 12,
-        paddingLeft: 8,
+        color: '#333',
+        marginBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        paddingBottom: 5,
     },
-    // New custom table styles for better alignment
     tableContainer: {
-        backgroundColor: 'white',
-        borderRadius: 8,
-        overflow: 'hidden',
-        elevation: 2,
+        width: '100%',
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: colors.primaryLight,
-        paddingVertical: 6,
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
-    },
-    headerText: {
-        fontWeight: 'bold',
-        color: colors.primaryDark,
-        fontSize: 13,
+        borderBottomColor: '#ddd',
+        paddingBottom: 8,
+        marginBottom: 5,
     },
     tableRow: {
         flexDirection: 'row',
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
-        minHeight: 50, // Minimum height for rows with long course names
     },
-    // Column sizing - adjusted for proper spacing
+    failedRow: {
+        backgroundColor: '#ffebee', // Light red background for failed courses
+    },
     codeColumn: {
-        width: '19%',
-        paddingHorizontal: 6,
+        width: '20%',
         justifyContent: 'center',
     },
     courseColumn: {
-        width: '46%', // Increased for long course names
-        paddingHorizontal: 10,
-        
+        width: '45%',
         justifyContent: 'center',
     },
     creditColumn: {
         width: '15%',
-        paddingHorizontal: 4,
         justifyContent: 'center',
         alignItems: 'center',
     },
     gradeColumn: {
-        width: '19%',
-        paddingHorizontal: 4,
+        width: '20%',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    // Text styles for each column
+    headerText: {
+        fontWeight: 'bold',
+        color: '#333',
+    },
     codeText: {
-        fontSize: 13,
-        color: colors.dark,
+        fontSize: 14,
+        color: '#333',
     },
     courseText: {
-        fontSize: 13,
-        color: colors.dark,
-        flexWrap: 'wrap', // Allow wrapping for long course names
+        fontSize: 14,
+        color: '#333',
     },
     creditText: {
-        fontSize: 13,
-        textAlign: 'center',
-        color: colors.dark,
+        fontSize: 14,
+        color: '#333',
     },
     gradeText: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    failedRow: {
-        backgroundColor: '#FFEBEE',
     },
     failedGrade: {
-        color: '#F44336',
-        fontWeight: 'bold',
+        color: '#c62828', // Red for F
+    },
+    warningGrade: {
+        color: '#ff8f00', // Orange for D
     },
     excellentGrade: {
-        color: '#4CAF50',
-        fontWeight: 'bold',
+        color: '#2e7d32', // Green for A
     },
     normalGrade: {
-        color: colors.dark,
+        color: '#333', // Default for other grades
     },
     sessionSummaryRow: {
         flexDirection: 'row',
-        backgroundColor: '#f5f5f5',
-        paddingVertical: 5,
+        paddingVertical: 10,
+        marginTop: 5,
         borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
+        borderTopColor: '#ddd',
     },
     summaryRowText: {
-        fontSize: 13,
         fontWeight: 'bold',
-        color: colors.dark,
+        color: '#333',
     },
-})
+    failedCoursesContainer: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        margin: 15,
+        padding: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    sectionHeader: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        paddingBottom: 5,
+    },
+    failedCourseItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    courseInfo: {
+        flex: 1,
+    },
+    courseCode: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    courseName: {
+        fontSize: 14,
+        color: '#666',
+    },
+    courseSession: {
+        fontSize: 12,
+        color: '#999',
+        marginTop: 2,
+    },
+    reEnrollButton: {
+        backgroundColor: '#1565c0',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 5,
+    },
+    reEnrollButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+});
 
 export default Exam

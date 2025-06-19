@@ -1,35 +1,56 @@
-import { StatusBar, StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { 
+  StatusBar, 
+  StyleSheet, 
+  Text, 
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert, 
+  Modal, 
+  ScrollView,
+  Platform 
+} from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { API_URL, MyBtn, Navbar } from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 import font from '../ControlsAPI/font';
 import { RefreshControl } from 'react-native-gesture-handler';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 
 const AttendenceList = ({ navigation, route }) => {
   const userData = route.params?.userData.TeacherInfo || {};
   const classData = route.params?.userData;
   const Tid = global.Tid;
-  console.log('Tid: ', Tid);
+
+  // State for classes data
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // State for previous attendance modal
+  const [showPreviousAttendanceModal, setShowPreviousAttendanceModal] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [venues, setVenues] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const forceRefresh = () => {
+    setRefreshing(true);
+    fetchTodayClasses().finally(() => setRefreshing(false));
+  };
+
   useEffect(() => {
     fetchTodayClasses();
   }, []);
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await     fetchTodayClasses();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to refresh notifications');
-    } finally {
-      setRefreshing(false);
-    }
-  };
+
   const fetchTodayClasses = async () => {
-   
     try {
       setLoading(true);
       setError(null);
@@ -37,12 +58,11 @@ const AttendenceList = ({ navigation, route }) => {
       const response = await fetch(`${API_URL}/api/Teachers/today?teacher_id=${Tid}`);
 
       if (!response.ok) {
-        const errorData = await response.json(); // Parse error response if available
+        const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch classes');
       }
       
       const data = await response.json();
-      console.log('Fetched classes:', data);
       const classesWithIds = data.map((item, index) => ({
         ...item,
         uniqueId: `${item.teacher_offered_course_id}_${index}_${Date.now()}`
@@ -50,21 +70,124 @@ const AttendenceList = ({ navigation, route }) => {
       setClasses(classesWithIds);
      
     } catch (err) {
-      console.error('Error fetching today classes:', {
-        message: err.message,
-        stack: err.stack,
-        response: err.response, // If using a custom error object
-      });
+      console.error('Error fetching today classes:', err);
       setError(err.message || 'Failed to load classes. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-  const handleClassPress = (classData) => {
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchTodayClasses();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to refresh notifications');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+   const fetchVenues = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/Teachers/venues`);
+      const data = await response.json();
+      // Format venues according to the API response
+      const formattedVenues = data.map(venue => ({
+        id: venue.id,
+        name: venue.venue
+      }));
+      setVenues(formattedVenues);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load venues');
+      console.error('Error fetching venues:', error);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/Teachers/your-courses?teacher_id=${Tid}`);
+      const data = await response.json();
+      // Format active courses according to the API response
+      const activeCourses = data.data?.active_courses?.map(course => ({
+        id: course.teacher_offered_course_id,
+        course_name: course.course_name,
+        section: course.section_name,
+        course_code: course.course_code
+      })) || [];
+      setCourses(activeCourses);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load courses');
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const handleOpenPreviousAttendance = () => {
+    fetchCourses();
+    fetchVenues();
+    setShowPreviousAttendanceModal(true);
+  };
+
+  const handleMarkPreviousAttendance = () => {
+    if (!selectedCourse || !selectedVenue) {
+      Alert.alert('Error', 'Please select both course and venue');
+      return;
+    }
+
+    const formattedClassData = {
+      teacher_offered_course_id: selectedCourse.id,
+      coursename: selectedCourse.course_name,
+      venue: selectedVenue.name,
+      venue_id: selectedVenue.id,
+   
+  
+fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTimeString().substring(0, 8),
+
+      section: selectedCourse.section || 'N/A',
+      attendance_status: 'Unmarked'
+    };
+
     navigation.navigate('MarkAttendence', { 
       userData,
-      classData 
+      classData: formattedClassData,
+      refreshList: forceRefresh,
+      isUpdate: false
     });
+
+    setShowPreviousAttendanceModal(false);
+  };
+
+  const handleClassPress = (classData) => {
+    if (classData.attendance_status !== 'Unmarked') {
+      Alert.alert(
+        'Attendance Already Marked',
+        'The attendance for this class has already been marked. Do you want to update it?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Update',
+            onPress: () => {
+              navigation.navigate('MarkAttendence', { 
+                userData,
+                classData,
+                refreshList: forceRefresh(),
+                isUpdate: true  
+              });
+            }
+          }
+        ]
+      );
+    } else {
+      navigation.navigate('MarkAttendence', { 
+        userData,
+        classData,
+        refreshList: forceRefresh(),
+        isUpdate: false
+      });
+    }
   };
 
   const renderClassItem = ({ item }) => (
@@ -73,8 +196,6 @@ const AttendenceList = ({ navigation, route }) => {
       onPress={() => handleClassPress(item)}
     >
       <View style={styles.classInfo}>
-      
-      
         <Text style={styles.courseName}>{item.coursename}</Text> 
         <Text style={styles.sectionName}>{item.section}</Text>
         <View style={styles.timeVenueContainer}>
@@ -93,7 +214,16 @@ const AttendenceList = ({ navigation, route }) => {
       </View>
     </TouchableOpacity>
   );
-  
+
+  const onDateChange = (event, date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (date) setSelectedDate(date);
+  };
+
+  const onTimeChange = (event, time) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (time) setSelectedTime(time);
+  };
 
   return (
     <View style={styles.container}>
@@ -104,9 +234,124 @@ const AttendenceList = ({ navigation, route }) => {
         onLogout={() => navigation.replace('Login')}
       />
       
-             
-      <Text style={styles.txt}>Today's Classes</Text>
-      
+      <View style={styles.headerRow}>
+        <Text style={styles.txt}>Today's Classes</Text>
+        <TouchableOpacity 
+          style={styles.previousAttendanceButton}
+          onPress={handleOpenPreviousAttendance}
+        >
+          <Text style={styles.previousAttendanceButtonText}>Mark Previous Attendance</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Previous Attendance Modal */}
+      <Modal
+        visible={showPreviousAttendanceModal}
+        animationType="slide"
+        transparent={false}
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Text style={styles.modalTitle}>Mark Previous Attendance</Text>
+
+      {/* Course Picker */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Select Course:</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={selectedCourse}
+                  onValueChange={(itemValue) => setSelectedCourse(itemValue)}
+                >
+                  <Picker.Item label="Select a course..." value={null} />
+                  {courses.map((course) => (
+                    <Picker.Item 
+                      key={course.id} 
+                      label={`${course.course_name} (${course.section})`} 
+                      value={course} 
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+          
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Select Venue:</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={selectedVenue}
+                  onValueChange={(itemValue) => setSelectedVenue(itemValue)}
+                >
+                  <Picker.Item label="Select a venue..." value={null} />
+                  {venues.map((venue) => (
+                    <Picker.Item 
+                      key={venue.id} 
+                      label={venue.name} 
+                      value={venue} 
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Select Date:</Text>
+              <TouchableOpacity 
+                style={styles.dateTimeInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text>{selectedDate.toDateString()}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                />
+              )}
+            </View>
+
+            {/* Time Picker */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Select Time:</Text>
+              <TouchableOpacity 
+                style={styles.dateTimeInput}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text>{selectedTime.toLocaleTimeString()}</Text>
+              </TouchableOpacity>
+              {showTimePicker && (
+                <DateTimePicker
+                  value={selectedTime}
+                  mode="time"
+                  display="default"
+                  onChange={onTimeChange}
+                />
+              )}
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowPreviousAttendanceModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.submitButton]}
+                onPress={handleMarkPreviousAttendance}
+              >
+                <Text style={styles.modalButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Main Content */}
       {loading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -137,127 +382,191 @@ const AttendenceList = ({ navigation, route }) => {
           }
         />
       )}
-      
-   
     </View>
   );
 };
-      
-   
 
-export default AttendenceList;
-
-const styles = StyleSheet.create({refreshContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 20,
-  },
-  refreshLoader: {
-    height: 60,
-    width: 60,
-    borderRadius: 30,
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: '#f5f5f5', // Light gray background
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    marginVertical: 10,
+    backgroundColor: '#ffffff', // White background for header
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   txt: {
-    color: colors.black,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#2c3e50', // Dark blue-gray
+  },
+  previousAttendanceButton: {
+    backgroundColor: '#3498db', // Bright blue
+    padding: 10,
+    borderRadius: 5,
+    elevation: 3,
+  },
+  previousAttendanceButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  modalContent: {
+    flexGrow: 1,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 25,
     textAlign: 'center',
-    margin: 10,
+    color: '#2c3e50', // Dark blue-gray
+  },
+  inputContainer: {
     marginBottom: 20,
   },
-  btnContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    padding: 16,
+  label: {
+    marginBottom: 8,
+    fontWeight: '600',
+    color: '#34495e', // Slightly darker blue-gray
+    fontSize: 16,
   },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#bdc3c7', // Light gray border
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+  dateTimeInput: {
+    borderWidth: 1,
+    borderColor: '#bdc3c7',
+    borderRadius: 8,
+    padding: 14,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    height: 50,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 25,
+    marginBottom: 15,
+  },
+  modalButton: {
+    padding: 15,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    elevation: 3,
+  },
+  cancelButton: {
+    backgroundColor: '#e74c3c', // Red
+  },
+  submitButton: {
+    backgroundColor: '#2ecc71', // Green
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   classCard: {
-    backgroundColor: colors.white,
+    backgroundColor: '#ffffff',
     borderRadius: 10,
-    marginBottom: 16,
     padding: 16,
-    elevation: 3,
-    shadowColor: colors.black,
+    marginBottom: 12,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 22,
+    shadowRadius: 4,
+    elevation: 3,
     borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
+    borderLeftColor: '#3498db', // Blue accent
   },
   classInfo: {
     flex: 1,
   },
   courseName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: colors.black,
-    marginBottom: 4,
+    color: '#2c3e50', // Dark blue-gray
+    marginBottom: 6,
   },
   sectionName: {
-    fontSize: 16,
-    color: colors.title,
-    marginBottom: 8,
+    fontSize: 15,
+    color: '#7f8c8d', // Gray
+    marginBottom: 6,
+    fontWeight: '500',
   },
   timeVenueContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-
-    marginBottom: 8,
+    marginBottom: 6,
   },
   timeVenue: {
     fontSize: 14,
-    color: colors.title,
+    color: '#34495e', // Dark gray-blue
+    fontWeight: '500',
   },
   statusContainer: {
     alignSelf: 'flex-end',
+    padding: 5,
+    borderRadius: 4,
+    backgroundColor: '#f1f1f1',
   },
   status: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   errorText: {
-    fontSize: 16,
-    color: colors.red,
-    textAlign: 'center',
+    color: '#e74c3c', // Red
     marginBottom: 20,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: '#f5f5f5',
   },
   emptyText: {
+    color: '#7f8c8d', // Gray
     fontSize: 16,
-    color: colors.darkGray,
-    textAlign: 'center',
-  }
+    fontWeight: '500',
+  },
+  listContainer: {
+    padding: 15,
+  },
 });
+export default AttendenceList;

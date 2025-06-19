@@ -69,7 +69,7 @@ const TaskGetScreen = ({ navigation, route }) => {
 
   const handleEditDates = (taskId) => {
     Alert.alert("Edit Dates", `Edit dates for task ${taskId}`);
-    // Implement your edit dates logic here
+   
   };
 
   const handleDeleteTask = (taskId) => {
@@ -85,7 +85,7 @@ const TaskGetScreen = ({ navigation, route }) => {
 
   const deleteTaskConfirmed = (taskId) => {
     Alert.alert("Success", `Task ${taskId} deleted (simulated)`);
-    // Implement your delete logic here
+ 
   };
 
   const handleViewSubmissions = (taskId) => {

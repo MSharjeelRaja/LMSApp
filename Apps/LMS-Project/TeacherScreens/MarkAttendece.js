@@ -33,19 +33,21 @@ const AttendanceScreen = ({ route, navigation }) => {
     time: ''
   });
   const alertContext = useAlert();
+   const refreshList = route.params?.refreshList;
+
   
-  // Get data from route params
   const classData = route.params?.classData || {};
-fd=classData.fixed_date;
-  console.log('class data is '+classData )
+fd=classData.fixed_date ;
+  console.log('class data is '+classData.class_type,classData?.teacher_offered_course_id,classData.fixed_date  )
   console.log('fd '+fd )
   const Tid = global.Tid;
+   
   const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
  console.log("Teacher Offered Course ID: " + teacherOfferedCourseId + classData.venue);
   useEffect(() => {
 
   
-    // Set section info from the classData
+    
     if (classData) {
       setSectionInfo({
         section: classData.section || '',
@@ -64,72 +66,103 @@ fd=classData.fixed_date;
     }
   }, [searchQuery]);
 
-  const fetchStudentList = async () => {
-    setLoading(true);
-    try {
+const fetchStudentList = async () => {
+  setLoading(true);
+  try {
+    const isUpdate = route.params?.isUpdate;
+    let response;
+    
+    if (isUpdate) {
+      const data = {
+        teacher_offered_course_id: teacherOfferedCourseId,
+        venue_name: classData.venue,
+        fixed_date: fd
+      };
+    
+      response = await fetch(`${API_URL}/api/Teachers/re-take`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      console.log('Re-take response:', response);
+    } else {
       const data = {
         teacher_offered_course_id: teacherOfferedCourseId,
         venue_name: classData.venue,
       };
-  console.log( 'fetched list '+data)
-      const response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
+      console.log("Fetching attendance list ", data);
+      response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
-      console.log(response)
-      if (!response.ok) {
-        const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
-        throw new Error(errorMessage); // Ensure the Error object is correctly instantiated
+    }
+
+    if (!response.ok) {
+      const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    const adata = await response.json();
+    console.log('API response data:', adata);
+    
+    if (!adata.students || !Array.isArray(adata.students)) {
+      throw new Error("Invalid response format: students data missing.");
+    }
+
+    const studentsWithAttendance = adata.students.map(student => {
+      // Handle both possible spellings of attendance_status
+      const statusFromApi = student.attendance_status || student.attedance_status;
+      
+      // Convert API status to our app's status format
+      let attendanceStatus;
+      if (statusFromApi) {
+        attendanceStatus = statusFromApi.toLowerCase() === 'p' 
+          ? ATTENDANCE_STATUS.PRESENT 
+          : ATTENDANCE_STATUS.ABSENT;
+      } else {
+        // Default to present if no status provided
+        attendanceStatus = ATTENDANCE_STATUS.PRESENT;
       }
-  
-      const adata = await response.json();
-      console.log("Students:", adata?.students);
-  
-      // Validate the API response
-      if (!adata.students || !Array.isArray(adata.students)) {
-        throw new Error("Invalid response format: students data missing.");
-      }
-  
-      const studentsWithAttendance = adata.students.map(student => ({
+
+      return {
         ...student,
         id: student.student_id,
         image: student.Student_Image,
         name: student.name,
         roll_number: student.RegNo,
-        percentage: student.percentage
-  ,
-        attendanceStatus: student.attendance_status || ATTENDANCE_STATUS.PRESENT,
-      }));
-  
-      setStudents(studentsWithAttendance);
-      setFilteredStudents(studentsWithAttendance);
-    } catch (err) {
-      console.error("Error fetching students:", err.message || err);
-  
-      setError('Failed to load student data. Please try again.');
-  
-      // Mock data for testing if API fails
-      const mockStudents = [
-        {
-          id: 1,
-          name: 'Sameer Danish',
-          percentage: '65%',
-          roll_number: '2021-ARID-4583',
-          attendanceStatus: ATTENDANCE_STATUS.PRESENT,
-        },
-      ];
-  
-      setStudents(mockStudents);
-      setFilteredStudents(mockStudents);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  
+        percentage: student.percentage,
+        attendanceStatus: attendanceStatus,
+      };
+    });
+
+    setStudents(studentsWithAttendance);
+    setFilteredStudents(studentsWithAttendance);
+  } catch (err) {
+    console.error("Error fetching students:", err.message || err);
+    setError('Failed to load student data. Please try again.');
+    
+    // Fallback to mock data if needed
+    const mockStudents = [
+      {
+        id: 1,
+        name: 'Sameer Danish',
+        percentage: '65%',
+        roll_number: '2021-ARID-4583',
+        attendanceStatus: ATTENDANCE_STATUS.PRESENT,
+      },
+    ];
+    
+    setStudents(mockStudents);
+    setFilteredStudents(mockStudents);
+  } finally {
+    setLoading(false);
+  }
+};
   const filterStudents = () => {
     if (!searchQuery.trim()) {
       setFilteredStudents(students);
@@ -258,7 +291,7 @@ fd=classData.fixed_date;
       setLoading(true);
       console.log('Submitting attendance '+fd);
       
-      // Prepare attendance data in the required format
+     console.log('data'+classData.class_type, classData.venue_id, classData.fixed_date, teacherOfferedCourseId);
       const attendanceRecords = students.map(student => ({
         student_id: student.Student_Id || student.id,
         teacher_offered_course_id: teacherOfferedCourseId,
@@ -268,7 +301,6 @@ fd=classData.fixed_date;
         venue_id: classData.venue_id || 25 // Use actual venue ID from class data
       }));
       
-      // Create the payload structure
       const payload = {
         attendance_records: attendanceRecords
       };
@@ -293,10 +325,13 @@ fd=classData.fixed_date;
       
       alertContext.showAlert('success', 'Attendance Marked Successfully');
       
-      // Navigate back after successful submission
-      setTimeout(() => {
+ if (refreshList) {
+        refreshList();
+      } 
+
+
         navigation.goBack();
-      }, 1500);
+    
       
     } catch (error) {
       alertContext.showAlert('error', 'Failed to Submit Attendance');

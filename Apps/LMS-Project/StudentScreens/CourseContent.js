@@ -131,7 +131,7 @@ const CourseContent = ({route, navigation}) => {
     <>
       <StatusBar backgroundColor={COLORS.primaryDark} barStyle="light-content" />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Course Content</Text>
+        <Text style={styles.headerTitle}>Course Content lms</Text>
       </View>
       <ScrollView style={styles.container}>
         <View style={styles.courseSelector}>

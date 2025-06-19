@@ -14,6 +14,7 @@ import {
   import { Picker } from '@react-native-picker/picker';
   import { API_URL, Navbar } from '../ControlsAPI/Comps';
   import colors from '../ControlsAPI/colors';
+import { Button } from 'react-native-paper';
   
   const Courses = ({navigation, route}) => {
     const userData = route.params.userData;
@@ -33,10 +34,11 @@ import {
             `${API_URL}/api/Teachers/your-courses?teacher_id=${userData.id}`
           );
           const data = await response.json();
-          
+         console.log(data)
           if (data.status === 'success') {
             setCourses({
               active: data.data.active_courses,
+              
               previous: data.data.previous_courses
             });
           } else {
@@ -53,14 +55,7 @@ import {
     }, []);
   
     const renderCourseCard = (course) => (
-      <TouchableOpacity 
-        style={styles.courseCard} 
-        key={course.teacher_offered_course_id}
-        onPress={() => navigation.navigate('CourseInfo', { 
-          courseData: course,
-          userData: userData 
-        })}
-      >
+     <View style={styles.courseCard}>
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.courseTitle}>{course.course_name}</Text>
@@ -92,8 +87,18 @@ import {
               <Text style={styles.infoValue}>{course.junior_name || 'N/A'}</Text>
             </View>
           )}
+          <View style={styles.buttons}>
+            <Button   onPress={() => navigation.navigate('Audit', { 
+          courseData: course,
+          userData: userData 
+        })}> Audit</Button>
+          <Button   onPress={() => navigation.navigate('SectionDetails', { 
+          courseId: course.teacher_offered_course_id,
+          userData: userData 
+        })}> Section Details</Button>
+          </View>
         </View>
-      </TouchableOpacity>
+  </View>
     );
   
     const getCurrentSession = () => {

@@ -47,13 +47,13 @@ import JAttendenceList from './JuniorLec/JAttendenceList';
 import JContestattendence from './JuniorLec/JContestattendence';
 import JMarkAttendence from './JuniorLec/JMarkAttendece';
 import AddseatingPlan from './JuniorLec/AddseatingPlan';
-
+import calender from './StudentScreens/calender';
 import JDetails from './JuniorLec/JDetails';
 import JCreatetask from './JuniorLec/JCreatetask';
 import Tasks from './Grader/Tasks';
 import JCourses from './JuniorLec/JCourses';
 import Jtaskget from './JuniorLec/Jtaskget';
-
+import parent_Home from './Parent/parent_Home';
 import JAddContent from './JuniorLec/JAddContent';
 import FullTimetables from './StudentScreens/FullTimeTable';
 import submittask from './StudentScreens/submittask';
@@ -62,8 +62,15 @@ import Tasksubmit from './StudentScreens/Tasksubmit'
 import SCourses from './StudentScreens/Courses';
 import Exam from './StudentScreens/Exam';
 import Task from './StudentScreens/Task';
+import Audit from './TeacherScreens/Audit';
+import parentnotification from './Parent/notification';
 import ConsiderTask from './TeacherScreens/ConsiderTask';
 import ConsideredTasks from './StudentScreens/ConsideredTasks';
+import Child_info from './Parent/Child_info';
+import Degree_Courses from './StudentScreens/Degree_Courses';
+
+import AllCourses_Content from './StudentScreens/AllCourses_Content';
+import SectionDetails from './TeacherScreens/SectionDetails';
 const App = () => {
 
  
@@ -78,7 +85,17 @@ const App = () => {
         <Stack.Screen name="ipChange" component={ipChange} options={{ headerShown: false }} />
         <Stack.Screen name="loginLoader" component={loginLoader} options={{ headerShown: false }} />
         <Stack.Screen name="BottomTabs" component={BottomTabs} options={{ headerShown: false }} />
+
+  
+    {/*............Parent...............Parent ........*/}
+    <Stack.Screen name="parent_home" component={parent_Home} options={{ headerShown: false }} />
+ <Stack.Screen name="parentnotification" component={parentnotification} options={{ headerShown: false }} />
+
+
+ <Stack.Screen name="Child_info" component={Child_info} options={{ headerShown: false }} />
+
     {/*............TEACHER..............................  teacher ...............TEACHER ........*/}
+    <Stack.Screen name="SectionDetails" component={SectionDetails} options={{ headerShown: false }} />
         <Stack.Screen name="TeacherTabs" component={TeacherTabs} options={{ headerShown: false }} />
         <Stack.Screen name="FullTimetable" component={FullTimetable} options={{ headerShown: false }} />
         <Stack.Screen name="Contestattendence" component={Contestattendence} options={{ headerShown: false }} />
@@ -106,6 +123,8 @@ const App = () => {
 
         <Stack.Screen name="Createtask" component={Createtask} options={{ headerShown: false }} />
 
+        <Stack.Screen name="Audit" component={Audit} options={{ headerShown: false }} />
+
 
 
 
@@ -113,12 +132,17 @@ const App = () => {
       {/*............STUDENT..............................  STUDENT...............STUDENT........*/}
       <Stack.Screen name="submitask" component={submittask} options={{ headerShown: false }} />
       <Stack.Screen name="FullTimetables" component={FullTimetables} options={{ headerShown: false }} />
+      <Stack.Screen name="degreecourses" component={Degree_Courses} options={{ headerShown: false }} />
      
       <Stack.Screen name="ConsideredTasks" component={ConsideredTasks} options={{ headerShown: false }} />
       <Stack.Screen name="notification" component={notification} options={{ headerShown: false }} />
       <Stack.Screen name="Tasksubmit" component={Tasksubmit} options={{ headerShown: false }} />
       <Stack.Screen name="CourseContent" component={CourseContent} options={{ headerShown: false }} />
+            <Stack.Screen name="calender" component={calender} options={{ headerShown: false }} />
       
+  <Stack.Screen name="AllCourses_Content" component={AllCourses_Content} options={{ headerShown: false }} />
+      
+
       <Stack.Screen name="sTask" component={Task} options={{ headerShown: false }} />
       
       <Stack.Screen name="Exam" component={Exam} options={{ headerShown: false }} />

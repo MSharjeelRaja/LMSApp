@@ -6,7 +6,7 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   Image, 
-  Modal,
+  Modal,Alert,
   FlatList,
   Dimensions,
   Linking,
@@ -20,8 +20,7 @@ import { Platform, ToastAndroid } from 'react-native';
 import RNFetchBlob from 'react-native-blob-util'
 import { useAlert } from '../ControlsAPI/alert';
 
-
-const CourseCard = ({ course, onPress, examResult }) => {
+const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
   const [expanded, setExpanded] = useState(false);
   const animatedHeight = useRef(new Animated.Value(0)).current;
 
@@ -34,98 +33,108 @@ const CourseCard = ({ course, onPress, examResult }) => {
     }).start();
   };
 
+  // Only show re-enroll button if can_re_enroll is exactly "Yes" (case-sensitive)
+  const showReEnroll = course.can_re_enroll === "Yes";
+
   return (
     <View style={styles.cardContainer}>
-    <TouchableOpacity style={styles.card} onPress={() => onPress(course)}>
-      <View style={styles.cardHeader}>
-        <View style={styles.courseInfo}>
-          <Text style={styles.courseName}>{course.course_name}</Text>
-          <Text style={styles.courseCode}>{course.course_code}</Text>
-  
-          {/* Show Lab Tag */}
-          {course.Is === "Lab" && (
-            <Text style={styles.labTag}>Lab</Text>
-          )}
-        </View>
-  
-        <View style={styles.courseDetails}>
-          <Text style={styles.detailText}>Credits: {course.credit_hours}</Text>
-          <Text style={styles.detailText}>Type: {course.Type}</Text>
-          <Text style={styles.detailText}>Section: {course.section}</Text>
-        </View>
-      </View>
-  
-      {/* Teacher Info */}
-      <View style={styles.teacherInfo}>
-        {course.teacher_image ? (
-          <Image 
-            source={{ uri: course.teacher_image }} 
-            style={styles.teacherImage}
-          />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>{course.teacher_name?.charAt(0) || "T"}</Text>
+      <TouchableOpacity style={styles.card} onPress={() => onPress(course)}>
+        <View style={styles.cardHeader}>
+          <View style={styles.courseInfo}>
+            <Text style={styles.courseName}>{course.course_name}</Text>
+            <Text style={styles.courseCode}>{course.course_code}</Text>
+    
+            {/* Show Lab Tag */}
+            {course.Is === "Lab" && (
+              <Text style={styles.labTag}>Lab</Text>
+            )}
           </View>
-        )}
-        <Text style={styles.teacherName}>{course.teacher_name}</Text>
-      </View>
-  
-      {/* Junior Lecturer Info - if available */}
-      {course.junior_lecturer_name && (
+    
+          <View style={styles.courseDetails}>
+            <Text style={styles.detailText}>Credits: {course.credit_hours}</Text>
+            <Text style={styles.detailText}>Type: {course.Type}</Text>
+            <Text style={styles.detailText}>Section: {course.section}</Text>
+          </View>
+        </View>
+    
+        {/* Teacher Info */}
         <View style={styles.teacherInfo}>
-         
-          {course.junior_image ? (
+          {course.teacher_image ? (
             <Image 
-              source={{ uri: course.junior_image }} 
+              source={{ uri: course.teacher_image }} 
               style={styles.teacherImage}
             />
           ) : (
             <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>{course.junior_lecturer_name?.charAt(0) || "J"}</Text>
+              <Text style={styles.placeholderText}>{course.teacher_name?.charAt(0) || "T"}</Text>
             </View>
           )}
-          <Text style={styles.teacherName}>JL {course.junior_lecturer_name}</Text>
+          <Text style={styles.teacherName}>{course.teacher_name}</Text>
         </View>
+    
+        {/* Junior Lecturer Info - if available */}
+        {course.junior_lecturer_name && (
+          <View style={styles.teacherInfo}>
+            {course.junior_image ? (
+              <Image 
+                source={{ uri: course.junior_image }} 
+                style={styles.teacherImage}
+              />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <Text style={styles.placeholderText}>{course.junior_lecturer_name?.charAt(0) || "J"}</Text>
+              </View>
+            )}
+            <Text style={styles.teacherName}>JL {course.junior_lecturer_name}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    
+      {/* Conditionally render re-enroll button */}
+      {showReEnroll && (
+        <TouchableOpacity 
+          style={styles.reEnrollButton}
+          onPress={() => onReEnroll(course)}
+        >
+          <Text style={styles.reEnrollButtonText}>Re-enroll</Text>
+        </TouchableOpacity>
       )}
-    </TouchableOpacity>
-  
-    {/* Exam Results Toggle */}
-    <TouchableOpacity style={styles.examButton} onPress={toggleExpand}>
-      <Text style={styles.examButtonText}>Exam Results</Text>
-      <Text style={styles.examButtonIcon}>{expanded ? "▲" : "▼"}</Text>
-    </TouchableOpacity>
-  
-    <Animated.View style={[styles.examResultsContainer, {
-      maxHeight: animatedHeight.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 200]
-      })
-    }]}>
-      {examResult ? (
-        <View style={styles.examResultContent}>
-          <View style={styles.examRow}>
-            <Text style={styles.examLabel}>Total Marks:</Text>
-            <Text style={styles.examValue}>{examResult.total_marks}</Text>
+
+      <TouchableOpacity style={styles.examButton} onPress={toggleExpand}>
+        <Text style={styles.examButtonText}>Exam Results</Text>
+        <Text style={styles.examButtonIcon}>{expanded ? "▲" : "▼"}</Text>
+      </TouchableOpacity>
+    
+      <Animated.View style={[styles.examResultsContainer, {
+        maxHeight: animatedHeight.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 200]
+        })
+      }]}>
+        {examResult ? (
+          <View style={styles.examResultContent}>
+            <View style={styles.examRow}>
+              <Text style={styles.examLabel}>Total Marks:</Text>
+              <Text style={styles.examValue}>{examResult.total_marks}</Text>
+            </View>
+            <View style={styles.examRow}>
+              <Text style={styles.examLabel}>Obtained:</Text>
+              <Text style={styles.examValue}>{examResult.obtained_marks}</Text>
+            </View>
+            <View style={styles.examRow}>
+              <Text style={styles.examLabel}>Solid Marks:</Text>
+              <Text style={styles.examValue}>{examResult.solid_marks}</Text>
+            </View>
+            <View style={styles.examRow}>
+              <Text style={styles.examLabel}>Equivalent:</Text>
+              <Text style={styles.examValue}>{examResult.solid_marks_equivalent}</Text>
+            </View>
           </View>
-          <View style={styles.examRow}>
-            <Text style={styles.examLabel}>Obtained:</Text>
-            <Text style={styles.examValue}>{examResult.obtained_marks}</Text>
-          </View>
-          <View style={styles.examRow}>
-            <Text style={styles.examLabel}>Solid Marks:</Text>
-            <Text style={styles.examValue}>{examResult.solid_marks}</Text>
-          </View>
-          <View style={styles.examRow}>
-            <Text style={styles.examLabel}>Equivalent:</Text>
-            <Text style={styles.examValue}>{examResult.solid_marks_equivalent}</Text>
-          </View>
-        </View>
-      ) : (
-        <Text style={styles.noExamData}>No exam results available</Text>
-      )}
-    </Animated.View>
-  </View>
-  
+        ) : (
+          <Text style={styles.noExamData}>No exam results available</Text>
+        )}
+      </Animated.View>
+    </View>
   );
 };
 
@@ -147,12 +156,9 @@ const CourseCard = ({ course, onPress, examResult }) => {
 
 
 
-// -------------------- course content item --------------------
-// This component is used to display each item in the course content list
-// It includes the title, type, week, topics, and a download button if applicable
 
 const CourseContentItem = ({ item, onDownload }) => {
-   const alertContext = useAlert() // Get alert context for notifications
+   const alertContext = useAlert() 
  
   const handleFileDownload = async (url, fileName) => {
     if (!url) {
@@ -269,6 +275,8 @@ const Courses = ({navigation, route}) => {
   const userData = route.params?.userData || {};
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showcourses, setShowAllCourses] = useState(false);
+
   const [activeTab, setActiveTab] = useState('current');
   const [courses, setCourses] = useState({
     CurrentCourses: [],
@@ -285,11 +293,49 @@ const Courses = ({navigation, route}) => {
   const [contentLoading, setContentLoading] = useState(false);
   const [examLoading, setExamLoading] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(null);
-
+   const alertContext = useAlert() 
   useEffect(() => {
     fetchData();
   }, []);
+  const handleReEnroll = async (course) => {
+    Alert.alert(
+      'Re-enroll Confirmation',
+      `Re-enroll in ${course.course_name}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Confirm', 
+          onPress: async () => {
+            if (!course.student_offered_course_id) {
+              alertContext.showAlert('error', 'Invalid course ID', 'Error');
+              return;
+            }
 
+            try {
+              const response = await fetch(`${API_URL}/api/Insertion/re_enroll/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  student_offered_course_id: course.student_offered_course_id.toString()
+                })
+              });
+
+              const result = await response.json();
+              
+              if (response.ok) {
+                alertContext.showAlert('success', 'Re-enrollment successful!');
+                fetchCourses(); // Refresh courses
+              } else {
+                throw new Error(result.message || 'Re-enrollment failed');
+              }
+            } catch (error) {
+              alertContext.showAlert('error', error.message);
+            }
+          }
+        }
+      ]
+    );
+  };
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -308,7 +354,7 @@ const Courses = ({navigation, route}) => {
     try {
       const response = await fetch(`${API_URL}/api/Students/getAllEnrollments?student_id=${userData.id}`);
       const data = await response.json();
-      console.log('Course data fetched:', data);
+      console.log('enrollment data fetched:', data);
       if (data.success === 'Fetcehd Successfully !' || data.status === 'success') {
         setCourses({
           CurrentCourses: data.CurrentCourses || [],
@@ -466,13 +512,15 @@ const Courses = ({navigation, route}) => {
       <FlatList
         data={courses.CurrentCourses}
         keyExtractor={(item, index) => `current-${item.offered_course_id || index}`}
-        renderItem={({ item }) => (
-          <CourseCard 
-            course={item} 
-            onPress={handleCourseClick}
-            examResult={getExamResultForCourse(item)}
-          />
-        )}
+      
+renderItem={({ item }) => (
+  <CourseCard 
+    course={item} 
+    onPress={handleCourseClick}
+    examResult={getExamResultForCourse(item)}
+   
+  />
+)}
         contentContainerStyle={styles.coursesList}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -485,18 +533,66 @@ const Courses = ({navigation, route}) => {
 
   const renderPreviousCourses = () => {
     const sections = organizePreviousCourses();
+const handleReEnroll = (course) => {
+  Alert.alert(
+    'Re-enroll Confirmation',
+    `Are you sure you want to re-enroll in ${course.course_name} (${course.course_code})?`,
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel'
+      },
+      {
+        text: 'Yes',
+        onPress: () => confirmReEnroll(course)
+      }
+    ]
+  );
+};
 
+const confirmReEnroll = async (course) => {
+  if (!course.student_offered_course_id) {
+    alertContext.showAlert('error', 'Invalid course ID for re-enrollment', 'Error', 3000);
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/Insertion/re_enroll/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        student_offered_course_id: course.student_offered_course_id.toString()
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alertContext.showAlert('success', 'Successfully re-enrolled in the course', 'Success', 3000);
+      // Refresh the course data
+      fetchCourses();
+    } else {
+      throw new Error(result.message || 'Failed to re-enroll');
+    }
+  } catch (error) {
+    console.error('Re-enroll error:', error);
+    alertContext.showAlert('error', error.message, 'Re-enroll Failed', 3000);
+  }
+};
     return (
       <SectionList
         sections={sections}
         keyExtractor={(item, index) => `previous-${index}`}
-        renderItem={({ item }) => (
-          <CourseCard 
-            course={item} 
-            onPress={handleCourseClick}
-            examResult={getExamResultForCourse(item)}
-          />
-        )}
+     renderItem={({ item }) => (
+  <CourseCard 
+    course={item} 
+    onPress={handleCourseClick}
+    examResult={getExamResultForCourse(item)}
+    onReEnroll={handleReEnroll}
+  />
+)}
         renderSectionHeader={({ section: { title } }) => (
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionHeaderText}>{title}</Text>
@@ -557,8 +653,14 @@ const Courses = ({navigation, route}) => {
 
   return (
     <View style={styles.container}>
-      <Navbar title="My Courses" navigation={navigation} />
-      
+       <Navbar
+                 title="Courses"
+                 userName={userData.name}
+                 des={'Student'}
+                 onLogout={() => navigation.replace('Login')}
+                 showBackButton={true}
+                 onBack={() => navigation.goBack()}
+             />
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -573,22 +675,29 @@ const Courses = ({navigation, route}) => {
       ) : (
         <View style={styles.content}>
           <View style={styles.tabContainer}>
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'current' && styles.activeTab]} 
-              onPress={() => setActiveTab('current')}
-            >
-              <Text style={[styles.tabText, activeTab === 'current' && styles.activeTabText]}>
-                Current Courses
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'previous' && styles.activeTab]} 
-              onPress={() => setActiveTab('previous')}
-            >
-              <Text style={[styles.tabText, activeTab === 'previous' && styles.activeTabText]}>
-                Previous Courses
-              </Text>
-            </TouchableOpacity>
+           <TouchableOpacity 
+  style={[styles.tab, activeTab === 'current' && styles.activeTab]} 
+  onPress={() => {
+    setActiveTab('current');
+
+    setShowAllCourses(false);
+  }}
+>
+  <Text style={[styles.tabText, activeTab === 'current' && styles.activeTabText]}>
+    Current Courses
+  </Text>
+</TouchableOpacity>
+<TouchableOpacity 
+  style={[styles.tab, activeTab === 'previous' && styles.activeTab]} 
+  onPress={() => {
+    setActiveTab('previous');
+    setShowAllCourses(false);
+  }}
+>
+  <Text style={[styles.tabText, activeTab === 'previous' && styles.activeTabText]}>
+    Previous Courses
+  </Text>
+</TouchableOpacity>
           </View>
           
           {activeTab === 'current' ? renderCurrentCourses() : renderPreviousCourses()}
@@ -616,7 +725,14 @@ const Courses = ({navigation, route}) => {
           
           {renderModalContent()}
         </View>
-      </Modal>
+      </Modal><TouchableOpacity 
+  style={styles.allCoursesButton}
+  onPress={() => navigation.navigate('degreecourses', { userData })}
+>
+  <Text style={styles.allCoursesButtonText}>
+    Show All Courses
+  </Text>
+</TouchableOpacity>
     </View>
   );
 };
@@ -673,7 +789,35 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     elevation: 2,
-  },
+  },reEnrollButton: {
+  backgroundColor: colors.orange || '#ff9800',
+  padding: 10,
+  alignItems: 'center',
+},allCoursesButton: {
+  position: 'absolute',
+  bottom: 20,
+  left: 20,
+  right: 20,
+  backgroundColor: colors.primary || '#2196f3',
+  borderRadius: 25,
+  paddingVertical: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+},
+allCoursesButtonText: {
+  color: '#ffffff',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+reEnrollButtonText: {
+  color: '#ffffff',
+  fontWeight: '600',
+},
   tab: {
     flex: 1,
     paddingVertical: 12,
