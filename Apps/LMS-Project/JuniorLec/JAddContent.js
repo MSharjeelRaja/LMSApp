@@ -272,7 +272,7 @@ console.log('Fetched courses:', data);
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Content Type</Text>
           <View style={styles.typeContainer}>
-            {["Notes", "Assignment", "Quiz","LabTask", "MCQS"].map((type) => (
+            {[ "Assignment", "Quiz","LabTask", "MCQS"].map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[

@@ -29,9 +29,10 @@ const TaskGetScreen = ({ navigation, route }) => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/JuniorLec/task/get?teacher_id=${Tid}`);
+      const response = await fetch(`${API_URL}/api/JuniorLec/task/get?teacher_id=${userData.id}`);
       const data = await response.json();
-      
+      console.log("Fetched tasks:", data);
+
       if (data.status === "success") {
         setTasks({
           completed: data.Tasks.completed_tasks || [],
@@ -40,6 +41,7 @@ const TaskGetScreen = ({ navigation, route }) => {
           unmarked: data.Tasks.unmarked_tasks || []
         });
       }
+      console.log("Tasks state updated:", tasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       Alert.alert("Error", "Failed to fetch tasks");
@@ -63,33 +65,15 @@ const TaskGetScreen = ({ navigation, route }) => {
     });
   };
 
-  const handleAssignGrader = (taskId) => {
-   navigation.navigate('AssignGrader', { taskId });
-  };
+ 
 
-  const handleEditDates = (taskId) => {
-    Alert.alert("Edit Dates", `Edit dates for task ${taskId}`);
-    // Implement your edit dates logic here
-  };
+ 
 
-  const handleDeleteTask = (taskId) => {
-    Alert.alert(
-      "Delete Task",
-      "Are you sure you want to delete this task?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", onPress: () => deleteTaskConfirmed(taskId) }
-      ]
-    );
-  };
 
-  const deleteTaskConfirmed = (taskId) => {
-    Alert.alert("Success", `Task ${taskId} deleted (simulated)`);
-    // Implement your delete logic here
-  };
+ 
 
-  const handleViewSubmissions = (taskId) => {
-   navigation.navigate('ViewSubmissions', { taskId });
+  const handleViewSubmissions = (  taskId,taskname,points, userData ) => {
+     navigation.navigate('JMarkTask', {  taskId,taskname,points, userData  });
   };
 
   const handleViewQuestions = (taskId) => {
@@ -97,31 +81,17 @@ const TaskGetScreen = ({ navigation, route }) => {
     // Implement your view questions logic here
   };
 
-  const handleMarkTask = (taskId) => {
-    Alert.alert("Mark Task", `Mark task ${taskId}`);
-    // Implement your mark task logic here
+  const handleMarkTask = (taskId,taskname,points) => {
+   navigation.navigate('JMarkTask', {  taskId,taskname,points, userData  });
   };
 
+  
   const renderTaskButtons = (task) => {
     switch (activeTab) {
       case 'upcoming':
         return (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.assignButton]}
-              onPress={() => handleAssignGrader(task.task_id)}
-            >
-              <Icon name="person-add" size={16} color="white" />
-              <Text style={styles.buttonText}>Assign Grader</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.button, styles.editButton]}
-              onPress={() => handleEditDates(task.task_id)}
-            >
-              <Icon name="edit" size={16} color="white" />
-              <Text style={styles.buttonText}>Edit Dates</Text>
-            </TouchableOpacity>
+           
             
             {task.File && (
               <TouchableOpacity 
@@ -133,13 +103,7 @@ const TaskGetScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             )}
             
-            <TouchableOpacity 
-              style={[styles.button, styles.deleteButton]}
-              onPress={() => handleDeleteTask(task.task_id)}
-            >
-              <Icon name="delete" size={16} color="white" />
-              <Text style={styles.buttonText}>Delete</Text>
-            </TouchableOpacity>
+           
           </View>
         );
       
@@ -148,7 +112,7 @@ const TaskGetScreen = ({ navigation, route }) => {
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
               style={[styles.button, styles.viewButton]}
-              onPress={() => handleViewSubmissions(task.task_id)}
+              onPress={() => handleViewSubmissions(task.task_id,task.title,task.points)}
             >
               <Icon name="list-alt" size={16} color="white" />
               <Text style={styles.buttonText}>View Submissions</Text>
@@ -169,17 +133,11 @@ const TaskGetScreen = ({ navigation, route }) => {
       case 'unmarked':
         return (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.button, styles.assignButton]}
-              onPress={() => handleAssignGrader(task.task_id)}
-            >
-              <Icon name="person-add" size={16} color="white" />
-              <Text style={styles.buttonText}>Assign Grader</Text>
-            </TouchableOpacity>
+           
             
             <TouchableOpacity 
               style={[styles.button, styles.markButton]}
-              onPress={() => handleMarkTask(task.task_id)}
+                 onPress={() =>handleMarkTask(task.task_id,task.title,task.points)}
             >
               <Icon name="check-circle" size={16} color="white" />
               <Text style={styles.buttonText}>Mark Task</Text>
@@ -401,7 +359,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
     marginVertical: 6, // Center vertically
     borderRadius: 16,
-    backgroundColor: colors.gray,
+    backgroundColor: colors.white,
     height: 40, // Fixed height
   },
   activeTab: {
@@ -501,9 +459,7 @@ const styles = StyleSheet.create({
   viewButton: {
     backgroundColor: colors.primary,
   },
-  deleteButton: {
-    backgroundColor: colors.error,
-  },
+  
   markButton: {
     backgroundColor: colors.success,
   },

@@ -5,276 +5,338 @@ import {
   ScrollView, 
   StyleSheet, 
   TouchableOpacity, 
-  ActivityIndicator, 
-  PermissionsAndroid, 
-  Platform, 
-  Alert,
-  StatusBar
+  ActivityIndicator,
+  FlatList,
+  Linking
 } from "react-native";
 import { DataTable } from "react-native-paper";
-import { SelectList } from "react-native-dropdown-select-list";
-import CheckBox from "@react-native-community/checkbox";
-import { Navbar } from "../ControlsAPI/Comps";
-import RNFS from "react-native-fs";
-import RNFetchBlob from "react-native-blob-util";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { API_URL, Navbar } from "../ControlsAPI/Comps";
+import { useAlert } from "../ControlsAPI/alert";
 
-import { API_URL } from "../ControlsAPI/Comps";
-
-// Modern color palette
 const COLORS = {
-  primary: "#2563eb",       // Blue-600
-  primaryDark: "#1d4ed8",   // Blue-700
-  primaryLight: "#dbeafe",  // Blue-100
-  secondary: "#4f46e5",     // Indigo-600
-  accent: "#8b5cf6",        // Violet-500
-  success: "#10b981",       // Emerald-500
-  danger: "#ef4444",        // Red-500
-  warning: "#f59e0b",       // Amber-500
-  dark: "#1e293b",          // Slate-800
-  light: "#f8fafc",         // Slate-50
+  primary: "#2563eb",
+  primaryDark: "#1d4ed8",
+  primaryLight: "#dbeafe",
+  secondary: "#4f46e5",
+  accent: "#8b5cf6",
+  success: "#10b981",
+  danger: "#ef4444",
+  warning: "#f59e0b",
+  dark: "#1e293b",
+  light: "#f8fafc",
   white: "#ffffff",
-  gray: "#64748b",          // Slate-500
-  grayLight: "#f1f5f9",     // Slate-100
-  border: "#e2e8f0",        // Slate-200
+  gray: "#64748b",
+  grayLight: "#f1f5f9",
+  border: "#e2e8f0",
 };
-
 const CourseContent = ({route, navigation}) => {
+  const { offered_course_id, student_id, studentname, course } = route.params;
+  const [allCourseContent, setAllCourseContent] = useState({ Active: [], Previous: [] });
+  const [currentCourseContent, setCurrentCourseContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [courseInfo, setCourseInfo] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState(null);
+  const [weeks, setWeeks] = useState([]);
+  const [isPreviousCourse, setIsPreviousCourse] = useState(false);
+  const alertContext = useAlert();
+  
   useEffect(() => {
-    console.log("CourseContent Params:", route.params);
-  }, []);
+    if (offered_course_id && student_id) {
+      fetchCourseContent();
+    }
+  }, [offered_course_id, student_id]);
 
-  const [courseContent, setCourseContent] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-
-  const courseList = [
-    { key: "18", value: "Compiler Construction" },
-    { key: "5", value: "Programming Fundamentals" },
-  ];
-
-  const fetchCourseContent = async (courseId) => {
-    if (!courseId) return;
+  const fetchCourseContent = async () => {
     setLoading(true);
-
     try {
-      const response = await fetch(`${API_URL}/api/Students/course-content?offered_course_id=${courseId}&section_id=53`);
+      const response = await fetch(
+        `${API_URL}/api/Students/getStudentCourseContent?student_id=${student_id}&offered_course_id=${offered_course_id}`
+      );
       const data = await response.json();
-      console.log(data, response);
+      
+      if (data.success === "success") {
+        setAllCourseContent({
+          Active: data.data.Active || [],
+          Previous: data.data.Previous || []
+        });
+        
+        // First try to find the course in Active courses
+        let selectedCourse = data.data.Active?.find(c => c.course_name === course);
+        let courseIsPrevious = false;
+        
+        // If not found in Active, try Previous courses
+        if (!selectedCourse && data.data.Previous) {
+          selectedCourse = data.data.Previous.find(c => c.course_name === course);
+          courseIsPrevious = true;
+        }
+        
+        if (selectedCourse) {
+          setIsPreviousCourse(courseIsPrevious);
+          setCourseInfo({
+            name: selectedCourse.course_name,
+            session: selectedCourse.session,
+            section: selectedCourse.Section,
+            teacher: selectedCourse.teacher_name,
+            isPrevious: courseIsPrevious
+          });
 
-      if (data?.["Course Content"]) {
-        const formattedData = Object.entries(data["Course Content"]).map(([weekNumber, contents]) => ({
-          week_title: `Week ${weekNumber}`,
-          items: contents.map((content) => ({
-            ...content,
-            topics: content.topics || [],
-          })),
-        }));
+          const formattedData = Object.entries(selectedCourse.course_content).map(([weekNumber, contents]) => ({
+            week_number: parseInt(weekNumber),
+            week_title: `Week ${weekNumber}`,
+            items: contents.map(content => ({
+              ...content,
+              topics: content.topics || [],
+              MCQS: content.MCQS || []
+            })),
+          }));
 
-        setCourseContent(formattedData);
+          setCurrentCourseContent(formattedData);
+          setWeeks(formattedData.map(week => ({
+            number: week.week_number,
+            title: week.week_title
+          })));
+          
+          if (formattedData.length > 0) {
+            setSelectedWeek(formattedData[0].week_number);
+          }
+        } else {
+          setCurrentCourseContent([]);
+          setWeeks([]);
+        }
       } else {
-        setCourseContent([]);
+        setAllCourseContent({ Active: [], Previous: [] });
+        setCurrentCourseContent([]);
+        setWeeks([]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      setCourseContent([]);
+      setAllCourseContent({ Active: [], Previous: [] });
+      setCurrentCourseContent([]);
+      setWeeks([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const requestStoragePermission = async () => {
-    if (Platform.OS === "android") {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: "Storage Permission Required",
-            message: "App needs access to your storage to download files.",
-            buttonPositive: "OK",
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-    return true; // iOS doesn't need permission
-  };
-
-  const downloadFile = async (url, filename) => {
-    const savePath = `${RNFS.DownloadDirectoryPath}/${filename}`; // ✅ Save to /storage/emulated/0/Download
-
-    try {
-      const res = await RNFetchBlob.config({
-        path: savePath,
-        fileCache: true,
-        appendExt: "pdf",
-        notification: true,
-      }).fetch("GET", url);
-      Alert.alert("Download Complete", `File saved to: ${savePath}`, [
-        { text: "Open File", onPress: () => openFile(savePath) },
-        { text: "OK", style: "cancel" },
-      ]);
-    } catch (error) {
-      console.error("Download error:", error);
-      Alert.alert("Error", "Failed to download file.");
+  const handleOpenFile = (fileUrl) => {
+    if (fileUrl) {
+      Linking.openURL(fileUrl).catch(err => {
+        console.error("Failed to open URL:", err);
+        alertContext.showAlert('error', 'Failed to open file', 'Please try again');
+      });
+    } else {
+      alertContext.showAlert('error', 'No file available', 'File Error');
     }
   };
 
-  const openFile = (filePath) => {
-    RNFetchBlob.android.actionViewIntent(filePath, "application/pdf");
+  const renderMCQS = (mcqs) => {
+    return (
+      <View style={styles.mcqsContainer}>
+        {mcqs.map((mcq, index) => (
+          <View key={mcq.ID} style={styles.mcqItem}>
+            <Text style={styles.mcqQuestion}>
+              {mcq["Question NO"]}. {mcq.Question} ({mcq.Points} points)
+            </Text>
+            <View style={styles.optionsContainer}>
+              <Text style={styles.optionText}>1. {mcq["Option 1"]}</Text>
+              <Text style={styles.optionText}>2. {mcq["Option 2"]}</Text>
+              <Text style={styles.optionText}>3. {mcq["Option 3"]}</Text>
+              <Text style={styles.optionText}>4. {mcq["Option 4"]}</Text>
+            </View>
+            <Text style={styles.correctAnswer}>
+              Correct Answer: ****
+              {/* {mcq.Answer} */}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
   };
-  
+
+  const renderWeekItem = ({item}) => (
+    <TouchableOpacity
+      style={[
+        styles.weekTab,
+        selectedWeek === item.number && styles.selectedWeekTab
+      ]}
+      onPress={() => setSelectedWeek(item.number)}
+    >
+      <Text style={[
+        styles.weekTabText,
+        selectedWeek === item.number && styles.selectedWeekTabText
+      ]}>
+        {item.title}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderContent = () => {
+    if (!selectedWeek) return null;
+    
+    const weekData = currentCourseContent.find(w => w.week_number === selectedWeek);
+    if (!weekData) return null;
+
+    return (
+      <View style={styles.weekContentContainer}>
+       
+        
+        {weekData.items.map((item) => (
+          <View key={item.course_content_id} style={styles.itemContainer}>
+            <View style={styles.itemHeader}>
+              <Icon 
+                name={
+                  item.type === "Notes" ? "description" : 
+                  item.type === "Quiz" ? "quiz" : 
+                  item.type === "MCQS" ? "question-answer" : 
+                  "assignment"
+                } 
+                size={20} 
+                color={
+                  item.type === "Notes" ? COLORS.secondary : 
+                  item.type === "Quiz" ? COLORS.accent : 
+                  item.type === "MCQS" ? COLORS.success : 
+                  COLORS.warning
+                } 
+              />
+              <Text style={styles.lectureTitle}>{item.title}</Text>
+            </View>
+
+            {item.type === "Notes" && (
+              <>
+                {item.topics.length > 0 && (
+                  <View style={styles.tableContainer}>
+                    <DataTable style={styles.dataTable}>
+                      <DataTable.Header style={styles.tableHeader}>
+                        <DataTable.Title style={styles.topicColumn}>
+                          <Text style={styles.tableHeaderText}>Topic</Text>
+                        </DataTable.Title>
+                        <DataTable.Title style={styles.statusColumn}>
+                          <Text style={styles.tableHeaderText}>Status</Text>
+                        </DataTable.Title>
+                      </DataTable.Header>
+                      
+                      {item.topics.map((topic, index) => (
+                        <DataTable.Row key={index} style={styles.tableRow}>
+                          <DataTable.Cell style={styles.topicColumn}>
+                            <Text style={styles.topicText}>{topic.topic_name}</Text>
+                          </DataTable.Cell>
+                          <DataTable.Cell style={styles.statusColumn}>
+                            <View style={[
+                              styles.statusBadge,
+                              topic.status === "Covered" ? styles.coveredBadge : styles.notCoveredBadge
+                            ]}>
+                              <Text style={[
+                                styles.statusText,
+                                topic.status === "Covered" ? styles.coveredText : styles.notCoveredText
+                              ]}>
+                                {topic.status}
+                              </Text>
+                            </View>
+                          </DataTable.Cell>
+                        </DataTable.Row>
+                      ))}
+                    </DataTable>
+                  </View>
+                )}
+                {item.File && (
+                  <TouchableOpacity
+                    style={[
+                      styles.downloadButton,
+                      { backgroundColor: COLORS.secondary }
+                    ]}
+                    activeOpacity={0.8}
+                    onPress={() => handleOpenFile(item.File)}
+                  >
+                    <Icon name="open-in-browser" size={18} color={COLORS.white} />
+                    <Text style={styles.downloadText}>View Notes</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+            {item.type === "MCQS" && item.MCQS.length > 0 && (
+              renderMCQS(item.MCQS)
+            )}
+
+            {(item.type === "Assignment" || item.type === "Quiz"|| item.type === "LabTask") && item.File && (
+              <TouchableOpacity
+                style={[
+                  styles.downloadButton,
+                  { 
+                    backgroundColor: item.type === "Quiz" ? COLORS.accent : COLORS.warning
+                  }
+                ]}
+                activeOpacity={0.8}
+                onPress={() => handleOpenFile(item.File)}
+              >
+                <Icon name="open-in-browser" size={18} color={COLORS.white} />
+                <Text style={styles.downloadText}>View {item.type}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+
   return (
     <>
-      <StatusBar backgroundColor={COLORS.primaryDark} barStyle="light-content" />
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Course Content lms</Text>
-      </View>
-      <ScrollView style={styles.container}>
-        <View style={styles.courseSelector}>
-          <Icon name="menu-book" size={24} color={COLORS.primary} style={styles.selectorIcon} />
-          <SelectList
-            setSelected={(val) => {
-              setSelectedCourse(val);
-              fetchCourseContent(val);
-            }}
-            data={courseList}
-            placeholder="Select a Course"
-            boxStyles={styles.dropdown}
-            dropdownStyles={styles.dropdownList}
-            dropdownTextStyles={styles.dropdownText}
-            inputStyles={styles.dropdownInput}
-            search={false}
-          />
-        </View>
-
-        {loading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loaderText}>Loading course content...</Text>
+      <Navbar
+        title={course}
+        userName={studentname}
+        des={'Student'}
+        onLogout={() => navigation.replace('Login')}
+        showBackButton={true}
+        onBack={() => navigation.goBack()}
+      />
+      
+      {courseInfo && (
+        <View style={styles.courseInfoContainer}>
+          <Text style={styles.courseName}>{courseInfo.name}</Text>
+          <View style={styles.courseMeta}>
+            <Text style={styles.courseMetaText}>{courseInfo.session}</Text>
+            <Text style={styles.courseMetaText}>Section: {courseInfo.section}</Text>
+            <Text style={styles.courseMetaText}>Teacher: {courseInfo.teacher}</Text>
+             {isPreviousCourse && (
+          <View style={{display:'flex',gap:2,flexDirection:'row'}}>
+            <Icon name="info" size={18} color={COLORS.warning} />
+            <Text style={{color:'black'}}>This is a previous course</Text>
           </View>
-        ) : courseContent.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="folder-open" size={60} color={COLORS.gray} />
-            <Text style={styles.emptyStateText}>No content available</Text>
-            <Text style={styles.emptyStateSubText}>Select a course to view its content</Text>
-          </View>
-        ) : (
-          courseContent.map((week, weekIndex) => (
-            <View key={weekIndex} style={styles.weekContainer}>
-              <View style={styles.weekHeaderContainer}>
-                <Icon name="date-range" size={22} color={COLORS.primary} />
-                <Text style={styles.weekTitle}>{week.week_title}</Text>
-              </View>
-
-              {week.items.map((item) => (
-                <View key={item.course_content_id} style={styles.itemContainer}>
-                  
-                  {/* Notes Section */}
-                  {item.type === "Notes" && (
-                    <>
-                      <View style={styles.itemHeader}>
-                        <Icon name="description" size={20} color={COLORS.secondary} />
-                        <Text style={styles.lectureTitle}>{item.title}</Text>
-                      </View>
-                      
-                      <TouchableOpacity
-                        style={styles.downloadButton}
-                        onPress={() => downloadFile(item.File, item.title + ".pdf")}
-                        activeOpacity={0.8}
-                      >
-                        <Icon name="file-download" size={18} color={COLORS.white} />
-                        <Text style={styles.downloadText}>Download Notes</Text>
-                      </TouchableOpacity>
-
-                      <View style={styles.tableContainer}>
-                        <DataTable style={styles.dataTable}>
-                          <DataTable.Header style={styles.tableHeader}>
-                            <DataTable.Title style={styles.topicColumn}>
-                              <Text style={styles.tableHeaderText}>Topic</Text>
-                            </DataTable.Title>
-                            <DataTable.Title style={styles.statusColumn}>
-                              <Text style={styles.tableHeaderText}>Status</Text>
-                            </DataTable.Title>
-                          </DataTable.Header>
-                          
-                          {item.topics.map((topic) => (
-                            <DataTable.Row key={topic.topic_id} style={styles.tableRow}>
-                              <DataTable.Cell style={styles.topicColumn}>
-                                <Text style={styles.topicText}>{topic.topic_name}</Text>
-                              </DataTable.Cell>
-                              <DataTable.Cell style={styles.statusColumn}>
-                                <View style={[
-                                  styles.statusBadge,
-                                  topic.status === "Covered" ? styles.coveredBadge : styles.notCoveredBadge
-                                ]}>
-                                  <Text style={[
-                                    styles.statusText,
-                                    topic.status === "Covered" ? styles.coveredText : styles.notCoveredText
-                                  ]}>
-                                    {topic.status}
-                                  </Text>
-                                </View>
-                              </DataTable.Cell>
-                            </DataTable.Row>
-                          ))}
-                        </DataTable>
-                      </View>
-                    </>
-                  )}
-
-                  {/* Assignments, Quizzes */}
-                  {item.type !== "Notes" && (
-                    <View style={styles.otherContentContainer}>
-                      <View style={styles.otherContentHeader}>
-                        <Icon 
-                          name={item.type === "Quiz" ? "quiz" : "assignment"} 
-                          size={20} 
-                          color={item.type === "Quiz" ? COLORS.accent : COLORS.warning} 
-                        />
-                        <Text style={[
-                          styles.otherContentTitle,
-                          {color: item.type === "Quiz" ? COLORS.accent : COLORS.warning}
-                        ]}>
-                          {item.type}
-                        </Text>
-                      </View>
-                      <Text style={styles.otherContentText}>{item.title}</Text>
-                      
-                      <View style={styles.actionButtonsContainer}>
-                        <TouchableOpacity 
-                          style={[
-                            styles.actionButton, 
-                            {backgroundColor: item.type === "Quiz" ? COLORS.accent : COLORS.warning}
-                          ]} 
-                          activeOpacity={0.8}
-                          onPress={() => downloadFile(item.File, item.title + ".pdf")}
-                        >
-                          <Icon name="file-download" size={16} color={COLORS.white} />
-                          <Text style={styles.actionButtonText}>Download</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                          style={styles.viewDetailsButton} 
-                          activeOpacity={0.8}
-                        >
-                          <Text style={styles.viewDetailsText}>View Details</Text>
-                          <Icon name="arrow-forward" size={16} color={COLORS.primary} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          ))
         )}
-        
-        <View style={{ height: 20 }} />
-      </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loaderText}>Loading course content...</Text>
+        </View>
+      ) : weeks.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Icon name="folder-open" size={60} color={COLORS.gray} />
+          <Text style={styles.emptyStateText}>No content available</Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.weekSelectorContainer}>
+            <FlatList
+              horizontal
+              data={weeks}
+              renderItem={renderWeekItem}
+              keyExtractor={item => item.number.toString()}
+              contentContainerStyle={styles.weekList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+
+          <ScrollView style={styles.container}>
+            {renderContent()}
+          </ScrollView>
+        </>
+      )}
     </>
   );
 };
@@ -284,51 +346,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.light,
   },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    elevation: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.white,
-  },
-  courseSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  courseInfoContainer: {
     backgroundColor: COLORS.white,
-    marginHorizontal: 16,
-    marginVertical: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    padding: 16,
+    margin: 16,
     borderRadius: 12,
     elevation: 2,
   },
-  selectorIcon: {
-    marginRight: 12,
-  },
-  dropdown: {
-    flex: 1,
-    borderWidth: 0,
-    padding: 8,
-    backgroundColor: 'transparent',
-  },
-  dropdownList: {
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  dropdownText: {
+  courseName: {
+    fontSize: 18,
+    fontWeight: "700",
     color: COLORS.dark,
+    marginBottom: 8,
+  },
+  courseMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  courseMetaText: {
     fontSize: 14,
-  },
-  dropdownInput: {
-    color: COLORS.dark,
-    fontSize: 15,
-    fontWeight: '500',
+    color: COLORS.gray,
+    marginRight: 16,
+    marginBottom: 4,
   },
   loaderContainer: {
     padding: 30,
@@ -350,36 +389,42 @@ const styles = StyleSheet.create({
     color: COLORS.dark,
     marginTop: 16,
   },
-  emptyStateSubText: {
-    fontSize: 14,
-    color: COLORS.gray,
-    marginTop: 8,
-  },
-  weekContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+  weekSelectorContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    overflow: 'hidden',
+    paddingVertical: 8,
     elevation: 2,
   },
-  weekHeaderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+  weekList: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
   },
-  weekTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.primary,
-    marginLeft: 8,
+  weekTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.grayLight,
+  },
+  selectedWeekTab: {
+    backgroundColor: COLORS.primary,
+  },
+  weekTabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.dark,
+  },
+  selectedWeekTabText: {
+    color: COLORS.white,
+  },
+  weekContentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   itemContainer: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
     padding: 16,
+    marginBottom: 16,
+    elevation: 1,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -434,10 +479,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   coveredBadge: {
-    backgroundColor: COLORS.success + '20', // 20% opacity
+    backgroundColor: COLORS.success + '20',
   },
   notCoveredBadge: {
-    backgroundColor: COLORS.warning + '20', // 20% opacity
+    backgroundColor: COLORS.warning + '20',
   },
   statusText: {
     fontSize: 12,
@@ -450,7 +495,6 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
   },
   downloadButton: {
-    backgroundColor: COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -458,7 +502,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     alignSelf: 'flex-start',
-    marginBottom: 16,
+    marginTop: 12,
   },
   downloadText: {
     color: COLORS.white,
@@ -466,58 +510,39 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 8,
   },
-  otherContentContainer: {
-    backgroundColor: COLORS.white,
+  mcqsContainer: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     borderRadius: 8,
-    padding: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.accent,
+    padding: 12,
   },
-  otherContentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  mcqItem: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  mcqQuestion: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.dark,
     marginBottom: 8,
   },
-  otherContentTitle: {
+  optionsContainer: {
+    marginLeft: 8,
+    marginBottom: 8,
+  },
+  optionText: {
+    fontSize: 14,
+    color: COLORS.dark,
+    marginBottom: 4,
+  },
+  correctAnswer: {
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 6,
-  },
-  otherContentText: {
-    fontSize: 15,
-    color: COLORS.dark,
-    marginBottom: 12,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 6,
-  },
-  actionButtonText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  viewDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  viewDetailsText: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '600',
-    marginRight: 4,
+    color: COLORS.success,
+    marginTop: 8,
   },
 });
 

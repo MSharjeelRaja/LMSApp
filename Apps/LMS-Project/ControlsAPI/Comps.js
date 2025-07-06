@@ -144,12 +144,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   studentName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: 'bold',
     color: 'white',
   },
   student: {
-    fontSize: 14,
+    fontSize: 11,
     color: 'lightgray',
   },
   logoutButton: {

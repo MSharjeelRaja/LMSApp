@@ -28,7 +28,7 @@ purplelight:'#899ef7',
   Greenborder2: '#5FCF8C',
   Greenborder3: '#A8F5C4',
   
-
+placeholder:'black',
 
 
 

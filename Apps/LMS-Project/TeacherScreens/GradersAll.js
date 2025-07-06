@@ -57,11 +57,11 @@ const Grader = ({navigation, route}) => {
   const handleSubmitFeedback = async () => {
     try {
       setFeedbackLoading(true);
-  
-      // Send `null` to API if feedback is empty
+      Alert.alert("Success", "Feedback updated");
+      
       const payload = {
         teacher_grader_id: selectedGrader.teacher_grader_id,
-        feedback: feedbackText.trim() || null  // Delete feedback if empty
+        feedback: feedbackText.trim() || null  
       };
   
       const response = await fetch(`${API_URL}/api/Teachers/add-or-update-feedbacks`, {
@@ -73,10 +73,10 @@ const Grader = ({navigation, route}) => {
       const result = await response.json();
       
       if (result.status === "success") {
-        // Update both active and previous graders
+      
         const updateGrader = (g) => 
           g.teacher_grader_id === selectedGrader.teacher_grader_id
-            ? { ...g, feedback: feedbackText.trim() } // Store empty string instead of null
+            ? { ...g, feedback: feedbackText.trim() } 
             : g;
   
         setGraders((prev) => ({
@@ -89,9 +89,11 @@ const Grader = ({navigation, route}) => {
           ),
         }));
   
-        setShowFeedbackModal(false); // Close modal on success
-        Alert.alert("Success", "Feedback updated");
+        setShowFeedbackModal(false);
+    
+       
       }
+     
     } catch (err) {
       Alert.alert("Error", err.message);
     } finally {
@@ -201,7 +203,7 @@ const Grader = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <Navbar
-        title="LMS"
+        title="Manage Grader"
         userName={userData.name}
         des={'Teacher'}
         showBackButton={true}

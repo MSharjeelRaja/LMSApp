@@ -15,14 +15,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { API_URL } from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 import { useAlert } from '../ControlsAPI/alert';
-import { useIsFocused } from '@react-navigation/native';
 
 const ATTENDANCE_STATUS = {
   PRESENT: 'P',
   ABSENT: 'A'
 };
 
-const AttendanceScreen = ({ route, navigation }) => {
+const JAttendanceScreen = ({ route, navigation }) => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,25 +33,22 @@ const AttendanceScreen = ({ route, navigation }) => {
     time: ''
   });
   const alertContext = useAlert();
-  
+   const refreshList = route.params?.refreshList;
 
-  console.log("Route params:", route.params);
-  
-  // Destructure properly
- 
-  const classData = route.params?.classData || {};  // Changed from userData to classData
-  
- 
-  console.log("Class data:", classData);
-  const [apiResponse, setApiResponse] = useState(null);
+   const [apiResponse, setApiResponse] = useState(null);
 
-  const Tid = global.Jid;
+  const classData = route.params?.classData || {};
+fd=classData.fixed_date ;
+  console.log('class data is '+classData.class_type,classData?.teacher_offered_course_id,classData.fixed_date  )
+  console.log('fd '+fd )
+  const Tid = global.Tid;
+   
   const teacherOfferedCourseId = classData?.teacher_offered_course_id || 39;
- console.log("Teacher Offered Course ID is: " + teacherOfferedCourseId +' and '+ classData.venue);
+ console.log("Teacher Offered Course ID: " + teacherOfferedCourseId + classData.venue);
   useEffect(() => {
 
   
-   
+    
     if (classData) {
       setSectionInfo({
         section: classData.section || '',
@@ -63,16 +59,7 @@ const AttendanceScreen = ({ route, navigation }) => {
     
     fetchStudentList();
   }, []);
-  const isFocused = useIsFocused();
 
-  useEffect(() => {
-    if (isFocused) {
-      fetchStudentList();
-    }
-  }, [isFocused]);
-
-
-  
   // Only filter when searchQuery changes, not when students changes
   useEffect(() => {
     if (students.length > 0) {
@@ -80,73 +67,103 @@ const AttendanceScreen = ({ route, navigation }) => {
     }
   }, [searchQuery]);
 
-  const fetchStudentList = async () => {
-    setLoading(true);
-    try {
+const fetchStudentList = async () => {
+  setLoading(true);
+  try {
+    const isUpdate = route.params?.isUpdate;
+    let response;
+    
+    if (isUpdate) {
+      const data = {
+        teacher_offered_course_id: teacherOfferedCourseId,
+        venue_name: classData.venue,
+        fixed_date: fd
+      };
+    
+      response = await fetch(`${API_URL}/api/Teachers/re-take`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      console.log('Re-take response:', response);
+    } else {
       const data = {
         teacher_offered_course_id: teacherOfferedCourseId,
         venue_name: classData.venue,
       };
-
-      const response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
+      console.log("Fetching attendance list ", data);
+      response = await fetch(`${API_URL}/api/Teachers/attendance-list`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
-      console.log('rep is = '+response)
-      if (!response.ok) {
-        const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
-        throw new Error(errorMessage); // Ensure the Error object is correctly instantiated
-      }
-  
-      const adata = await response.json();
-      console.log("Students:", adata?.students);
-      
+    }
+
+    if (!response.ok) {
+      const errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    let adata = await response.json();
+    console.log('API response data:', adata);
       setApiResponse(adata);
-      // Validate the API response
-      if (!adata.students || !Array.isArray(adata.students)) {
-        throw new Error("Invalid response format: students data missing.");
+    if (!adata.students || !Array.isArray(adata.students)) {
+      throw new Error("Invalid response format: students data missing.");
+    }
+
+    const studentsWithAttendance = adata.students.map(student => {
+      // Handle both possible spellings of attendance_status
+      const statusFromApi = student.attendance_status || student.attedance_status;
+      
+      // Convert API status to our app's status format
+      let attendanceStatus;
+      if (statusFromApi) {
+        attendanceStatus = statusFromApi.toLowerCase() === 'p' 
+          ? ATTENDANCE_STATUS.PRESENT 
+          : ATTENDANCE_STATUS.ABSENT;
+      } else {
+        // Default to present if no status provided
+        attendanceStatus = ATTENDANCE_STATUS.PRESENT;
       }
-  
-      const studentsWithAttendance = adata.students.map(student => ({
+
+      return {
         ...student,
         id: student.student_id,
         image: student.Student_Image,
         name: student.name,
         roll_number: student.RegNo,
-        percentage: student.percentage
-  ,
-        attendanceStatus: student.attendance_status || ATTENDANCE_STATUS.PRESENT,
-      }));
-  
-      setStudents(studentsWithAttendance);
-      setFilteredStudents(studentsWithAttendance);
-    } catch (err) {
-      console.error("Error fetching students:", err.message || err);
-  
-      setError('Failed to load student data. Please try again.');
-  
-      // Mock data for testing if API fails
-      const mockStudents = [
-        {
-          id: 1,
-          name: 'Sameer Danish',
-          percentage: '65%',
-          roll_number: '2021-ARID-4583',
-          attendanceStatus: ATTENDANCE_STATUS.PRESENT,
-        },
-      ];
-  
-      setStudents(mockStudents);
-      setFilteredStudents(mockStudents);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  
+        percentage: student.percentage,
+        attendanceStatus: attendanceStatus,
+      };
+    });
+
+    setStudents(studentsWithAttendance);
+    setFilteredStudents(studentsWithAttendance);
+  } catch (err) {
+    console.error("Error fetching students:", err.message || err);
+    setError('Failed to load student data. Please try again.');
+    
+    // Fallback to mock data if needed
+    const mockStudents = [
+      {
+        id: 1,
+        name: 'Sameer Danish',
+        percentage: '65%',
+        roll_number: '2021-ARID-4583',
+        attendanceStatus: ATTENDANCE_STATUS.PRESENT,
+      },
+    ];
+    
+    setStudents(mockStudents);
+    setFilteredStudents(mockStudents);
+  } finally {
+    setLoading(false);
+  }
+};
   const filterStudents = () => {
     if (!searchQuery.trim()) {
       setFilteredStudents(students);
@@ -210,18 +227,18 @@ const AttendanceScreen = ({ route, navigation }) => {
       console.log(`Updated filtered students array`);
     }
     
-    // Only send notification if status is changed to ABSENT
+  
     if (newStatus === ATTENDANCE_STATUS.ABSENT) {
       console.log(`Preparing to send absence notification for student ${student.name}`);
       
       try {
-        // Create notification payload
+      
         const notificationData = {
           "title": "Absence Notification",
           "description": "You have been marked absent in today's class",
-          "sender": "JuniorLecturer",
+          "sender": "Teacher",
           "Student_id": id,
-          "sender_id": global.tuserid, // Using the teacher ID from route params
+          "sender_id": global.tuserid, 
         };
         
         console.log(`Notification payload created with:`);
@@ -230,7 +247,7 @@ const AttendanceScreen = ({ route, navigation }) => {
         console.log(`- Teacher ID: ${Tid}`);
         console.log(`Full notification payload: ${JSON.stringify(notificationData)}`);
         
-        // Send the notification
+      
         console.log(`Sending notification to API...`);
         const response = await fetch(`${API_URL}/api/student/notification`, {
           method: 'POST',
@@ -241,7 +258,7 @@ const AttendanceScreen = ({ route, navigation }) => {
           body: JSON.stringify(notificationData)
         });
         
-        // Handle the response
+        
         if (response.ok) {
           const responseData = await response.json();
           console.log(`Notification API success response:`, responseData);
@@ -271,56 +288,60 @@ const AttendanceScreen = ({ route, navigation }) => {
   
   const submitAttendance = async () => {
     try {
+      // Show loading state
       setLoading(true);
+      console.log('Submitting attendance '+fd);
       
-      // Validate required data
-      if (!teacherOfferedCourseId || !classData?.venue_id) {
-        throw new Error("Missing required course or venue data");
-      }
-  
+     console.log('data'+classData.class_type, classData.venue_id, classData.fixed_date, teacherOfferedCourseId);
       const attendanceRecords = students.map(student => ({
         student_id: student.Student_Id || student.id,
         teacher_offered_course_id: teacherOfferedCourseId,
-        status: student.attendanceStatus.toLowerCase(),
+        status: student.attendanceStatus.toLowerCase(), // Convert P/A to p/a
         date_time: fd,
-        isLab: classData.class_type === "Supervised Lab",
-        venue_id: classData.venue_id
+        isLab: classData.class_type === "Supervised Lab", // Set based on class type
+        venue_id: classData.venue_id || 25 // Use actual venue ID from class data
       }));
-  
+      
+      const payload = {
+        attendance_records: attendanceRecords
+      };
+      
+      console.log('Submitting attendance data:', payload);
+      
+      // Make the actual API call
       const response = await fetch(`${API_URL}/api/Teachers/attendance/mark-bulk`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attendance_records: attendanceRecords })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
       });
-  
-      const responseText = await response.text();
       
-      // Handle non-JSON responses
       if (!response.ok) {
-        console.error('Server Error Response:', responseText);
-        throw new Error(`Attendance submission failed: ${response.statusText}`);
+        throw new Error('Failed to submit attendance');
       }
-  
-      try {
-        const result = JSON.parse(responseText);
-        alertContext.showAlert('success', 'Attendance Marked Successfully');
-        setTimeout(() => navigation.goBack(), 1500);
-      } catch (parseError) {
-        throw new Error("Invalid server response format");
-      }
+      
+      const result = await response.json();
+      console.log('Attendance submission result:', result);
+      
+      alertContext.showAlert('success', 'Attendance Marked Successfully');
+      
+ if (refreshList) {
+        refreshList();
+      } 
+
+
+        navigation.goBack();
+    
       
     } catch (error) {
-      console.error('Attendance Error:', error);
-      alertContext.showAlert(
-        'error', 
-        error.message.includes('JSON') 
-          ? 'Server response error - contact support'
-          : error.message
-      );
+      alertContext.showAlert('error', 'Failed to Submit Attendance');
+      console.error('Submit attendance error:', error);
     } finally {
       setLoading(false);
     }
   };
+
   const getPercentageColor = (percentage) => {
     const percentageNum = parseInt(percentage);
     if (percentageNum >= 90) return colors.green4;
@@ -423,26 +444,22 @@ const AttendanceScreen = ({ route, navigation }) => {
         </View>
       </View>
   
-      {/* Second Row - Action Buttons */}
+
       <View style={styles.actionButtonsRow}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.actionButtonLast]}
-          onPress={() => navigation.navigate('AddseatingPlan', { 
+      
+<TouchableOpacity 
+  style={[styles.actionButton, styles.actionButtonLast]}
+  onPress={() => navigation.navigate('JAddseatingPlan', { 
     classData,
-   apiResponse
+    apiResponse,
+    refreshAttendance: fetchStudentList 
   })}
-        >
-          <Icon name="sort" size={18} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Sort</Text>
-        </TouchableOpacity>
+>
+  <Icon name="sort" size={18} color={colors.primary} />
+  <Text style={styles.actionButtonText}>Sort</Text>
+</TouchableOpacity>
         
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('EnrollStudent')}
-        >
-          <Icon name="person-add" size={18} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Enroll</Text>
-        </TouchableOpacity>
+       
       </View>
     </View>
   );
@@ -534,7 +551,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.red1,
+    color: colors.primary,
   },
   content: {
     flex: 1,
@@ -686,7 +703,7 @@ const styles = StyleSheet.create({
     borderColor: colors.green4,
   },
   red: {
-    backgroundColor: colors.red3,
+    backgroundColor: colors.redb3,
     borderColor: colors.redb2,
   },
   statusIndicator: {
@@ -792,4 +809,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AttendanceScreen;
+export default JAttendanceScreen;

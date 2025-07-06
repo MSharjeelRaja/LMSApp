@@ -155,7 +155,7 @@ const CourseSections = ({ route }) => {
         </View>
       </View>
 
-      {/* Render topics for Notes */}
+
       {item.type === 'Notes' && item.topics && (
         <View style={styles.topicsContainer}>
           <Text style={styles.subtitle}>Topics:</Text>
@@ -165,14 +165,24 @@ const CourseSections = ({ route }) => {
               <Text style={styles.topicText}>{topic.topic_name}</Text>
             </View>
           ))}
+          
+      {item.type === 'Notes' && item.File && (
+        <TouchableOpacity 
+          style={styles.fileButton}
+          onPress={() =>  Linking.openURL(item.File)}
+        >
+          <Icon name="file-download" size={18} color="white" />
+          <Text style={styles.fileText}>Download File</Text>
+        </TouchableOpacity>
+      )}
         </View>
       )}
 
-      {/* Handle Assignments */}
+
       {item.type === 'Assignment' && item.File && (
         <TouchableOpacity 
           style={styles.fileButton}
-          onPress={() => handleOpenFile(item.File)}
+          onPress={() =>  Linking.openURL(item.File)}
         >
           <Icon name="file-download" size={18} color="white" />
           <Text style={styles.fileText}>Download Assignment</Text>
@@ -201,7 +211,7 @@ const CourseSections = ({ route }) => {
       ) : item.type === 'Quiz' && item.File && (
         <TouchableOpacity 
           style={styles.fileButton}
-          onPress={() => handleOpenFile(item.File)}
+          onPress={() =>  Linking.openURL(item.File)}
         >
           <Icon name="file-download" size={18} color="white" />
           <Text style={styles.fileText}>Download Quiz</Text>
@@ -210,16 +220,7 @@ const CourseSections = ({ route }) => {
     </View>
   );
 
-  const handleOpenFile = (fileUrl) => {
-    Alert.alert(
-      'Download File',
-      'Would you like to download this file?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Download', onPress: () => Linking.openURL(fileUrl) }
-      ]
-    );
-  };
+
 
   if (loading) {
     return (

@@ -250,7 +250,7 @@ const ConsideredTasks = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Navbar
-        title="LMS"
+        title="Considered Tasks"
         userName={userData.name}
         des={'Student'}
         showBackButton={true}

@@ -296,7 +296,7 @@ const Grader = ({ navigation, route }) => {
             <Icon 
               name="event-available" 
               size={20} 
-              color={activeTab === 'current' ? '#4361EE' : '#64748B'} 
+              color={activeTab === 'current' ? colors.secondary : '#64748B'} 
               style={styles.tabIcon}
             />
             <Text style={[styles.tabText, activeTab === 'current' && styles.activeTabText]}>
@@ -312,7 +312,7 @@ const Grader = ({ navigation, route }) => {
             <Icon 
               name="history-edu" 
               size={20} 
-              color={activeTab === 'previous' ? '#4361EE' : '#64748B'}
+              color={activeTab === 'previous' ? colors.secondary : '#64748B'}
               style={styles.tabIcon}
             />
             <Text style={[styles.tabText, activeTab === 'previous' && styles.activeTabText]}>
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     elevation: 6,
-    shadowColor: '#4361EE',
+    shadowColor: colors.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   notificationButton: {
-    backgroundColor: '#4361EE',
+    backgroundColor: colors.secondary,
     padding: 6,
     borderRadius: 12,
     elevation: 3,
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4361EE',
+    color: colors.secondary,
   },
   statLabel: {
     fontSize: 12,
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   graderButton: {
-    backgroundColor: '#4361EE',
+    backgroundColor: colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -552,8 +552,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   infoButton: {
-    backgroundColor: '#6366F1',
-    paddingVertical: 12,
+    backgroundColor: colors.yellow,
     paddingHorizontal: 16,
     borderRadius: 12,
     flexDirection: 'row',
@@ -619,7 +618,7 @@ const styles = StyleSheet.create({
   activeTabButton: {
     backgroundColor: '#EEF2FF',
     borderBottomWidth: 2,
-    borderBottomColor: '#4361EE',
+    borderBottomColor: colors.secondary,
   },
   tabIcon: {
     marginRight: 8,
@@ -631,7 +630,7 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     fontWeight: '600',
-    color: '#4361EE',
+    color: colors.secondary,
   },
   
   // Content Styles
@@ -711,7 +710,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 1,
     borderLeftWidth: 4,
-    borderLeftColor: '#4361EE',
+    borderLeftColor: colors.secondary,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -824,7 +823,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#4361EE',
+    backgroundColor: colors.secondary,
   },
   modalTitle: {
     fontSize: 18,

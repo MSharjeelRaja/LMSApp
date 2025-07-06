@@ -27,8 +27,8 @@ const AddseatingPlan = ({ route, navigation }) => {
   const [tempCols, setTempCols] = useState('5');
   const [layoutConfig, setLayoutConfig] = useState({ rows: 6, cols: 5 });
   const [showLayoutModal, setShowLayoutModal] = useState(false);
-
-  // Calculate dynamic seat size based on columns
+  console.log('API Response:', apiResponse);
+const { refreshAttendance } = route.params;
   const getSeatSize = () => {
     const maxColumns = 5; // Base number of columns
     const columnCount = Math.max(layoutConfig.cols, 1); // Ensure at least 1 column
@@ -116,39 +116,44 @@ const AddseatingPlan = ({ route, navigation }) => {
     setSelectedStudent(null);
   };
 
-  const handleSubmit = async () => {
-    try {
-      const assignedStudents = classroomLayout.flatMap(row => 
-        row.filter(seat => seat.student).map(seat => ({
-          student_id: seat.student.student_id,
-          seatNo: seat.seatNo
-        }))
-      );
+const handleSubmit = async () => {
+  try {
+    const assignedStudents = classroomLayout.flatMap(row => 
+      row.filter(seat => seat.student).map(seat => ({
+        student_id: seat.student.student_id,
+        seatNo: seat.seatNo
+      }))
+    );
 
-      const payload = {
-        teacher_offered_course_id: classData.teacher_offered_course_id,
-        students: assignedStudents
-      };
+    const payload = {
+      teacher_offered_course_id: classData.teacher_offered_course_id,
+      students: assignedStudents
+    };
 
-      const response = await fetch(`${API_URL}/api/JuniorLec/add-sequence-attendance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch(`${API_URL}/api/JuniorLec/add-sequence-attendance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      const result = await response.json();
-      
-      if (response.ok) {
-        Alert.alert('Success', 'Seating plan saved successfully');
-        navigation.goBack();
-      } else {
-        Alert.alert('Error', result.message || 'Failed to save seating plan');
+    const result = await response.json();
+    
+    if (response.ok) {
+      Alert.alert('Success', 'Seating plan saved successfully');
+      // Call the refresh function if it exists before navigating back
+      if (route.params?.refreshAttendance) {
+        route.params.refreshAttendance();
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to save seating plan');
-      console.error('Submission error:', error);
+      navigation.goBack();
+    } else {
+      Alert.alert('Error', result.message || 'Failed to save seating plan');
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', 'Failed to save seating plan');
+    console.error('Submission error:', error);
+  }
+};
+
 
   const renderStudentItem = (student) => (
     <TouchableOpacity

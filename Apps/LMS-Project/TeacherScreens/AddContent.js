@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 12,
     backgroundColor: colors.primaryFaint,
-    color: colors.black,
+    color: 'red',
     fontWeight: '500',
   },
   pickerContainer: {

@@ -9,10 +9,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { API_URL, Navbar } from '../ControlsAPI/Comps';
-
 const { width } = Dimensions.get('window');
 
-const StudentCalendar = ({ navigation }) => {
+const Tcalender = ({ navigation }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -573,4 +572,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StudentCalendar;
+export default Tcalender;

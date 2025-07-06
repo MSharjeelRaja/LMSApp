@@ -59,6 +59,7 @@ import {
         setRefreshing(true);
         const response = await fetch(`${API_URL}/api/Grader/YourTask?grader_id=${graderId}&teacher_id=${teacherId}`);
         const data = await response.json();
+        console.log(data)
         setTasks(data);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -169,22 +170,23 @@ import {
             item.marking_status !== 'Marked' ? (
               <TouchableOpacity 
                 style={styles.primaryButton}
-                onPress={() => navigation.navigate('ViewSubmissions', { 
-                  taskId: item.task_id,
-                  taskName: item.title,
-                  totalMarks: item.total_marks 
-                })}
+                onPress={() => navigation.navigate('marktask', { 
+  taskId: item.task_id,
+  taskname: item.title,
+  points: item['Total Marks']
+
+})}
               >
                 <Text style={styles.buttonText}>Mark Now</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity 
                 style={styles.secondaryButton}
-                onPress={() => navigation.navigate('ViewSubmissions', { 
-                  taskId: item.task_id,
-                  taskName: item.title,
-                  totalMarks: item.total_marks 
-                })}
+                onPress={() => navigation.navigate('marktask', { 
+  taskId: item.task_id,
+  taskname: item.title,
+  points: item['Total Marks']
+})}
               >
                 <Text style={styles.buttonText}>View Submissions</Text>
               </TouchableOpacity>

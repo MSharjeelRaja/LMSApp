@@ -1,25 +1,25 @@
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  Modal, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Modal,
   Alert,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
+  ScrollView,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
-import { pick } from '@react-native-documents/picker';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, {useState, useEffect} from 'react';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
+import {pick} from '@react-native-documents/picker';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/MaterialIcons';
 
 const TaskSubmit = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { taskData } = route.params || {}; 
-  
+  const {taskData} = route.params || {};
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [file, setFile] = useState(null);
@@ -32,7 +32,7 @@ const TaskSubmit = () => {
     // Initialize task data and validate
     console.log('TaskSubmit mounted with taskData:', JSON.stringify(taskData));
     if (!taskData) {
-      Alert.alert("Error", "Task data is missing");
+      Alert.alert('Error', 'Task data is missing');
       navigation.goBack();
     }
   }, []);
@@ -42,26 +42,31 @@ const TaskSubmit = () => {
     console.log(`Selected answer for question ${questionId}:`, answer);
     setSelectedAnswers(prev => ({
       ...prev,
-      [questionId]: answer
+      [questionId]: answer,
     }));
   };
 
   const nextQuestion = () => {
     const question = taskData.attachments.mcqs[currentQuestionIndex];
     const questionId = question.ID.toString();
-    
+
     // Ensure user has selected an answer before proceeding
     if (!selectedAnswers[questionId]) {
-      Alert.alert("Warning", "Please select an answer before continuing");
+      Alert.alert('Warning', 'Please select an answer before continuing');
       return;
     }
-    
+
     setCurrentQuestionIndex(prev => prev + 1);
   };
 
-  const getQuestionNumber = (questionId) => {
-    const question = taskData.attachments.mcqs.find(q => q.ID.toString() === questionId);
-    return question ? (question['Question NO'] || taskData.attachments.mcqs.indexOf(question) + 1) : 0;
+  const getQuestionNumber = questionId => {
+    const question = taskData.attachments.mcqs.find(
+      q => q.ID.toString() === questionId,
+    );
+    return question
+      ? question['Question NO'] ||
+          taskData.attachments.mcqs.indexOf(question) + 1
+      : 0;
   };
 
   const getQuestionProgress = () => {
@@ -70,12 +75,17 @@ const TaskSubmit = () => {
 
   const renderMCQQuestion = () => {
     console.log('Rendering MCQ question. Current index:', currentQuestionIndex);
-    if (!taskData?.attachments?.mcqs || taskData.attachments.mcqs.length === 0) {
+    if (
+      !taskData?.attachments?.mcqs ||
+      taskData.attachments.mcqs.length === 0
+    ) {
       console.warn('No questions available in taskData');
       return (
         <View style={styles.errorContainer}>
           <Ionicons name="error-outline" size={40} color="#E94560" />
-          <Text style={styles.errorText}>No questions available for this quiz</Text>
+          <Text style={styles.errorText}>
+            No questions available for this quiz
+          </Text>
         </View>
       );
     }
@@ -83,7 +93,7 @@ const TaskSubmit = () => {
     const question = taskData.attachments.mcqs[currentQuestionIndex];
     console.log('Current question:', JSON.stringify(question));
     const options = [];
-    
+
     // Extract options dynamically
     for (let i = 1; i <= 4; i++) {
       const optionKey = `Option ${i}`;
@@ -97,72 +107,76 @@ const TaskSubmit = () => {
       <View style={styles.questionContainer}>
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View 
+            <View
               style={[
-                styles.progressFill, 
-                {width: `${((currentQuestionIndex + 1) / taskData.attachments.mcqs.length) * 100}%`}
-              ]} 
+                styles.progressFill,
+                {
+                  width: `${
+                    ((currentQuestionIndex + 1) /
+                      taskData.attachments.mcqs.length) *
+                    100
+                  }%`,
+                },
+              ]}
             />
           </View>
           <Text style={styles.progressText}>{getQuestionProgress()}</Text>
         </View>
-        
-        <Text style={styles.questionText}>
-          {question.Question}
-        </Text>
-        
+
+        <Text style={styles.questionText}>{question.Question}</Text>
+
         {options.map((option, idx) => (
           <TouchableOpacity
             key={`option-${idx}`}
             style={[
               styles.optionButton,
-              selectedAnswers[question.ID] === option && styles.selectedOption
+              selectedAnswers[question.ID] === option && styles.selectedOption,
             ]}
-            onPress={() => handleAnswerSelect(question.ID.toString(), option)}
-          >
+            onPress={() => handleAnswerSelect(question.ID.toString(), option)}>
             <View style={styles.optionContent}>
-              <View style={[
-                styles.optionCircle,
-                selectedAnswers[question.ID] === option && styles.selectedCircle
-              ]}>
-                {selectedAnswers[question.ID] === option && 
+              <View
+                style={[
+                  styles.optionCircle,
+                  selectedAnswers[question.ID] === option &&
+                    styles.selectedCircle,
+                ]}>
+                {selectedAnswers[question.ID] === option && (
                   <Ionicons name="check" size={16} color="#FFFFFF" />
-                }
+                )}
               </View>
-              <Text style={[
-                styles.optionText,
-                selectedAnswers[question.ID] === option && styles.selectedOptionText
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedAnswers[question.ID] === option &&
+                    styles.selectedOptionText,
+                ]}>
                 {option}
               </Text>
             </View>
           </TouchableOpacity>
         ))}
-        
+
         <View style={styles.navigationButtons}>
           {currentQuestionIndex > 0 && (
             <TouchableOpacity
               style={styles.navButton}
-              onPress={() => setCurrentQuestionIndex(prev => prev - 1)}
-            >
+              onPress={() => setCurrentQuestionIndex(prev => prev - 1)}>
               <Ionicons name="arrow-back" size={20} color="#555" />
               <Text style={styles.navButtonText}>Previous</Text>
             </TouchableOpacity>
           )}
-          
+
           {currentQuestionIndex < taskData.attachments.mcqs.length - 1 ? (
             <TouchableOpacity
               style={[styles.navButton, styles.primaryButton]}
-              onPress={nextQuestion}
-            >
+              onPress={nextQuestion}>
               <Text style={styles.primaryButtonText}>Next</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.submitButton}
-              onPress={confirmSubmitQuiz}
-            >
+              onPress={confirmSubmitQuiz}>
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
@@ -179,35 +193,40 @@ const TaskSubmit = () => {
   const pickFile = async () => {
     console.log('Attempting to pick file');
     try {
-      const [res] = await pick({ allowMultiSelection: false });
+      const [res] = await pick({allowMultiSelection: false});
       console.log('File picked:', res);
       if (res) {
-        const allowedTypes = ['application/pdf', 'application/msword', 
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        
+        const allowedTypes = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
         // Check file extension if type is not available
         let fileType = res.type;
         if (!fileType) {
           const extension = res.name.split('.').pop().toLowerCase();
           if (extension === 'pdf') fileType = 'application/pdf';
           else if (extension === 'doc') fileType = 'application/msword';
-          else if (extension === 'docx') fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          else if (extension === 'docx')
+            fileType =
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         }
 
         console.log('File type determined:', fileType);
 
         if (!allowedTypes.includes(fileType)) {
-          Alert.alert("Invalid File Type", "Please pick a PDF or Word file.");
+          Alert.alert('Invalid File Type', 'Please pick a PDF or Word file.');
           return;
         }
 
-        setFile({ uri: res.uri, name: res.name, type: fileType });
+        setFile({uri: res.uri, name: res.name, type: fileType});
         setSubmissionStatus('File selected: ' + res.name);
       }
     } catch (err) {
       console.error('Error picking file:', err);
       if (!err.isCancel) {
-        Alert.alert("Error", "Failed to select file: " + err.message);
+        Alert.alert('Error', 'Failed to select file: ' + err.message);
       }
     }
   };
@@ -215,54 +234,50 @@ const TaskSubmit = () => {
   const confirmSubmitQuiz = () => {
     // Check if all questions have answers
     const unansweredQuestions = taskData.attachments.mcqs.filter(
-      (q) => !selectedAnswers[q.ID]
+      q => !selectedAnswers[q.ID],
     );
-    
+
     console.log('Unanswered questions:', unansweredQuestions.length);
-    
+
     if (unansweredQuestions.length > 0) {
       Alert.alert(
-        "Unanswered Questions",
+        'Unanswered Questions',
         `You have ${unansweredQuestions.length} unanswered questions. Are you sure you want to submit?`,
         [
-          { text: "Review Answers", style: "cancel" },
-          { text: "Submit Anyway", onPress: submitQuizAnswers }
-        ]
+          {text: 'Review Answers', style: 'cancel'},
+          {text: 'Submit Anyway', onPress: submitQuizAnswers},
+        ],
       );
     } else {
-      Alert.alert(
-        "Submit Quiz",
-        "Are you sure you want to submit this quiz?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Submit", onPress: submitQuizAnswers }
-        ]
-      );
+      Alert.alert('Submit Quiz', 'Are you sure you want to submit this quiz?', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Submit', onPress: submitQuizAnswers},
+      ]);
     }
   };
 
   const confirmSubmitFile = () => {
     if (!file) {
-      Alert.alert("Error", "Please select a file first");
+      Alert.alert('Error', 'Please select a file first');
       return;
     }
-    
+
     Alert.alert(
-      "Submit Assignment",
-      "Are you sure you want to submit this file?",
+      'Submit Assignment',
+      'Are you sure you want to submit this file?',
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Submit", onPress: submitFile }
-      ]
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Submit', onPress: submitFile},
+      ],
     );
   };
 
   const submitFile = async () => {
     if (!file) {
-      Alert.alert("Error", "Please select a file first");
+      Alert.alert('Error', 'Please select a file first');
       return;
     }
-  
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -273,14 +288,14 @@ const TaskSubmit = () => {
       });
       formData.append('student_id', taskData.studentId.toString());
       formData.append('task_id', taskData.task_id.toString());
-      
-      console.log('Submitting file with mllsjjls', {
-        'file_name': file.name,
-        'file_type': file.type,
-        'student_id': taskData.studentId,
-        'task_id': taskData.task_id,
+
+      console.log('Submitting file with form data:', {
+        file_name: file.name,
+        file_type: file.type,
+        student_id: taskData.studentId,
+        task_id: taskData.task_id,
       });
-      
+
       const response = await fetch(`${API_URL}/api/Students/submit-task-file`, {
         method: 'POST',
         headers: {
@@ -290,11 +305,11 @@ const TaskSubmit = () => {
       });
 
       console.log('File submit response status:', response.status);
-      
+
       // Get both text and status for logging
       const responseText = await response.text();
       console.log('File submit response text:', responseText);
-      
+
       let result;
       try {
         result = JSON.parse(responseText);
@@ -303,29 +318,30 @@ const TaskSubmit = () => {
         console.error('Failed to parse response:', e);
         result = {
           success: false,
-          message: responseText || 'Invalid server response'
+          message: responseText || 'Invalid server response',
         };
       }
-  
+
       if (!response.ok) {
         throw new Error(result.message || `Server error: ${response.status}`);
       }
-  
+
       Alert.alert(
-        result.success ? "Success" : "Error", 
-        result.message || (result.success ? 'File uploaded successfully' : 'Unknown error'),
+        result.success ? 'Success' : 'Success',
+        result.message ||
+          (result.success ? 'File uploaded successfully' : 'Unknown error'),
         [
-          { 
-            text: "OK", 
-            onPress: () => result.success ? navigation.goBack() : null 
-          }
-        ]
+          {
+            text: 'OK',
+            onPress: () => (result.success ? navigation.goBack() : null),
+          },
+        ],
       );
     } catch (error) {
       console.error('File submission error:', error);
       Alert.alert(
-        "Error", 
-        error.message || 'Failed to submit file. Please try again.'
+        'Error',
+        error.message || 'Failed to submit file. Please try again.',
       );
     } finally {
       setLoading(false);
@@ -342,17 +358,20 @@ const TaskSubmit = () => {
         console.log(`Converting questionId ${key} to question number ${qNo}`);
         return {
           QNo: qNo,
-          StudentAnswer: value
+          StudentAnswer: value,
         };
       });
-      
+
       const payload = {
         student_id: taskData.studentId,
         task_id: taskData.task_id,
         Answer: answers,
       };
-      
-      console.log('Submitting quiz answers with payload:', JSON.stringify(payload));
+
+      console.log(
+        'Submitting quiz answers with payload:',
+        JSON.stringify(payload),
+      );
 
       const response = await fetch(`${API_URL}/api/Students/submit-quiz`, {
         method: 'POST',
@@ -360,14 +379,14 @@ const TaskSubmit = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      });
+     } );
 
       console.log('Quiz submit response status:', response.status);
-      
+
       // Get full response text for logging
       const responseText = await response.text();
       console.log('Quiz submit response text:', responseText);
-      
+
       if (!response.ok) {
         throw new Error(`Server error: ${response.status} - ${responseText}`);
       }
@@ -378,27 +397,31 @@ const TaskSubmit = () => {
         console.log('Parsed quiz result:', result);
       } catch (e) {
         console.error('Failed to parse quiz result:', e);
-        throw new Error("Failed to parse server response");
+        throw new Error('Failed to parse server response');
       }
-      
-      // Log each part of the result for debugging
-      console.log('Obtained Marks:', result['Obtained Marks']);
-      console.log('Correct Answers:', result['Correct Answers']);
-      console.log('Wrong Answers:', result['Wrong Answers']);
-      console.log('Your Submissions:', result['Your Submissions']);
-      
-      // Prepare result data for display
+
+      // Set quiz result with all necessary data
       setQuizResult({
-        obtained_points: result['Obtained Marks'] || 0,
-        correct_answers: result['Correct Answers'] || 0,
-        wrong_answers: result['Wrong Answers'] || 0,
-        your_submissions: result['Your Submissions'] || []
+        message: result.message || 'Your MCQ quiz has been submitted!',
+        obtainedMarks: result['Obtained Marks'] || 0,
+        totalMarks: result['Total Marks of Task'] || 0,
+        quizData: result['Quiz Data'] || [],
+        yourSubmissions: result['Your Submissions'] || [],
+        correctAnswers: result['Your Submissions']?.filter(submission => {
+          const question = result['Quiz Data']?.find(q => q['Question NO'] === submission.QNo);
+          return question && submission.StudentAnswer === question.Answer;
+        }).length || 0,
+        wrongAnswers: (result['Quiz Data']?.length || 0) - 
+          (result['Your Submissions']?.filter(submission => {
+            const question = result['Quiz Data']?.find(q => q['Question NO'] === submission.QNo);
+            return question && submission.StudentAnswer === question.Answer;
+          }).length || 0)
       });
-      
+
       setResultModalVisible(true);
     } catch (error) {
       console.error('Quiz submission error:', error);
-      Alert.alert("Error", "Submission failed: " + error.message);
+      Alert.alert('Error', 'Submission failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -407,7 +430,7 @@ const TaskSubmit = () => {
   const getFileIcon = () => {
     if (!file) return null;
     const extension = file.name.split('.').pop().toLowerCase();
-    
+
     if (extension === 'pdf') {
       return <Ionicons name="picture-as-pdf" size={24} color="#E94560" />;
     } else if (['doc', 'docx'].includes(extension)) {
@@ -421,13 +444,13 @@ const TaskSubmit = () => {
   const renderTaskContent = () => {
     console.log('Rendering content for task type:', taskData?.taskType);
     console.log('Task attachments:', JSON.stringify(taskData?.attachments));
-    
+
     if (!taskData) return null;
-    
+
     // Check if it's an MCQ task
     if (taskData.taskType === 'MCQS' && taskData.attachments?.mcqs) {
       return renderMCQQuestion();
-    } 
+    }
     // Default to file submission for all other task types or if not specified
     else {
       return renderFileSubmission();
@@ -454,7 +477,10 @@ const TaskSubmit = () => {
           {file && (
             <View style={styles.fileInfoContainer}>
               {getFileIcon()}
-              <Text style={styles.fileInfoText} numberOfLines={1} ellipsizeMode="middle">
+              <Text
+                style={styles.fileInfoText}
+                numberOfLines={1}
+                ellipsizeMode="middle">
                 {file.name}
               </Text>
               <TouchableOpacity onPress={() => setFile(null)}>
@@ -463,11 +489,10 @@ const TaskSubmit = () => {
             </View>
           )}
 
-          <TouchableOpacity 
-            style={[styles.submitFileButton, !file && styles.disabledButton]} 
+          <TouchableOpacity
+            style={[styles.submitFileButton, !file && styles.disabledButton]}
             onPress={confirmSubmitFile}
-            disabled={!file || loading}
-          >
+            disabled={!file || loading}>
             {loading ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
@@ -481,46 +506,61 @@ const TaskSubmit = () => {
 
   const renderQuizResultModal = () => {
     if (!quizResult) return null;
-    
-    console.log('Rendering quiz result modal with data:', JSON.stringify(quizResult));
-    
-    const percentageScore = taskData.points > 0 
-      ? (quizResult.obtained_points / taskData.points) * 100 
+
+    const percentageScore = quizResult.totalMarks > 0 
+      ? (quizResult.obtainedMarks / quizResult.totalMarks) * 100 
       : 0;
-    
-    const scoreMessage = percentageScore >= 70
-      ? "Excellent Work! 🎉"
-      : percentageScore >= 50
-        ? "Good Job! 👍"
-        : "Keep Practicing! 💪";
-        
+
     return (
       <Modal visible={resultModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.resultHeader}>
               <Text style={styles.resultTitle}>Quiz Results</Text>
-              <Text style={styles.scoreMessage}>{scoreMessage}</Text>
+              <Text style={styles.scoreMessage}>{quizResult.message}</Text>
             </View>
-            
-            <View style={styles.scoreCircle}>
-              <Text style={styles.scoreValue}>
-                {quizResult.obtained_points}/{taskData.points}
-              </Text>
-            </View>
-            
-            <View style={styles.resultStatsContainer}>
-              <View style={styles.resultStat}>
-                <Ionicons name="check-circle" size={24} color="#4CAF50" />
-                <Text style={styles.resultStatText}>Correct: {quizResult.correct_answers}</Text>
+
+            <View style={styles.scoreContainer}>
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>Obtained Marks</Text>
+                <Text style={styles.scoreValue}>{quizResult.obtainedMarks}</Text>
               </View>
-              
-              <View style={styles.resultStat}>
-                <Ionicons name="cancel" size={24} color="#E94560" />
-                <Text style={styles.resultStatText}>Wrong: {quizResult.wrong_answers}</Text>
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>Total Marks</Text>
+                <Text style={styles.scoreValue}>{quizResult.totalMarks}</Text>
+              </View>
+              <View style={styles.scoreBox}>
+                <Text style={styles.scoreLabel}>Correct Answers</Text>
+                <Text style={styles.scoreValue}>{quizResult.correctAnswers}/{quizResult.quizData.length}</Text>
               </View>
             </View>
-            
+
+            <View style={styles.percentageContainer}>
+              <Text style={styles.percentageText}>Score: {Math.round(percentageScore)}%</Text>
+            </View>
+
+            <View style={styles.answersContainer}>
+              <Text style={styles.answersTitle}>Question-wise Results:</Text>
+              {quizResult.quizData.map((question, index) => {
+                const submission = quizResult.yourSubmissions.find(s => s.QNo === question['Question NO']);
+                const isCorrect = submission?.StudentAnswer === question.Answer;
+                
+                return (
+                  <View key={index} style={[
+                    styles.answerItem,
+                    isCorrect ? styles.correctAnswer : styles.wrongAnswer
+                  ]}>
+                    <Text style={styles.questionText}>Q{question['Question NO']}: {question.Question}</Text>
+                    <Text style={styles.answerText}>Your Answer: {submission?.StudentAnswer || 'Not answered'}</Text>
+                    {!isCorrect && (
+                      <Text style={styles.correctAnswerText}>Correct Answer: {question.Answer}</Text>
+                    )}
+                    <Text style={styles.pointsText}>Points: {question.Points} {isCorrect ? '✓' : '✗'}</Text>
+                  </View>
+                );
+              })}
+            </View>
+
             <TouchableOpacity
               style={styles.closeModalButton}
               onPress={() => {
@@ -546,7 +586,9 @@ const TaskSubmit = () => {
         onLogout={() => navigation.replace('Login')}
       />
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}>
         {loading && !resultModalVisible && (
           <View style={styles.loaderOverlay}>
             <ActivityIndicator size="large" color="#4361EE" />
@@ -557,7 +599,9 @@ const TaskSubmit = () => {
         <View style={styles.headerContainer}>
           <Text style={styles.title}>{taskData?.title || 'Task'}</Text>
           <View style={styles.taskInfoRow}>
-            <Text style={styles.subtitle}>{taskData?.courseName || 'Unknown Course'}</Text>
+            <Text style={styles.subtitle}>
+              {taskData?.courseName || 'Unknown Course'}
+            </Text>
             {taskData?.points && (
               <View style={styles.pointsContainer}>
                 <Ionicons name="star" size={16} color="#FFD700" />
@@ -581,16 +625,16 @@ const TaskSubmit = () => {
 };
 
 // Helper function to format date time
-const formatDateTime = (dateTimeString) => {
+const formatDateTime = dateTimeString => {
   if (!dateTimeString) return 'N/A';
   try {
     const date = new Date(dateTimeString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: 'numeric',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   } catch (e) {
     return dateTimeString;
@@ -675,7 +719,7 @@ const styles = StyleSheet.create({
     borderColor: '#E9ECEF',
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -871,10 +915,11 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    maxHeight: '80%',
   },
   resultHeader: {
     alignItems: 'center',
@@ -890,42 +935,91 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#212529',
     fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  scoreCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#E7F1FF',
-    justifyContent: 'center',
+  scoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  scoreBox: {
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#4361EE',
-    marginBottom: 24,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#F8F9FA',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  scoreLabel: {
+    fontSize: 14,
+    color: '#6C757D',
+    marginBottom: 5,
   },
   scoreValue: {
-    fontSize: 24,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  percentageContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  percentageText: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#4361EE',
   },
-  resultStatsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  answersContainer: {
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 20,
   },
-  resultStat: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
+  answersTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 10,
   },
-  resultStatText: {
+  answerItem: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  correctAnswer: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderColor: '#4CAF50',
+  },
+  wrongAnswer: {
+    backgroundColor: 'rgba(233, 69, 96, 0.1)',
+    borderColor: '#E94560',
+  },
+  questionText: {
     fontSize: 16,
-    marginTop: 8,
+    fontWeight: '600',
+    color: '#212529',
+    marginBottom: 5,
+  },
+  answerText: {
+    fontSize: 14,
     color: '#495057',
-    fontWeight: '500',
+    marginBottom: 3,
+  },
+  correctAnswerText: {
+    fontSize: 14,
+    color: '#E94560',
+    marginBottom: 3,
+    fontStyle: 'italic',
+  },
+  pointsText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#495057',
   },
   closeModalButton: {
     backgroundColor: '#4361EE',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
     width: '100%',

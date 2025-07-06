@@ -11,7 +11,6 @@ import {
   StatusBar, 
   Linking, 
   Modal,
-  FlatList,
   Platform
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -161,6 +160,29 @@ const Createtask = ({ navigation, route }) => {
     }
   };
 
+  const handleViewContent = (content) => {
+    // Handle both string URLs and array content
+    let fileUrl = content;
+    
+    if (Array.isArray(content)) {
+      if (content.length > 0) {
+        fileUrl = content[0].content; // Assuming first item has the content URL
+      } else {
+        Alert.alert('Info', 'No content available for this task');
+        return;
+      }
+    }
+    
+    if (fileUrl) {
+      Linking.openURL(fileUrl).catch(err => {
+        console.error("Failed to open URL:", err);
+        Alert.alert('Error', 'Failed to open file', 'Please try again later');
+      });
+    } else {
+      Alert.alert('Info', 'No content available for this task');
+    }
+  };
+
   const renderWeekTasks = (courseId, week) => (
     <View key={`${courseId}-${week.weekNumber}`} style={styles.weekContainer}>
       <TouchableOpacity 
@@ -189,22 +211,33 @@ const Createtask = ({ navigation, route }) => {
                 </View>
               </View>
               
-              <TouchableOpacity 
-                style={styles.assignButton}
-                onPress={() => {
-                  setSelectedTask(task);
-                  setAssignmentState({
-                    points: '',
-                    startDate: new Date(),
-                    dueDate: new Date(Date.now() + 604800000), // One week from now
-                    selectedSections: [],
-                  });
-                }}
-                activeOpacity={0.8}
-              >
-                <Icon name="assignment" size={18} color={COLORS.white} style={styles.buttonIcon} />
-                <Text style={styles.assignButtonText}>Assign Task</Text>
-              </TouchableOpacity>
+              <View style={styles.taskButtonsContainer}>
+                <TouchableOpacity 
+                  style={[styles.taskButton, styles.viewButton]}
+                  onPress={() => handleViewContent(task.content)}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="visibility" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  <Text style={styles.taskButtonText}>View Content</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.taskButton, styles.assignButton]}
+                  onPress={() => {
+                    setSelectedTask(task);
+                    setAssignmentState({
+                      points: '',
+                      startDate: new Date(),
+                      dueDate: new Date(Date.now() + 604800000),
+                      selectedSections: [],
+                    });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="assignment" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  <Text style={styles.taskButtonText}>Assign Task</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
         </View>
@@ -413,13 +446,12 @@ const Createtask = ({ navigation, route }) => {
 
       {datePicker.visible && (
         <DateTimePicker
-          key={`${datePicker.type}-${datePicker.mode}`} // Force remount on mode/type change
+          key={`${datePicker.type}-${datePicker.mode}`}
           value={assignmentState[datePicker.type]}
           mode={datePicker.mode}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDateTimeChange}
           minimumDate={new Date()}
-          // Custom theming for Android
           themeVariant="light"
           textColor={COLORS.black}
           accentColor={COLORS.primary}
@@ -477,17 +509,13 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
   },
   scrollContainer: {
-    padding: 16,
+    padding: 6,
   },
   courseContainer: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
     marginBottom: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    padding: 10,
     elevation: 2,
   },
   courseTitleContainer: {
@@ -502,18 +530,18 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   weekContainer: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   weekHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: COLORS.lightGray,
-    padding: 14,
+    padding: 10,
     borderRadius: 8,
   },
   weekHeaderExpanded: {
-    backgroundColor: COLORS.secondary + '30', // 30% opacity
+    backgroundColor: COLORS.secondary + '30',
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
   },
@@ -538,12 +566,8 @@ const styles = StyleSheet.create({
   taskCard: {
     backgroundColor: COLORS.white,
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
     elevation: 1,
   },
   taskHeader: {
@@ -559,7 +583,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   taskTypeBadge: {
-    backgroundColor: COLORS.secondary + '30', // 30% opacity
+    backgroundColor: COLORS.secondary + '30',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 20,
@@ -569,17 +593,30 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-  assignButton: {
-    backgroundColor: COLORS.primary,
-    padding: 12,
+  taskButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  taskButton: {
+    flex: 1,
+    padding: 8,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginHorizontal: 4,
   },
-  assignButtonText: {
+  viewButton: {
+    backgroundColor: COLORS.darkGray,
+  },
+  assignButton: {
+    backgroundColor: COLORS.primary,
+  },
+  taskButtonText: {
     color: COLORS.white,
     fontWeight: 'bold',
+    fontSize: 14,
   },
   buttonIcon: {
     marginRight: 6,

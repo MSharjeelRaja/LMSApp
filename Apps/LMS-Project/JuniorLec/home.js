@@ -102,7 +102,7 @@ const J_Home = ({ navigation, route }) => {
       icon: "users",
       iconType: "FontAwesome5",
       color: colors.success,
-      onPress: () => navigation.navigate("JAttendencelist", { userData })
+      onPress: () => navigation.navigate("JAttendenceList", { userData })
     },
     
     {
@@ -119,6 +119,14 @@ const J_Home = ({ navigation, route }) => {
       iconType: "MaterialIcons",
       color: colors.orange,
       onPress: () => navigation.navigate("JCreatetask", { userData })
+    }
+     , {
+      id: 7,
+      title: "Considered tasks",
+      icon: "assignment",
+      iconType: "MaterialIcons",
+      color: colors.blueNavy,
+      onPress: () => navigation.navigate("ConsiderTaskJ", { userData })
     }
   ];
 
@@ -150,6 +158,7 @@ const J_Home = ({ navigation, route }) => {
           <View style={styles.profileInfo}>
           <View style={styles.dateHeader}>
           <Text style={styles.dateText}>{formatDate()}</Text>
+            <Text style={styles.dateText}>Current Week :{userData.week}</Text>
         </View>
         
             <Text style={styles.userName}>{userData.name}</Text>
@@ -284,47 +293,8 @@ const J_Home = ({ navigation, route }) => {
           </View>
         </View>
       
-        {/* Manage Graders Section */}
-        <View style={[styles.section,{marginBottom:80}]}>
-          <Text style={styles.sectionTitle}>Manage Graders</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.graderButtonsScrollContainer}
-          >
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("Grader", { userData })}
-            >
-              <FontAwesome5 name="user-plus" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Add Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("Grader", { userData })}
-            >
-              <FontAwesome5 name="user-plus" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Add Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("GraderList")}
-            >
-              <FontAwesome5 name="list-ol" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>View Graders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.graderButton}
-              onPress={() => navigation.navigate("GraderReports")}
-            >
-              <FontAwesome5 name="chart-bar" size={20} color={colors.white} />
-              <Text style={styles.graderButtonText}>Reports</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+
+        
       </ScrollView>
     </View>
   );
@@ -336,7 +306,7 @@ import {  Animated } from 'react-native';
 
 import CourseSections from "../TeacherScreens/CourseSections";
 import Courses from "../TeacherScreens/Courses";
-import JAttendenceList from "./JAttendenceList";
+import JAttendenceList from "./attendencesheet";
 
 const Tab = createBottomTabNavigator();
 
@@ -725,9 +695,9 @@ left:-120,
   section: {
     backgroundColor: colors.white,
     borderRadius: 16,
-    padding: 16,
+    padding: 10,
     marginHorizontal: 10,
-    marginBottom: 16,
+    marginBottom: 66,
     elevation: 4,
   },
   quickActionsContainer: {

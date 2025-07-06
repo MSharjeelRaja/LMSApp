@@ -18,12 +18,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import colors from '../ControlsAPI/colors';
 
 const MarkTask = ({ navigation, route }) => {
-  // Route params
-  const { taskId, taskname,points, userData = {} } = route.params;
+ const { taskId, taskname, points } = route.params;
   console.log("Task ID:", taskId);
   console.log("Task Name:", taskname);
   console.log("Points:", points);
-  console.log("User Data:", userData);
+
   // State management
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -225,8 +224,8 @@ const MarkTask = ({ navigation, route }) => {
       <SafeAreaView style={styles.container}>
         <Navbar
           title="Mark Task"
-          userName={userData?.name}
-          des="Teacher"
+          userName={'Grader'}
+          des="Grader"
           onLogout={() => navigation.replace('Login')}
           showBackButton={true}
         />
@@ -242,8 +241,8 @@ const MarkTask = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <Navbar
         title="Mark Task"
-        userName={userData?.name}
-        des="Teacher"
+        userName={'Grader'}
+        des="Grader"
         onLogout={() => navigation.replace('Login')}
         showBackButton={true}
       />

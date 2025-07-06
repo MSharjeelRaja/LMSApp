@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { API_URL } from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 import { useAlert } from '../ControlsAPI/alert';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ATTENDANCE_STATUS = {
   PRESENT: 'P',
@@ -34,7 +35,11 @@ const AttendanceScreen = ({ route, navigation }) => {
   });
   const alertContext = useAlert();
    const refreshList = route.params?.refreshList;
-
+useFocusEffect(
+  React.useCallback(() => {
+     fetchStudentList();
+  }, [])
+);
   
   const classData = route.params?.classData || {};
 fd=classData.fixed_date ;
@@ -65,6 +70,7 @@ fd=classData.fixed_date ;
       filterStudents();
     }
   }, [searchQuery]);
+   const [apiResponse, setApiResponse] = useState(null);
 
 const fetchStudentList = async () => {
   setLoading(true);
@@ -107,9 +113,9 @@ const fetchStudentList = async () => {
       throw new Error(errorMessage);
     }
 
-    const adata = await response.json();
+    adata = await response.json();
     console.log('API response data:', adata);
-    
+    setApiResponse(adata);
     if (!adata.students || !Array.isArray(adata.students)) {
       throw new Error("Invalid response format: students data missing.");
     }
@@ -448,23 +454,14 @@ const fetchStudentList = async () => {
         <TouchableOpacity 
           style={[styles.actionButton, styles.actionButtonLast]}
           onPress={() => {
-            const sorted = [...filteredStudents].sort((a, b) => 
-              a.name.localeCompare(b.name)
-            );
-            setFilteredStudents(sorted);
+           navigation.navigate('addseatingplan', {classData,apiResponse});
           }}
         >
           <Icon name="sort" size={18} color={colors.primary} />
           <Text style={styles.actionButtonText}>Sort</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('EnrollStudent')}
-        >
-          <Icon name="person-add" size={18} color={colors.primary} />
-          <Text style={styles.actionButtonText}>Enroll</Text>
-        </TouchableOpacity>
+      
       </View>
     </View>
   );

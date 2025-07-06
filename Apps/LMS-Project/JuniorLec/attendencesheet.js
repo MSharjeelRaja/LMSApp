@@ -20,18 +20,19 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
 
-const AttendenceList = ({ navigation, route }) => {
-  const userData = route.params?.userData.TeacherInfo || {};
+const JAttendenceList = ({ navigation, route }) => {
+  const userData = route.params?.userData || {};
   const classData = route.params?.userData;
   const Tid = global.Tid;
+  console.log('User Data:', userData);
+console.log('User Data:', userData.id);
 
-  // State for classes data
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // State for previous attendance modal
+
   const [showPreviousAttendanceModal, setShowPreviousAttendanceModal] = useState(false);
   const [courses, setCourses] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -52,35 +53,41 @@ const AttendenceList = ({ navigation, route }) => {
   }, []);
 useFocusEffect(
   React.useCallback(() => {
-       fetchTodayClasses();
+     fetchTodayClasses();
   }, [])
 );
-  const fetchTodayClasses = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-  
-      const response = await fetch(`${API_URL}/api/Teachers/today?teacher_id=${Tid}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch classes');
+   const fetchTodayClasses = async () => {
+      console.log('im classes today ')
+      try {
+        setLoading(true);
+        setError(null);
+    
+        const response = await fetch(`${API_URL}/api/JuniorLec/today?teacher_id=${userData.id}`);
+  console.log('Response:', response);
+        if (!response.ok) {
+          const errorData = await response.json(); 
+          throw new Error(errorData.message || 'Failed to fetch classes');
+        }
+        
+        const data = await response.json();
+        console.log('Fetched classes:', data);
+        const classesWithIds = data.map((item, index) => ({
+          ...item,
+          uniqueId: `${item.teacher_offered_course_id}_${index}_${Date.now()}`
+        }));
+        setClasses(classesWithIds);
+       
+      } catch (err) {
+        console.error('Error fetching today classes:', {
+          message: err.message,
+          stack: err.stack,
+          response: err.response, // If using a custom error object
+        });
+        setError(err.message || 'Failed to load classes. Please try again.');
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await response.json();
-      const classesWithIds = data.map((item, index) => ({
-        ...item,
-        uniqueId: `${item.teacher_offered_course_id}_${index}_${Date.now()}`
-      }));
-      setClasses(classesWithIds);
-     
-    } catch (err) {
-      console.error('Error fetching today classes:', err);
-      setError(err.message || 'Failed to load classes. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   const handleRefresh = async () => {
     try {
@@ -111,8 +118,9 @@ useFocusEffect(
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Teachers/your-courses?teacher_id=${Tid}`);
+      const response = await fetch(`${API_URL}/api/JuniorLec/your-courses?teacher_id=${Tid}`);
       const data = await response.json();
+      console.log('data'+data.data.active_courses)
       // Format active courses according to the API response
       const activeCourses = data.data?.active_courses?.map(course => ({
         id: course.teacher_offered_course_id,
@@ -152,7 +160,7 @@ fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTime
       attendance_status: 'Unmarked'
     };
 
-    navigation.navigate('MarkAttendence', { 
+    navigation.navigate('JAttendanceScreen', { 
       userData,
       classData: formattedClassData,
       refreshList: forceRefresh,
@@ -175,7 +183,7 @@ fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTime
           {
             text: 'Update',
             onPress: () => {
-              navigation.navigate('MarkAttendence', { 
+              navigation.navigate('JAttendanceScreen', { 
                 userData,
                 classData,
                 refreshList: forceRefresh(),
@@ -186,7 +194,7 @@ fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTime
         ]
       );
     } else {
-      navigation.navigate('MarkAttendence', { 
+      navigation.navigate('JAttendanceScreen', { 
         userData,
         classData,
         refreshList: forceRefresh(),
@@ -249,7 +257,7 @@ fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTime
         </TouchableOpacity>
       </View>
 
-   <Modal
+      <Modal
         visible={showPreviousAttendanceModal}
         animationType="slide"
         transparent={false}
@@ -358,6 +366,7 @@ fixed_date: selectedDate.toISOString().split('T')[0] + ' ' + selectedTime.toTime
           </ScrollView>
         </View>
       </Modal>
+
 
       {/* Main Content */}
       {loading ? (
@@ -575,72 +584,21 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 15,
-  }, previousAttendanceButton: {
-    backgroundColor: '#3498db', // Bright blue
-    padding: 10,
-    borderRadius: 5,
-    elevation: 3,
   },
-  previousAttendanceButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+    picker: {
+    color: 'black', // Ensures selected value is black
   },
-  modalContainer: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+  pickerItem: {
+    color: 'black', // Ensures dropdown items are black
   },
-  modalContent: {
-    flexGrow: 1,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 25,
-    textAlign: 'center',
-    color: '#2c3e50', // Dark blue-gray
-  },
-  inputContainer: {
-    marginBottom: 20,
+  dateTimeText: {
+    color: 'black', // Ensures date/time text is black
   },
   label: {
     marginBottom: 8,
     fontWeight: '600',
-    color: '#34495e', // Slightly darker blue-gray
+    color: 'black', // Changed to black
     fontSize: 16,
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#bdc3c7', // Light gray border
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    overflow: 'hidden',
-  },
-  dateTimeInput: {
-    borderWidth: 1,
-    borderColor: '#bdc3c7',
-    borderRadius: 8,
-    padding: 14,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    height: 50,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 25,
-    marginBottom: 15,
-  },picker: {
-  color: 'black', // Ensure picker text is black
-  height: 50,
-},
-pickerItem: {
-  color: 'black', // Ensure dropdown items are black
-},
-dateTimeText: {
-  color: 'black', // Add this
-  fontSize: 16,
-},
 });
-export default AttendenceList;
+export default JAttendenceList;

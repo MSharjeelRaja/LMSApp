@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, FlatList, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import colors from '../ControlsAPI/colors';
 
 const Degree_Courses = ({ navigation, route }) => {
    
@@ -184,7 +185,7 @@ const Degree_Courses = ({ navigation, route }) => {
             
             <View style={styles.content}>
                 <View style={styles.headerSection}>
-                    <Text style={styles.programTitle}>{userData.program} Program</Text>
+                    <Text style={styles.programTitle}>{userData.Program}</Text>
                     <View style={styles.intakeTag}>
                         <Text style={styles.intakeText}>{userData.InTake}</Text>
                     </View>
@@ -313,17 +314,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#2563eb',
+        paddingVertical:5,
+        paddingHorizontal:15,
+        backgroundColor: colors.primary,
     },
     semesterHeaderContent: {
         flex: 1,
     },
     semesterTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
         color: '#ffffff',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     courseCount: {
         fontSize: 14,
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffff',
     },
     courseCodeContainer: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: colors.primary,
         borderRadius: 12,
         width: 48,
         height: 48,
@@ -365,10 +367,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: 16,
         elevation: 2,
-        shadowColor: '#3b82f6',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
+  
     },
     courseCode: {
         color: '#ffffff',

@@ -150,6 +150,7 @@ console.log('Fetched course content:', data);
           item.type === 'Notes' && styles.notesBadge,
           item.type === 'Assignment' && styles.assignmentBadge,
           item.type === 'Quiz' && styles.quizBadge,
+              item.type === 'LabTask' && styles.quizBadge,
         ]}>
           <Text style={styles.typeText}>{item.type}</Text>
         </View>
@@ -165,10 +166,16 @@ console.log('Fetched course content:', data);
               <Text style={styles.topicText}>{topic.topic_name}</Text>
             </View>
           ))}
+           <TouchableOpacity 
+          style={styles.fileButton}
+          onPress={() => handleOpenFile(item.File)}
+        >
+          <Icon name="file-download" size={18} color="white" />
+          <Text style={styles.fileText}>View Notes</Text>
+        </TouchableOpacity>
         </View>
       )}
 
-      {/* Handle Assignments */}
       {item.type === 'Assignment' && item.File && (
         <TouchableOpacity 
           style={styles.fileButton}
@@ -176,6 +183,15 @@ console.log('Fetched course content:', data);
         >
           <Icon name="file-download" size={18} color="white" />
           <Text style={styles.fileText}>Download Assignment</Text>
+        </TouchableOpacity>
+      )}
+   {item.type === 'LabTask' && item.File && (
+        <TouchableOpacity 
+          style={styles.fileButton}
+          onPress={() => handleOpenFile(item.File)}
+        >
+          <Icon name="file-download" size={18} color="white" />
+          <Text style={styles.fileText}>Download LabTask</Text>
         </TouchableOpacity>
       )}
 
@@ -502,11 +518,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   contentContainer: {
-    marginTop: 10,
+    marginTop: 10, paddingBottom:50,
   },
   contentCard: {
     backgroundColor: colors.white,
     padding: 16,
+   
     marginBottom: 16,
     borderRadius: 10,
     shadowColor: colors.black,

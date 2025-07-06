@@ -7,14 +7,12 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
-  Image,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import colors from '../ControlsAPI/colors';
 import { API_URL, Navbar } from '../ControlsAPI/Comps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Svg, { Circle, Text as SvgText, G } from 'react-native-svg';
-import { BlurView } from '@react-native-community/blur';
 
 const SubjectAttendence = ({ navigation, route }) => {
   const [attendanceData, setAttendanceData] = useState(null);
@@ -22,37 +20,51 @@ const SubjectAttendence = ({ navigation, route }) => {
   const [isContesting, setIsContesting] = useState(false);
   const userData = route.params?.userData || {};
   const subject = route.params?.subject || {};
-console.log('uuuuu'+global.sid)
-console.log('ssssss'+subject.teacher_offered_course_id)
+console.log('Subject:', subject);
+console.log('User Data:', userData);
+const fetchAttendance = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch(
+      `${API_URL}/api/Students/attendancePerSubject?student_id=${userData.id}&teacher_offered_course_id=${subject.teacher_offered_course_id}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(data)
+    // Validate the response structure
+    if (!data || !data.data) {
+      throw new Error('Invalid data format received from server');
+    }
+    console.log('Attendance Data:', data.data);
+    setAttendanceData(data.data);
+  } catch (error) {
+    console.error('Fetch error:', error);
+    Alert.alert('Error', error.message || 'Failed to fetch attendance details');
+    setAttendanceData(null); // Reset data on error
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        const response = await fetch(
-          `${API_URL}/api/Students/attendancePerSubject?student_id=${global.sid}&teacher_offered_course_id=${subject.teacher_offered_course_id}`
-        );
-        const data = await response.json();
-        setAttendanceData(data.data);
-        console.log('Attendance Dat:', data.data);
-      } catch (error) {
-        Alert.alert('Error', 'Failed to fetch attendance details');
-      } finally {
-        setLoading(false);
-      }
-    };
+  
 
     fetchAttendance();
   }, []);
 
   const getAttendanceColor = (percentage) => {
-    if (percentage >= 90) return '#22C55E'; // Brighter green
-    if (percentage >= 75) return '#FBBF24'; // Bright amber
-    return '#EF4444'; // Bright red
+    if (percentage >= 90) return '#22C55E';
+    if (percentage >= 75) return '#FBBF24';
+    return '#EF4444';
   };
 
   const handleContestAttendance = (session) => {
     Alert.alert(
       "Contest Attendance",
-      `Are you sure you want to contest your attendance for ${new Date(session.date).toDateString()}?`,
+      `Are you sure you want to contest your attendance for ${new Date(session.date_time).toDateString()}?`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Contest", onPress: () => submitAttendanceContest(session) }
@@ -63,18 +75,16 @@ console.log('ssssss'+subject.teacher_offered_course_id)
   const submitAttendanceContest = async (session) => {
     setIsContesting(true);
     try {
-      console.log('Contest Attendance:', session);
-      console.log('Contest Attendance ID:', session.id);
       const response = await fetch(
         `${API_URL}/api/Students/contest-attendance?attendance_id=${session.id}`,
         {
-          method: 'Post', // or 'POST' depending on your API
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
         }
       );
-  console.log('Contest Attendance Response:', response);
+
       if (response.ok) {
         Alert.alert(
           "Contest Submitted",
@@ -86,7 +96,7 @@ console.log('ssssss'+subject.teacher_offered_course_id)
       }
     } catch (error) {
       Alert.alert("Error", "Failed to submit attendance contest.");
-    }finally {
+    } finally {
       setIsContesting(false);
     }
   };
@@ -94,8 +104,8 @@ console.log('ssssss'+subject.teacher_offered_course_id)
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar backgroundColor="#1E293B" barStyle="light-content" />
-        <ActivityIndicator size="large" color="#fff" />
+
+        <ActivityIndicator size="large" color="blue" />
       </View>
     );
   }
@@ -103,6 +113,9 @@ console.log('ssssss'+subject.teacher_offered_course_id)
   const attendancePercentage = attendanceData?.Total?.percentage
     ? parseFloat(Number(attendanceData.Total.percentage).toFixed(1))
     : 0;
+
+  // Determine if we should show lab section based on isLab field
+  const showLabSection = attendanceData?.isLab === "Lab";
 
   return (
     <View style={styles.container}>
@@ -125,7 +138,7 @@ console.log('ssssss'+subject.teacher_offered_course_id)
           <View style={styles.courseInfo}>
             <Text style={styles.courseCode}>{subject.course_code || 'CS101'}</Text>
             <Text style={styles.courseName}>{subject.course_name}</Text>
-            <Text style={styles.teacherName}>{subject.teacher_name} - {subject.junior_lec_name} • {subject.section_name}</Text>
+            <Text style={styles.teacherName}>{subject.teacher_name} - {subject.junior_lec_name==='N/A'?'':subject.junior_lec_name} • {subject.section_name}</Text>
           </View>
         </View>
 
@@ -162,38 +175,43 @@ console.log('ssssss'+subject.teacher_offered_course_id)
 
         {/* Tab Section Titles */}
         <View style={styles.sectionTypeRow}>
-        <SectionTypeTab 
-  title="Class Sessions" 
-  icon="class"
-  data={attendanceData?.Class || {}}
-/>
-<SectionTypeTab 
-  title="Lab Sessions" 
-  icon="science"
-  data={attendanceData?.Lab || {}}
-/>
+          <SectionTypeTab 
+            title="Class Sessions" 
+            icon="class"
+            data={attendanceData?.Class || {}}
+          />
+          {showLabSection && (
+            <SectionTypeTab 
+              title="Lab Sessions" 
+              icon="science"
+              data={attendanceData?.Lab || {}}
+            />
+          )}
         </View>
 
-   
+        {/* Attendance Sections */}
         <AttendanceSection
-  title="Class Sessions"
-  data={attendanceData?.Class}
-  icon="class"
-  handleContestAttendance={handleContestAttendance}
-  isContesting={isContesting}
-/>
+          title="Class Sessions"
+          data={attendanceData?.Class || {}}
+          icon="class"
+          handleContestAttendance={handleContestAttendance}
+          isContesting={isContesting}
+        />
 
-<AttendanceSection
-  title="Lab Sessions"
-  data={attendanceData?.Lab}
-  icon="science"
-  handleContestAttendance={handleContestAttendance}
-  isContesting={isContesting}
-/>
+        {showLabSection && (
+          <AttendanceSection
+            title="Lab Sessions"
+            data={attendanceData?.Lab || {}}
+            icon="science"
+            handleContestAttendance={handleContestAttendance}
+            isContesting={isContesting}
+          />
+        )}
       </ScrollView>
     </View>
   );
 };
+
 
 const AttendanceProgressWheel = ({ percentage, color }) => {
   const size = 80;
@@ -274,85 +292,100 @@ const SectionTypeTab = ({ title, icon, data = {} }) => (
 
 );
 
-const canContestAttendance = (date) => {
-  const sessionDate = new Date(date);
+const canContestAttendance = (date_time) => {
+  if (!date_time) return false;
+  const sessionDate = new Date(date_time);
   const currentDate = new Date();
   const timeDifference = currentDate - sessionDate;
   const hoursDifference = timeDifference / (1000 * 60 * 60);
   return hoursDifference < 24;
 };
 
-const AttendanceSection = ({ title, data, icon, handleContestAttendance, isContesting  }) => (
-  <View style={styles.sessionsContainer}>
-    {data.records.length === 0 ? (
-      <View style={styles.emptyState}>
-        <Icon name="event-busy" size={32} color="#94A3B8" />
-        <Text style={styles.emptyText}>No {title.toLowerCase()} found</Text>
-      </View>
-    ) : (
-      <>
-        {data.records.map((session, index) => {
-          const canContest = canContestAttendance(session.date);
-          const showContestButton = session.status === 'Absent' && canContest;
-          const isPresent = session.status === 'Present';
-          
-          return (
-            <View key={index} style={styles.sessionCard}>
-              <View style={styles.sessionCardHeader}>
-                <View style={styles.dateSection}>
-                  <Text style={styles.sessionDay}>
-                    {new Date(session.date).getDate()}
-                  </Text>
-                  <Text style={styles.sessionMonth}>
-                    {new Date(session.date).toLocaleString('default', { month: 'short' })}
-                  </Text>
-                </View>
-                
-                <View style={styles.sessionInfo}>
-                  <Text style={styles.sessionTime}>{session.time || '10:00 AM'}</Text>
-                  <Text style={styles.sessionVenue}>{session.venue || 'Room 101'}</Text>
-                </View>
-                
-                <View style={[styles.statusIndicator, { 
-                  backgroundColor: isPresent ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                  borderColor: isPresent ? '#22C55E' : '#EF4444'
-                }]}>
-                  <Icon 
-                    name={isPresent ? 'check' : 'close'} 
-                    size={14} 
-                    color={isPresent ? '#22C55E' : '#EF4444'} 
-                  />
-                  <Text style={[styles.statusText, { 
-                    color: isPresent ? '#22C55E' : '#EF4444' 
+const AttendanceSection = ({ title, data, icon, handleContestAttendance, isContesting }) => {
+  // Safely handle undefined data or records
+  const records = data?.records || [];
+    const sectionType = title.toLowerCase().includes('lab') ? 'Lab Attendance' : 'Class Attendance';
+
+  return (
+    <View style={styles.sessionsContainer}>
+       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1E293B', marginBottom: 10 }}>
+        {sectionType}
+      </Text>
+
+      {records.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Icon name="event-busy" size={32} color="#94A3B8" />
+          <Text style={styles.emptyText}>No {title.toLowerCase()} found</Text>
+        </View>
+      ) : (
+        <>
+
+          {records.map((session, index) => {
+            const canContest = canContestAttendance(session.date_time);
+            const showContestButton = session.status === 'Absent' && canContest && !session.contested;
+            const isPresent = session.status === 'Present';
+            const sessionDate = session.date_time ? new Date(session.date_time) : new Date();
+            
+            return (
+              <View key={index} style={styles.sessionCard}>
+                <View style={styles.sessionCardHeader}>
+                  <View style={styles.dateSection}>
+                    <Text style={styles.sessionDay}>
+                      {sessionDate.getDate()}
+                    </Text>
+                    <Text style={styles.sessionMonth}>
+                      {sessionDate.toLocaleString('default', { month: 'short' })}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.sessionInfo}>
+                    <Text style={styles.sessionTime}>
+                      {sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                    <Text style={styles.sessionVenue}>{session.venue || 'Unknown Venue'}</Text>
+                  </View>
+                  
+                  <View style={[styles.statusIndicator, { 
+                    backgroundColor: isPresent ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    borderColor: isPresent ? '#22C55E' : '#EF4444'
                   }]}>
-                    {session.status}
-                  </Text>
+                    <Icon 
+                      name={isPresent ? 'check' : 'close'} 
+                      size={14} 
+                      color={isPresent ? '#22C55E' : '#EF4444'} 
+                    />
+                    <Text style={[styles.statusText, { 
+                      color: isPresent ? '#22C55E' : '#EF4444' 
+                    }]}>
+                      {session.status}
+                    </Text>
+                  </View>
                 </View>
+                
+                {showContestButton && (
+                  <TouchableOpacity 
+                    style={styles.contestButton}
+                    onPress={() => handleContestAttendance(session)}
+                    disabled={isContesting}
+                  >
+                    {isContesting ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Icon name="gavel" size={14} color="#fff" />
+                        <Text style={styles.contestButtonText}>Contest</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
-              
-              {showContestButton && (
-         <TouchableOpacity 
-         style={styles.contestButton}
-         onPress={() => handleContestAttendance(session)}
-         disabled={isContesting}
-       >
-         {isContesting ? (
-           <ActivityIndicator size="small" color="#fff" />
-         ) : (
-           <>
-             <Icon name="gavel" size={14} color="#fff" />
-             <Text style={styles.contestButtonText}>Contest</Text>
-           </>
-         )}
-       </TouchableOpacity>
-              )}
-            </View>
-          );
-        })}
-      </>
-    )}
-  </View>
-);
+            );
+          })}
+        </>
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -363,7 +396,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: 'white',
   },
   scrollContent: {
     paddingBottom: 24,

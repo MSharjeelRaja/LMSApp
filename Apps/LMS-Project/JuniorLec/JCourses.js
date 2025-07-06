@@ -53,14 +53,7 @@ import {
     }, []);
   
     const renderCourseCard = (course) => (
-      <TouchableOpacity 
-        style={styles.courseCard} 
-        key={course.teacher_offered_course_id}
-        onPress={() => navigation.navigate('CourseInfo', { 
-          courseData: course,
-          userData: userData 
-        })}
-      >
+   <View  style={styles.courseCard} >
         <View style={styles.cardHeader}>
           <View>
             <Text style={styles.courseTitle}>{course.course_name}</Text>
@@ -93,7 +86,7 @@ import {
             </View>
           )}
         </View>
-      </TouchableOpacity>
+     </View>
     );
   
     const getCurrentSession = () => {

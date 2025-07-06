@@ -1,27 +1,141 @@
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Image, 
-  Modal,Alert,
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
   FlatList,
-  Dimensions,
-  Linking,
+  SafeAreaView,
+  Alert,
   Animated,
-  SectionList
+  SectionList,
+  Modal,
+  ScrollView,
+  Linking,
 } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
-import { Platform, ToastAndroid } from 'react-native';
-import RNFetchBlob from 'react-native-blob-util'
-import { useAlert } from '../ControlsAPI/alert';
+import {useAlert} from '../ControlsAPI/alert';
 
-const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
+const ExamResultModal = ({visible, onClose, examResult}) => {
+  return (
+    <Modal
+      animationType="slide"
+      transparent={false}
+      visible={visible}
+      onRequestClose={onClose}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Exam Results</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>×</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.modalContent}>
+          {examResult &&
+          examResult.exam_results &&
+          Object.keys(examResult.exam_results).length > 0 ? (
+            Object.entries(examResult.exam_results).map(([examType, exams]) => (
+              <View key={examType} style={styles.examTypeContainer}>
+                <Text style={styles.examTypeHeader}>{examType} Exam</Text>
+
+                {exams.map((exam, index) => (
+                  <View
+                    key={`${examType}-${index}`}
+                    style={styles.examDetailContainer}>
+                    <View style={styles.examMetaRow}>
+                      <Text style={styles.examMetaLabel}>Status:</Text>
+                      <Text
+                        style={[
+                          styles.examMetaValue,
+                          exam.status === 'Declared'
+                            ? styles.statusDeclared
+                            : styles.statusPending,
+                        ]}>
+                        {exam.status}
+                      </Text>
+                    </View>
+
+                    <View style={styles.examMetaRow}>
+                      <Text style={styles.examMetaLabel}>Total Marks:</Text>
+                      <Text style={styles.examMetaValue}>
+                        {exam.total_marks}
+                      </Text>
+                    </View>
+
+                    <View style={styles.examMetaRow}>
+                      <Text style={styles.examMetaLabel}>Obtained Marks:</Text>
+                      <Text style={styles.examMetaValue}>
+                        {exam.obtained_marks || 'Not available'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.examMetaRow}>
+                      <Text style={styles.examMetaLabel}>Solid Marks:</Text>
+                      <Text style={styles.examMetaValue}>
+                        {exam.solid_marks}
+                      </Text>
+                    </View>
+
+                    <View style={styles.examMetaRow}>
+                      <Text style={styles.examMetaLabel}>Equivalent:</Text>
+                      <Text style={styles.examMetaValue}>
+                        {exam.solid_marks_equivalent}
+                      </Text>
+                    </View>
+
+                    {exam.exam_question_paper && (
+                      <TouchableOpacity
+                        style={styles.viewPaperButton}
+                        onPress={() =>
+                          Linking.openURL(exam.exam_question_paper)
+                        }>
+                        <Text style={styles.viewPaperButtonText}>
+                          View Question Paper
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {exam.questions && exam.questions.length > 0 && (
+                      <View style={styles.questionsContainer}>
+                        <Text style={styles.questionsHeader}>
+                          Question-wise Marks:
+                        </Text>
+                        {exam.questions.map((question, qIndex) => (
+                          <View key={`q-${qIndex}`} style={styles.questionRow}>
+                            <Text style={styles.questionNumber}>
+                              Q{question.q_no}:
+                            </Text>
+                            <Text style={styles.questionMarks}>
+                              {question.obtained_marks !== null
+                                ? `${question.obtained_marks}/${question.marks}`
+                                : `-/ ${question.marks}`}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            ))
+          ) : (
+            <View style={styles.noExamContainer}>
+              <Text style={styles.noExamText}>No exam results available</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
+
+const CourseCard = ({course, onPress, examResult, onReEnroll}) => {
   const [expanded, setExpanded] = useState(false);
+  const [showExamModal, setShowExamModal] = useState(false);
   const animatedHeight = useRef(new Animated.Value(0)).current;
 
   const toggleExpand = () => {
@@ -29,12 +143,15 @@ const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
     Animated.timing(animatedHeight, {
       toValue: expanded ? 0 : 1,
       duration: 300,
-      useNativeDriver: false
+      useNativeDriver: false,
     }).start();
   };
 
-  // Only show re-enroll button if can_re_enroll is exactly "Yes" (case-sensitive)
-  const showReEnroll = course.can_re_enroll === "Yes";
+  const showReEnroll = course.can_re_enroll === 'Yes';
+  const hasExamResults =
+    examResult &&
+    examResult.exam_results &&
+    Object.keys(examResult.exam_results).length > 0;
 
   return (
     <View style={styles.cardContainer}>
@@ -43,74 +160,83 @@ const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
           <View style={styles.courseInfo}>
             <Text style={styles.courseName}>{course.course_name}</Text>
             <Text style={styles.courseCode}>{course.course_code}</Text>
-    
-            {/* Show Lab Tag */}
-            {course.Is === "Lab" && (
-              <Text style={styles.labTag}>Lab</Text>
-            )}
+
+            {course.Is === 'Lab' && <Text style={styles.labTag}>Lab</Text>}
           </View>
-    
+
           <View style={styles.courseDetails}>
-            <Text style={styles.detailText}>Credits: {course.credit_hours}</Text>
+            <Text style={styles.detailText}>
+              Credits: {course.credit_hours}
+            </Text>
             <Text style={styles.detailText}>Type: {course.Type}</Text>
             <Text style={styles.detailText}>Section: {course.section}</Text>
           </View>
         </View>
-    
-        {/* Teacher Info */}
+
         <View style={styles.teacherInfo}>
           {course.teacher_image ? (
-            <Image 
-              source={{ uri: course.teacher_image }} 
+            <Image
+              source={{uri: course.teacher_image}}
               style={styles.teacherImage}
             />
           ) : (
             <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>{course.teacher_name?.charAt(0) || "T"}</Text>
+              <Text style={styles.placeholderText}>
+                {course.teacher_name?.charAt(0) || 'T'}
+              </Text>
             </View>
           )}
           <Text style={styles.teacherName}>{course.teacher_name}</Text>
         </View>
-    
-        {/* Junior Lecturer Info - if available */}
+
         {course.junior_lecturer_name && (
           <View style={styles.teacherInfo}>
             {course.junior_image ? (
-              <Image 
-                source={{ uri: course.junior_image }} 
+              <Image
+                source={{uri: course.junior_image}}
                 style={styles.teacherImage}
               />
             ) : (
               <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderText}>{course.junior_lecturer_name?.charAt(0) || "J"}</Text>
+                <Text style={styles.placeholderText}>
+                  {course.junior_lecturer_name?.charAt(0) || 'J'}
+                </Text>
               </View>
             )}
-            <Text style={styles.teacherName}>JL {course.junior_lecturer_name}</Text>
+            <Text style={styles.teacherName}>
+              JL {course.junior_lecturer_name}
+            </Text>
           </View>
         )}
       </TouchableOpacity>
-    
-      {/* Conditionally render re-enroll button */}
+
       {showReEnroll && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.reEnrollButton}
-          onPress={() => onReEnroll(course)}
-        >
+          onPress={() => onReEnroll(course)}>
           <Text style={styles.reEnrollButtonText}>Re-enroll</Text>
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.examButton} onPress={toggleExpand}>
+      <TouchableOpacity
+        style={styles.examButton}
+        onPress={() =>
+          hasExamResults ? setShowExamModal(true) : toggleExpand()
+        }>
         <Text style={styles.examButtonText}>Exam Results</Text>
-        <Text style={styles.examButtonIcon}>{expanded ? "▲" : "▼"}</Text>
+        <Text style={styles.examButtonIcon}>{expanded ? '▲' : '▼'}</Text>
       </TouchableOpacity>
-    
-      <Animated.View style={[styles.examResultsContainer, {
-        maxHeight: animatedHeight.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 200]
-        })
-      }]}>
+
+      <Animated.View
+        style={[
+          styles.examResultsContainer,
+          {
+            maxHeight: animatedHeight.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 200],
+            }),
+          },
+        ]}>
         {examResult ? (
           <View style={styles.examResultContent}>
             <View style={styles.examRow}>
@@ -119,7 +245,9 @@ const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
             </View>
             <View style={styles.examRow}>
               <Text style={styles.examLabel}>Obtained:</Text>
-              <Text style={styles.examValue}>{examResult.obtained_marks}</Text>
+              <Text style={styles.examValue}>
+                {examResult.obtained_marks || 'Not available'}
+              </Text>
             </View>
             <View style={styles.examRow}>
               <Text style={styles.examLabel}>Solid Marks:</Text>
@@ -127,184 +255,58 @@ const CourseCard = ({ course, onPress, examResult, onReEnroll }) => {
             </View>
             <View style={styles.examRow}>
               <Text style={styles.examLabel}>Equivalent:</Text>
-              <Text style={styles.examValue}>{examResult.solid_marks_equivalent}</Text>
+              <Text style={styles.examValue}>
+                {examResult.solid_marks_equivalent}
+              </Text>
             </View>
+            {hasExamResults && (
+              <TouchableOpacity
+                style={styles.viewDetailsButton}
+                onPress={() => setShowExamModal(true)}>
+                <Text style={styles.viewDetailsButtonText}>
+                  View Detailed Results
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <Text style={styles.noExamData}>No exam results available</Text>
         )}
       </Animated.View>
+
+      <ExamResultModal
+        visible={showExamModal}
+        onClose={() => setShowExamModal(false)}
+        examResult={examResult}
+      />
     </View>
   );
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const CourseContentItem = ({ item, onDownload }) => {
-   const alertContext = useAlert() 
- 
-  const handleFileDownload = async (url, fileName) => {
-    if (!url) {
-      alertContext.showAlert('error', 'Invalid file URL', 'Download Error');
-      return;
-    }
-   alertContext.showAlert('info', 'Starting download...', 'Transcript', 3000);
-        
-    try {
-      const downloadDir = RNFetchBlob.fs.dirs[Platform.OS === 'android' ? 'DownloadDir' : 'DocumentDir'];
-      const fileExt = url.split('.').pop().toLowerCase() || 'file';
-      const cleanName = `${fileName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}`;
-
-      const config = {
-        fileCache: false,
-        path: `${downloadDir}/${cleanName}.${fileExt}`,
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          title: fileName,
-          description: 'File download',
-          mime: 'application/octet-stream'
-        }
-      };
-
-      alertContext.showAlert('info', 'Starting download...', 'File Download');
-     
-      const response = await RNFetchBlob.config(config)
-        .fetch('GET', url)
-        .progress((received, total) => {
-          console.log(`Download progress: ${Math.round((received / total) * 100)}%`);
-        });
-
-      // Verify file existence
-      const fileExists = await RNFetchBlob.fs.exists(response.path());
-      if (fileExists) {
-        alertContext.showAlert('success', 'File downloaded successfully!');
-        Platform.OS === 'android' && 
-          ToastAndroid.show('File saved to Downloads', ToastAndroid.LONG);
-      } else {
-        alertContext.showAlert('error', 'Failed to save file', 'Download Error');
-      }
-
-    } catch (error) {
-      console.error('Download error:', error);
-      const errorMessage = error.message.includes('network') 
-        ? 'Check your internet connection' 
-        : error.message.includes('ENOENT')
-        ? 'Storage access denied'
-        : 'Download failed';
-      alertContext.showAlert('error', errorMessage, 'Download Error');
-    }
-  };
-  const renderTopics = () => {
-    if (!item.topics || !Array.isArray(item.topics) || item.topics.length === 0) {
-      return null;
-    }
-
-    return (
-      <View style={styles.topicsContainer}>
-        <Text style={styles.topicsHeader}>Topics:</Text>
-        {item.topics.map((topic, index) => {
-          const topicText =
-            typeof topic === 'object' && topic !== null
-              ? topic.topic_name || topic.topic || JSON.stringify(topic).slice(0, -devel50)
-              : topic;
-
-          return (
-            <Text key={index} style={styles.topicItem}>• {topicText}</Text>
-          );
-        })}
-      </View>
-    );
-  };
-
-  return (
-    <View style={styles.contentItem}>
-      <View style={styles.contentItemHeader}>
-        <View style={styles.contentTypeIcon}>
-          <Text style={styles.contentTypeIconText}>
-            {item.type === 'Notes'
-              ? '📝'
-              : item.type === 'Assignment'
-              ? '📋'
-              : item.type === 'Quiz'
-              ? '❓'
-              : item.type === 'MCQS'
-              ? '🔍'
-              : '📄'}
-          </Text>
-        </View>
-        <View style={styles.contentInfo}>
-          <Text style={styles.contentTitle}>{item.title}</Text>
-          <Text style={styles.contentType}>
-            Week {item.week} • {item.type}
-          </Text>
-        </View>
-      </View>
-
-      {renderTopics()}
-
-      {item.File && (
-     <TouchableOpacity
-     style={styles.downloadButton}
-     onPress={() => handleFileDownload(item.File, item.title)}
-   >
-     <Text style={styles.buttonText}>📥 Download {item.type}</Text>
-   </TouchableOpacity>
-      )}
-    </View>
-  );
-};
 const Courses = ({navigation, route}) => {
   const userData = route.params?.userData || {};
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showcourses, setShowAllCourses] = useState(false);
-
   const [activeTab, setActiveTab] = useState('current');
   const [courses, setCourses] = useState({
     CurrentCourses: [],
-    PreviousCourses: {}
-  });
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [activeOption, setActiveOption] = useState('content');
-  const [courseContent, setCourseContent] = useState({
-    Active: [],
-    Previous: []
+    PreviousCourses: {},
   });
   const [examResults, setExamResults] = useState([]);
-  const [contentLoading, setContentLoading] = useState(false);
-  const [examLoading, setExamLoading] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(null);
-   const alertContext = useAlert() 
+  const alertContext = useAlert();
+
   useEffect(() => {
     fetchData();
   }, []);
-  const handleReEnroll = async (course) => {
+
+  const handleReEnroll = async course => {
     Alert.alert(
       'Re-enroll Confirmation',
       `Re-enroll in ${course.course_name}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Confirm', 
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Confirm',
           onPress: async () => {
             if (!course.student_offered_course_id) {
               alertContext.showAlert('error', 'Invalid course ID', 'Error');
@@ -312,37 +314,39 @@ const Courses = ({navigation, route}) => {
             }
 
             try {
-              const response = await fetch(`${API_URL}/api/Insertion/re_enroll/add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  student_offered_course_id: course.student_offered_course_id.toString()
-                })
-              });
+              const response = await fetch(
+                `${API_URL}/api/Insertion/re_enroll/add`,
+                {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({
+                    student_offered_course_id:
+                      course.student_offered_course_id.toString(),
+                  }),
+                },
+              );
 
               const result = await response.json();
-              
+
               if (response.ok) {
                 alertContext.showAlert('success', 'Re-enrollment successful!');
-                fetchCourses(); // Refresh courses
+                fetchCourses();
               } else {
                 throw new Error(result.message || 'Re-enrollment failed');
               }
             } catch (error) {
               alertContext.showAlert('error', error.message);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchCourses(),
-        fetchExamResults()
-      ]);
+      await Promise.all([fetchCourses(), fetchExamResults()]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -352,13 +356,18 @@ const Courses = ({navigation, route}) => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Students/getAllEnrollments?student_id=${userData.id}`);
+      const response = await fetch(
+        `${API_URL}/api/Students/getAllEnrollments?student_id=${userData.id}`,
+      );
       const data = await response.json();
-      console.log('enrollment data fetched:', data);
-      if (data.success === 'Fetcehd Successfully !' || data.status === 'success') {
+      console.log(data);
+      if (
+        data.success === 'Fetcehd Successfully !' ||
+        data.status === 'success'
+      ) {
         setCourses({
           CurrentCourses: data.CurrentCourses || [],
-          PreviousCourses: data.PreviousCourses || {}
+          PreviousCourses: data.PreviousCourses || {},
         });
       } else {
         setError('Failed to fetch courses');
@@ -369,158 +378,75 @@ const Courses = ({navigation, route}) => {
     }
   };
 
-  const fetchCourseContent = async (course) => {
-    setContentLoading(true);
+  const fetchExamResults = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/Students/getStudentCourseContent?student_id=${userData.id}&offered_course_id=${course.offered_course_id || course.teacher_offered_course_id}`
+        `${API_URL}/api/Students/exam-result?student_id=${userData.id}`,
+        {
+          method: 'POST',
+        },
       );
       const data = await response.json();
-      console.log('Course content data:', data);
-      if (data.success === 'success') {
-        setCourseContent(data.data || { Active: [], Previous: [] });
-      }
-    } catch (err) {
-      console.error('Error fetching course content:', err);
-      setError('Failed to load course content');
-    } finally {
-      setContentLoading(false);
-    }
-  };
-
-  const fetchExamResults = async () => {
-    setExamLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/api/Students/exam-result?student_id=${userData.id}`, {
-        method: 'POST',
-      });
-      const data = await response.json();
-      console.log('Exam results data:', data);
       if (data.status === 'success') {
         setExamResults(data.data || []);
       }
     } catch (err) {
       console.error('Error fetching exam results:', err);
       setError('Failed to load exam results');
-    } finally {
-      setExamLoading(false);
     }
   };
 
-  const handleCourseClick = async (course) => {
-    console.log('Course clicked:', course);
-    setSelectedCourse(course);
-    setModalVisible(true);
-    setActiveOption('content');
-    await fetchCourseContent(course);
+  const handleCourseClick = course => {
+    navigation.navigate('CourseContent', {
+      student_id: userData.id,
+      offered_course_id: course.offered_course_id,
+      studentname: userData.name,
+      course: course.course_name,
+    });
   };
 
-  const handleOptionChange = (option) => {
-    setActiveOption(option);
-  };
-
-  const handleDownload = (fileUrl) => {
-    if (fileUrl) {
-      Linking.openURL(fileUrl);
-    }
-  };
-
-  const getExamResultForCourse = (course) => {
+  const getExamResultForCourse = course => {
     if (!examResults || examResults.length === 0) return null;
-    return examResults.find(result => 
-      result.course_name === course.course_name && 
-      result.section === course.section
+    return examResults.find(
+      result =>
+        result.course_name === course.course_name &&
+        result.section === course.section,
     );
   };
 
   const organizePreviousCourses = () => {
     const sections = [];
     if (!courses.PreviousCourses) return sections;
-    
+
     Object.keys(courses.PreviousCourses).forEach(semester => {
-      if (Array.isArray(courses.PreviousCourses[semester]) && courses.PreviousCourses[semester].length > 0) {
+      if (
+        Array.isArray(courses.PreviousCourses[semester]) &&
+        courses.PreviousCourses[semester].length > 0
+      ) {
         sections.push({
           title: semester,
-          data: courses.PreviousCourses[semester]
+          data: courses.PreviousCourses[semester],
         });
       }
     });
-    
+
     return sections;
-  };
-
-  const organizeContentByWeek = () => {
-    if (!selectedCourse || !courseContent.Active) return {};
-    
-    const activeCourse = courseContent.Active.find(course => 
-      course.course_name === selectedCourse.course_name
-    );
-    
-    if (!activeCourse || !activeCourse.course_content) return {};
-    
-    const weeklyContent = {};
-    Object.keys(activeCourse.course_content).forEach(weekNumber => {
-      const weekItems = activeCourse.course_content[weekNumber];
-      if (Array.isArray(weekItems) && weekItems.length > 0) {
-        weeklyContent[weekNumber] = weekItems;
-      }
-    });
-    
-    return weeklyContent;
-  };
-
-  const renderWeekSelector = (weeklyContent) => {
-    const weeks = Object.keys(weeklyContent).sort((a, b) => parseInt(a) - parseInt(b));
-    if (weeks.length === 0) return null;
-    
-    // Set default selected week if none is selected
-    if (!selectedWeek && weeks.length > 0) {
-      setSelectedWeek(weeks[0]);
-    }
-    
-    return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.weekSelectorContainer}
-      >
-        {weeks.map((week) => (
-          <TouchableOpacity
-            key={week}
-            style={[
-              styles.weekItem,
-              selectedWeek === week && styles.selectedWeekItem
-            ]}
-            onPress={() => setSelectedWeek(week)}
-          >
-            <Text 
-              style={[
-                styles.weekText,
-                selectedWeek === week && styles.selectedWeekText
-              ]}
-            >
-              Week {week}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    );
   };
 
   const renderCurrentCourses = () => {
     return (
       <FlatList
         data={courses.CurrentCourses}
-        keyExtractor={(item, index) => `current-${item.offered_course_id || index}`}
-      
-renderItem={({ item }) => (
-  <CourseCard 
-    course={item} 
-    onPress={handleCourseClick}
-    examResult={getExamResultForCourse(item)}
-   
-  />
-)}
+        keyExtractor={(item, index) =>
+          `current-${item.offered_course_id || index}`
+        }
+        renderItem={({item}) => (
+          <CourseCard
+            course={item}
+            onPress={handleCourseClick}
+            examResult={getExamResultForCourse(item)}
+          />
+        )}
         contentContainerStyle={styles.coursesList}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -533,67 +459,20 @@ renderItem={({ item }) => (
 
   const renderPreviousCourses = () => {
     const sections = organizePreviousCourses();
-const handleReEnroll = (course) => {
-  Alert.alert(
-    'Re-enroll Confirmation',
-    `Are you sure you want to re-enroll in ${course.course_name} (${course.course_code})?`,
-    [
-      {
-        text: 'Cancel',
-        style: 'cancel'
-      },
-      {
-        text: 'Yes',
-        onPress: () => confirmReEnroll(course)
-      }
-    ]
-  );
-};
 
-const confirmReEnroll = async (course) => {
-  if (!course.student_offered_course_id) {
-    alertContext.showAlert('error', 'Invalid course ID for re-enrollment', 'Error', 3000);
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_URL}/api/Insertion/re_enroll/add`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        student_offered_course_id: course.student_offered_course_id.toString()
-      })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alertContext.showAlert('success', 'Successfully re-enrolled in the course', 'Success', 3000);
-      // Refresh the course data
-      fetchCourses();
-    } else {
-      throw new Error(result.message || 'Failed to re-enroll');
-    }
-  } catch (error) {
-    console.error('Re-enroll error:', error);
-    alertContext.showAlert('error', error.message, 'Re-enroll Failed', 3000);
-  }
-};
     return (
       <SectionList
         sections={sections}
         keyExtractor={(item, index) => `previous-${index}`}
-     renderItem={({ item }) => (
-  <CourseCard 
-    course={item} 
-    onPress={handleCourseClick}
-    examResult={getExamResultForCourse(item)}
-    onReEnroll={handleReEnroll}
-  />
-)}
-        renderSectionHeader={({ section: { title } }) => (
+        renderItem={({item}) => (
+          <CourseCard
+            course={item}
+            onPress={handleCourseClick}
+            examResult={getExamResultForCourse(item)}
+            onReEnroll={handleReEnroll}
+          />
+        )}
+        renderSectionHeader={({section: {title}}) => (
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionHeaderText}>{title}</Text>
           </View>
@@ -608,59 +487,16 @@ const confirmReEnroll = async (course) => {
     );
   };
 
-  const renderModalContent = () => {
-    if (contentLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      );
-    }
-
-    const weeklyContent = organizeContentByWeek();
-    const weeks = Object.keys(weeklyContent);
-
-    if (weeks.length === 0) {
-      return (
-        <View style={styles.noContentContainer}>
-          <Text style={styles.noContentText}>No content available for this course</Text>
-        </View>
-      );
-    }
-
-    const currentWeekContent = weeklyContent[selectedWeek || weeks[0]] || [];
-
-    return (
-      <View style={styles.modalContentContainer}>
-        {renderWeekSelector(weeklyContent)}
-        
-        <FlatList
-          data={currentWeekContent}
-          keyExtractor={(item, index) => `content-${item.course_content_id || index}`}
-          renderItem={({ item }) => (
-            <CourseContentItem 
-              item={item} 
-              onDownload={handleDownload}
-            />
-          )}
-          contentContainerStyle={styles.contentList}
-        />
-      </View>
-    );
-  };
-
-  console.log('Rendering courses component, loading:', loading, 'current courses:', courses.CurrentCourses?.length);
-
   return (
-    <View style={styles.container}>
-       <Navbar
-                 title="Courses"
-                 userName={userData.name}
-                 des={'Student'}
-                 onLogout={() => navigation.replace('Login')}
-                 showBackButton={true}
-                 onBack={() => navigation.goBack()}
-             />
+    <SafeAreaView style={styles.container}>
+      <Navbar
+        title="Courses"
+        userName={userData.name}
+        des={'Student'}
+        onLogout={() => navigation.replace('Login')}
+        showBackButton={true}
+        onBack={() => navigation.goBack()}
+      />
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -675,65 +511,42 @@ const confirmReEnroll = async (course) => {
       ) : (
         <View style={styles.content}>
           <View style={styles.tabContainer}>
-           <TouchableOpacity 
-  style={[styles.tab, activeTab === 'current' && styles.activeTab]} 
-  onPress={() => {
-    setActiveTab('current');
-
-    setShowAllCourses(false);
-  }}
->
-  <Text style={[styles.tabText, activeTab === 'current' && styles.activeTabText]}>
-    Current Courses
-  </Text>
-</TouchableOpacity>
-<TouchableOpacity 
-  style={[styles.tab, activeTab === 'previous' && styles.activeTab]} 
-  onPress={() => {
-    setActiveTab('previous');
-    setShowAllCourses(false);
-  }}
->
-  <Text style={[styles.tabText, activeTab === 'previous' && styles.activeTabText]}>
-    Previous Courses
-  </Text>
-</TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'current' && styles.activeTab]}
+              onPress={() => setActiveTab('current')}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'current' && styles.activeTabText,
+                ]}>
+                Current Courses
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'previous' && styles.activeTab]}
+              onPress={() => setActiveTab('previous')}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'previous' && styles.activeTabText,
+                ]}>
+                Previous Courses
+              </Text>
+            </TouchableOpacity>
           </View>
-          
-          {activeTab === 'current' ? renderCurrentCourses() : renderPreviousCourses()}
+
+          {activeTab === 'current'
+            ? renderCurrentCourses()
+            : renderPreviousCourses()}
         </View>
       )}
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>
-              {selectedCourse?.course_name}
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              {selectedCourse?.course_code} • {selectedCourse?.section}
-            </Text>
-          </View>
-          
-          {renderModalContent()}
-        </View>
-      </Modal><TouchableOpacity 
-  style={styles.allCoursesButton}
-  onPress={() => navigation.navigate('degreecourses', { userData })}
->
-  <Text style={styles.allCoursesButtonText}>
-    Show All Courses
-  </Text>
-</TouchableOpacity>
-    </View>
+      <TouchableOpacity
+        style={styles.allCoursesButton}
+        onPress={() => navigation.navigate('degreecourses', {userData})}>
+        <Text style={styles.allCoursesButtonText}>Show Degree Courses</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
@@ -768,9 +581,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
-  },labTag: {
-    backgroundColor: "#f39c12",
-    color: "#fff",
+  },
+  labTag: {
+    backgroundColor: '#f39c12',
+    color: '#fff',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -778,7 +592,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     alignSelf: 'flex-start',
   },
-  
   retryButtonText: {
     color: '#ffffff',
     fontWeight: '600',
@@ -789,35 +602,37 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     elevation: 2,
-  },reEnrollButton: {
-  backgroundColor: colors.orange || '#ff9800',
-  padding: 10,
-  alignItems: 'center',
-},allCoursesButton: {
-  position: 'absolute',
-  bottom: 20,
-  left: 20,
-  right: 20,
-  backgroundColor: colors.primary || '#2196f3',
-  borderRadius: 25,
-  paddingVertical: 12,
-  alignItems: 'center',
-  justifyContent: 'center',
-  elevation: 5,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.25,
-  shadowRadius: 3.84,
-},
-allCoursesButtonText: {
-  color: '#ffffff',
-  fontWeight: 'bold',
-  fontSize: 16,
-},
-reEnrollButtonText: {
-  color: '#ffffff',
-  fontWeight: '600',
-},
+  },
+  reEnrollButton: {
+    backgroundColor: colors.orange || '#ff9800',
+    padding: 10,
+    alignItems: 'center',
+  },
+  allCoursesButton: {
+    position: 'absolute',
+    bottom: 5,
+    left: 20,
+    right: 20,
+    backgroundColor: colors.primary || '#2196f3',
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  allCoursesButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  reEnrollButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
   tab: {
     flex: 1,
     paddingVertical: 12,
@@ -960,6 +775,18 @@ reEnrollButtonText: {
     fontWeight: 'bold',
     color: '#333333',
   },
+  viewDetailsButton: {
+    backgroundColor: colors.primary || '#2196f3',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  viewDetailsButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  // Modal styles
   modalContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -968,6 +795,12 @@ reEnrollButtonText: {
     backgroundColor: colors.primary || '#2196f3',
     padding: 15,
     paddingTop: 40,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
   },
   closeButton: {
     position: 'absolute',
@@ -986,131 +819,103 @@ reEnrollButtonText: {
     color: '#333333',
     fontWeight: 'bold',
   },
-  modalTitle: {
-    fontSize: 22,
+  modalContent: {
+    flex: 1,
+    padding: 15,
+  },
+  examTypeContainer: {
+    marginBottom: 20,
+  },
+  examTypeHeader: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 5,
+    color: colors.primary || '#2196f3',
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingBottom: 5,
   },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#ffffff',
-    opacity: 0.9,
-  },
-  modalContentContainer: {
-    flex: 1,
-  },
-  weekSelectorContainer: {
-    backgroundColor: '#f5f5f5',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  weekItem: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    elevation: 1,
-  },
-  selectedWeekItem: {
-    backgroundColor: colors.primary || '#2196f3',
-  },
-  weekText: {
-    fontSize: 14,
-    color: '#333333',
-  },
-  selectedWeekText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  contentList: {
-    padding: 15,
-  },
-  contentItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 12,
-    elevation: 2,
-  },
-  contentItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contentTypeIcon: {
-    marginRight: 10,
-  },
-  contentTypeIconText: {
-    fontSize: 22,
-  },
-  contentInfo: {
-    flex: 1,
-  },
-  contentTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
-    marginBottom: 4,
-  },
-  contentType: {
-    fontSize: 13,
-    color: '#666666',
-  },
-  topicsContainer: {
-    backgroundColor: '#f5f5f5',
+  examDetailContainer: {
+    backgroundColor: '#f9f9f9',
     borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+  },
+  examMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  examMetaLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#555555',
+  },
+  examMetaValue: {
+    fontSize: 15,
+    color: '#333333',
+  },
+  statusDeclared: {
+    color: '#2e7d32',
+    fontWeight: 'bold',
+  },
+  statusPending: {
+    color: '#d32f2f',
+    fontWeight: 'bold',
+  },
+  viewPaperButton: {
+    backgroundColor: colors.secondary || '#673ab7',
     padding: 10,
+    borderRadius: 5,
     marginTop: 10,
-  },
-  topicsHeader: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#333333',
-  },
-  topicItem: {
-    fontSize: 13,
-    color: '#666666',
-    marginBottom: 3,
-    paddingLeft: 5,
-  },
-  downloadButton: {
-    backgroundColor: colors.green2 || '#4caf50',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    marginTop: 12,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
     alignItems: 'center',
   },
-  downloadText: {
+  viewPaperButtonText: {
     color: '#ffffff',
     fontWeight: '600',
-    marginLeft: 5,
   },
-  noContentContainer: {
+  questionsContainer: {
+    marginTop: 15,
+  },
+  questionsHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555555',
+    marginBottom: 10,
+  },
+  questionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    paddingHorizontal: 10,
+  },
+  questionNumber: {
+    fontSize: 14,
+    color: '#555555',
+  },
+  questionMarks: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+  },
+  noExamContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  noContentText: {
+  noExamText: {
     fontSize: 16,
     color: '#666666',
-    marginTop: 10,
-    textAlign: 'center',
+    fontStyle: 'italic',
   },
   emptyContainer: {
-    padding: 40,
+    padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   emptyText: {
     fontSize: 16,
     color: '#666666',
-    textAlign: 'center',
   },
 });
 

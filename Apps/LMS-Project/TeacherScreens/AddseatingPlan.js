@@ -127,10 +127,11 @@ const AddseatingPlan = ({ route, navigation }) => {
 
       const payload = {
         teacher_offered_course_id: classData.teacher_offered_course_id,
-        students: assignedStudents
+        students: assignedStudents,
+        attendance_type:classData.venue.includes('Lt') ? 'Class' : 'Lab',
       };
 
-      const response = await fetch(`${API_URL}/api/JuniorLec/add-sequence-attendance`, {
+      const response = await fetch(`${API_URL}/api/Teachers/add-sequence-attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

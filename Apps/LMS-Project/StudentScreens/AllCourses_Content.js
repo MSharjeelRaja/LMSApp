@@ -14,8 +14,11 @@ import {
   SafeAreaView,
   StatusBar
 } from 'react-native';
+import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import colors from '../ControlsAPI/colors';
 
-const AllCourses_Content = () => {
+const AllCourses_Content = ({navigation,route}) => {
+    const userData = route.params?.userData || {};
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,12 +32,12 @@ const AllCourses_Content = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://192.168.0.153:8000/api/Hod/content');
+        const response = await fetch(`${API_URL}/api/Hod/content`);
         const result = await response.json();
         
         if (result.status) {
           setData(result.data);
-          // Set the first session as default
+         
           const sessions = Object.keys(result.data);
           if (sessions.length > 0) {
             setSelectedSession(sessions[0]);
@@ -99,11 +102,11 @@ const AllCourses_Content = () => {
 
   const getContentTypeColor = (type) => {
     switch(type) {
-      case 'Notes': return '#4CAF50';
-      case 'Quiz': return '#FF9800';
-      case 'Assignment': return '#2196F3';
-      case 'MCQS': return '#9C27B0';
-      default: return '#757575';
+      case 'Notes': return colors.primary;
+      case 'Quiz': return colors.red1;
+      case 'Assignment': colors.highlight;
+      case 'MCQS': return colors.blueNavy;
+      default: return colors.primary;;
     }
   };
 
@@ -285,10 +288,14 @@ const AllCourses_Content = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
-      <View style={styles.header}>
-        <Text style={styles.title}>📚 Course Content</Text>
-        <Text style={styles.subtitle}>Browse and access your course materials</Text>
-      </View>
+      <Navbar
+             title="Course Content"
+             userName={userData.name}
+             des={'Student'}
+             onLogout={() => navigation.replace('Login')}
+             showBackButton={true}
+             onBack={() => navigation.goBack()}
+           />
 
       <View style={styles.filterContainer}>
   <TouchableOpacity 
@@ -390,16 +397,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+
   },
   title: {
     fontSize: 28,
@@ -603,14 +607,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backButtonText: {
-    color: '#2196F3',
+    color: 'white',
+
     fontSize: 16,
     fontWeight: '500',
   },
   courseHeaderTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#212529',
+    color: 'white',
   },
   contentContainer: {
     flex: 1,

@@ -43,10 +43,10 @@ import ViewSubmissions from './TeacherScreens/ViewSubmissions';
 import JTabs from './JuniorLec/home';
 import JTimetable from './JuniorLec/JTimeTable';
 import Jnotification from './JuniorLec/Jnotification';
-import JAttendenceList from './JuniorLec/JAttendenceList';
+// import JAttendenceList from './JuniorLec/JAttendenceList';
 import JContestattendence from './JuniorLec/JContestattendence';
 import JMarkAttendence from './JuniorLec/JMarkAttendece';
-import AddseatingPlan from './JuniorLec/AddseatingPlan';
+
 import calender from './StudentScreens/calender';
 import JDetails from './JuniorLec/JDetails';
 import JCreatetask from './JuniorLec/JCreatetask';
@@ -61,6 +61,7 @@ import notification from './StudentScreens/Notification';
 import Tasksubmit from './StudentScreens/Tasksubmit'
 import SCourses from './StudentScreens/Courses';
 import Exam from './StudentScreens/Exam';
+import JMarkTask from './JuniorLec/Jmarktask';
 import Task from './StudentScreens/Task';
 import Audit from './TeacherScreens/Audit';
 import parentnotification from './Parent/notification';
@@ -68,9 +69,15 @@ import ConsiderTask from './TeacherScreens/ConsiderTask';
 import ConsideredTasks from './StudentScreens/ConsideredTasks';
 import Child_info from './Parent/Child_info';
 import Degree_Courses from './StudentScreens/Degree_Courses';
-
+import JAttendenceList from './JuniorLec/attendencesheet';
+import Tcalender from './TeacherScreens/Tcalender';
+import JAttendanceScreen from './JuniorLec/attendencemark';
 import AllCourses_Content from './StudentScreens/AllCourses_Content';
 import SectionDetails from './TeacherScreens/SectionDetails';
+import JAddseatingPlan from './JuniorLec/addseatinplan';
+import AddseatingPlan from './TeacherScreens/AddseatingPlan';
+import marktast from './Grader/marktask';
+import ConsiderTaskJ from './JuniorLec/ConsiderTaskJ'
 const App = () => {
 
  
@@ -85,6 +92,8 @@ const App = () => {
         <Stack.Screen name="ipChange" component={ipChange} options={{ headerShown: false }} />
         <Stack.Screen name="loginLoader" component={loginLoader} options={{ headerShown: false }} />
         <Stack.Screen name="BottomTabs" component={BottomTabs} options={{ headerShown: false }} />
+<Stack.Screen name="Tcalender" component={Tcalender} options={{ headerShown: false }} />
+<Stack.Screen name="marktask" component={marktast} options={{ headerShown: false }} />
 
   
     {/*............Parent...............Parent ........*/}
@@ -110,7 +119,7 @@ const App = () => {
         <Stack.Screen name="MarkAttendence" component={MarkAttendece} options={{ headerShown: false }} />
         <Stack.Screen name="sendnotification" component={sendNotification} options={{ headerShown: false }} />
         <Stack.Screen name="getnotification" component={getnotification} options={{ headerShown: false }} />
-
+<Stack.Screen name="addseatingplan" component={AddseatingPlan} options={{ headerShown: false }} />
         <Stack.Screen name="AddContent" component={AddContent} options={{ headerShown: false }} />
     
         <Stack.Screen name="ConsiderTask" component={ConsiderTask} options={{ headerShown: false }} />  
@@ -163,11 +172,11 @@ const App = () => {
        <Stack.Screen name="JTimetable" component={JTimetable} options={{ headerShown: false }} />
        <Stack.Screen name="JTabs" component={JTabs} options={{ headerShown: false }} />
        <Stack.Screen name="Jnotification" component={Jnotification} options={{ headerShown: false }} />
+      <Stack.Screen name="ConsiderTaskJ" component={ConsiderTaskJ} options={{ headerShown: false }} />
       
-        <Stack.Screen name="AddseatingPlan" component={AddseatingPlan} options={{ headerShown: false }} />
-
         <Stack.Screen name="JAttendenceList" component={JAttendenceList} options={{ headerShown: false }} />
-      
+      <Stack.Screen name="JAttendanceScreen" component={JAttendanceScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="JAddseatingPlan" component={JAddseatingPlan} options={{ headerShown: false }} />
         <Stack.Screen name="JContestattendence" component={JContestattendence} options={{ headerShown: false }} />
         <Stack.Screen name="JMarkAttendence" component={JMarkAttendence} options={{ headerShown: false }} />
         <Stack.Screen name="JDetails" component={JDetails} options={{ headerShown: false }} />
@@ -175,7 +184,8 @@ const App = () => {
         
         <Stack.Screen name="JCreatetask" component={JCreatetask} options={{ headerShown: false }} />
         
-
+  <Stack.Screen name="JMarkTask" component={JMarkTask} options={{ headerShown: false }} />
+        
       </Stack.Navigator>
     </NavigationContainer>
     </AlertProvider>

@@ -16,7 +16,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import Pendingtasks from "../StudentScreens/Pendingtasks";
 import CourseSections from "./CourseSections";
 import { MyBtn, Navbar } from "../ControlsAPI/Comps";
-
+import Tcalender from "./Tcalender";
 import { Title } from "react-native-paper";
 import MarkAttendece from "./MarkAttendece";
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -113,14 +113,7 @@ const T_Home = ({ navigation, route }) => {
       color: colors.warning,
       onPress: () => navigation.navigate("Contestattendence", { userData })
     },
-    {
-      id: 4,
-      title: "Students",
-      icon: "users",
-      iconType: "FontAwesome5",
-      color: colors.success,
-      onPress: () => navigation.navigate("Attendencelist", { userData })
-    },
+    
     
     {
       id: 5,
@@ -129,14 +122,24 @@ const T_Home = ({ navigation, route }) => {
       iconType: "MaterialIcons",
       color: colors.orange,
       onPress: () => navigation.navigate("taskget", { userData })
-    },   {
+    }, 
+      {
       id: 6,
       title: "Assign task",
       icon: "assignment",
       iconType: "MaterialIcons",
       color: colors.orange,
       onPress: () => navigation.navigate("Createtask", { userData })
-    },   {
+    },  
+     {
+      id: 4,
+      title: "Calender",
+     icon: "calendar-today",
+iconType: "MaterialIcons",
+
+      color: colors.green,
+      onPress: () => navigation.navigate("Tcalender", { userData })
+    },  {
       id: 7,
       title: "Consider Tasks",
       icon: "assignment",
@@ -189,6 +192,7 @@ const T_Home = ({ navigation, route }) => {
           <View style={styles.profileInfo}>
           <View style={styles.dateHeader}>
           <Text style={styles.dateText}>{formatDate()}</Text>
+                    <Text style={styles.dateText}>Current Week :{userData.week}</Text>
         </View>
         
             <Text style={styles.userName}>{userData.name}</Text>
@@ -436,7 +440,7 @@ console.log('id is ='+userData.id)
       name="Courses"
       component={Courses}
       initialParams={route.params}
-    />
+    /> 
     </Tab.Navigator>
   );
 };
@@ -508,6 +512,8 @@ const styles = StyleSheet.create({
   
   // Date Header
   dateHeader: {
+    flexDirection: 'row',
+    gap:100,
 left:-120,
   },
   dateText: {

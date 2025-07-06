@@ -17,7 +17,7 @@ import { API_URL, Navbar } from '../ControlsAPI/Comps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import colors from '../ControlsAPI/colors';
 
-const MarkTask = ({ navigation, route }) => {
+const JMarkTask = ({ navigation, route }) => {
   // Route params
   const { taskId, taskname,points, userData = {} } = route.params;
   console.log("Task ID:", taskId);
@@ -365,12 +365,12 @@ const styles = StyleSheet.create({
   taskTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'black',
     marginBottom: 4,
   },
   taskSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: 'black',
     marginBottom: 16,
   },
   taskStats: {
@@ -522,4 +522,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MarkTask;
+export default JMarkTask;

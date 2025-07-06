@@ -29,7 +29,7 @@ const AttendanceAll = ({ navigation, route }) => {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/Students/attendance?student_id=${global.sid}`);
+        const response = await fetch(`${API_URL}/api/Students/attendance?student_id=${userData.id}`);
         const data = await response.json();
         if (data.data) {
           const processedData = data.data.map(item => ({
@@ -37,6 +37,7 @@ const AttendanceAll = ({ navigation, route }) => {
             pending_requests: item.pending_requests || [],
             Percentage: item.Percentage ? Number(item.Percentage) : 0
           }));
+          console.log('data'+processedData)
           setAttendanceData(processedData);
         }
         console.log("Attendance Data:", data.data);
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.bg
+    backgroundColor: colors.white
   },
   emptyContainer: {
     flex: 1,
