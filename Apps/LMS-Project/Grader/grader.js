@@ -18,6 +18,7 @@ import colors from '../ControlsAPI/colors';
 const { width } = Dimensions.get('window');
 
 const TeacherCard = ({ teacher, onPress }) => {
+  console.log('its Grader');
   return (
     <TouchableOpacity 
       style={styles.teacherCard}

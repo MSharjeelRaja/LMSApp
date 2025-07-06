@@ -38,6 +38,7 @@ import CreateTaskScreen from './TeacherScreens/Createtask';
 import AddContent from './TeacherScreens/AddContent';
 import Createtask from './TeacherScreens/Createtask';
 import taskget from './TeacherScreens/taskget';
+import Restrictions from './StudentScreens/Restrictions';
 import ViewSubmissions from './TeacherScreens/ViewSubmissions';
 //Junior Imports
 import JTabs from './JuniorLec/home';
@@ -54,6 +55,7 @@ import Tasks from './Grader/Tasks';
 import JCourses from './JuniorLec/JCourses';
 import Jtaskget from './JuniorLec/Jtaskget';
 import parent_Home from './Parent/parent_Home';
+import Parenttask from './Parent/Parenttask';
 import JAddContent from './JuniorLec/JAddContent';
 import FullTimetables from './StudentScreens/FullTimeTable';
 import submittask from './StudentScreens/submittask';
@@ -78,6 +80,7 @@ import JAddseatingPlan from './JuniorLec/addseatinplan';
 import AddseatingPlan from './TeacherScreens/AddseatingPlan';
 import marktast from './Grader/marktask';
 import ConsiderTaskJ from './JuniorLec/ConsiderTaskJ'
+import datesheet from './StudentScreens/datesheet';
 const App = () => {
 
  
@@ -99,6 +102,7 @@ const App = () => {
     {/*............Parent...............Parent ........*/}
     <Stack.Screen name="parent_home" component={parent_Home} options={{ headerShown: false }} />
  <Stack.Screen name="parentnotification" component={parentnotification} options={{ headerShown: false }} />
+ <Stack.Screen name="parenttask" component={Parenttask} options={{ headerShown: false }} />
 
 
  <Stack.Screen name="Child_info" component={Child_info} options={{ headerShown: false }} />
@@ -142,6 +146,7 @@ const App = () => {
       <Stack.Screen name="submitask" component={submittask} options={{ headerShown: false }} />
       <Stack.Screen name="FullTimetables" component={FullTimetables} options={{ headerShown: false }} />
       <Stack.Screen name="degreecourses" component={Degree_Courses} options={{ headerShown: false }} />
+ <Stack.Screen name="datesheet" component={datesheet} options={{ headerShown: false }} />
      
       <Stack.Screen name="ConsideredTasks" component={ConsideredTasks} options={{ headerShown: false }} />
       <Stack.Screen name="notification" component={notification} options={{ headerShown: false }} />
@@ -151,7 +156,7 @@ const App = () => {
       
   <Stack.Screen name="AllCourses_Content" component={AllCourses_Content} options={{ headerShown: false }} />
       
-
+<Stack.Screen name="Restrictions" component={Restrictions} options={{ headerShown: false }} ></Stack.Screen>
       <Stack.Screen name="sTask" component={Task} options={{ headerShown: false }} />
       
       <Stack.Screen name="Exam" component={Exam} options={{ headerShown: false }} />

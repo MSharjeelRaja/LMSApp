@@ -7,10 +7,12 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,
+  Alert,Modal,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import colors from '../ControlsAPI/colors';
 
 const SectionDetails = ({ route, navigation }) => {
   const { courseId, userData } = route.params;
@@ -18,11 +20,77 @@ const SectionDetails = ({ route, navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState({});
-console.log('sssssssss'+courseId)
+  const [remarksModalVisible, setRemarksModalVisible] = useState(false);
+const [currentStudent, setCurrentStudent] = useState(null);
+const [remarksText, setRemarksText] = useState('');
+const [isUpdatingRemarks, setIsUpdatingRemarks] = useState(false);
+console.log('COURSE ID :'+courseId)
   useEffect(() => {
     fetchSectionDetails();
   }, []);
+const handleAddRemarks = (student) => {
+  setCurrentStudent(student);
+  setRemarksText(student.remarks || '');
+  setIsUpdatingRemarks(!!student.remarks);
+  setRemarksModalVisible(true);
+};
 
+const handleSaveRemarks = async () => {
+  if (!remarksText.trim() || !currentStudent) return;
+
+  try {
+    const response = await fetch(`${API_URL}/api/Teachers/remarks/add_or_update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        teacher_offered_course_id: courseId,
+        student_id: currentStudent.student_id,
+        remarks: remarksText.trim()
+      })
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      Alert.alert('Success', data.message);
+      fetchSectionDetails(); // Refresh data
+      setRemarksModalVisible(false);
+    } else {
+      throw new Error(data.message || 'Failed to save remarks');
+    }
+  } catch (error) {
+    Alert.alert('Error', error.message);
+  }
+};
+
+const handleDeleteRemarks = async () => {
+  if (!currentStudent) return;
+
+  try {
+    const response = await fetch(`${API_URL}/api/Teachers/remarks/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        teacher_offered_course_id: courseId,
+        student_id: currentStudent.student_id
+      })
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      Alert.alert('Success', data.message);
+      fetchSectionDetails(); // Refresh data
+      setRemarksModalVisible(false);
+    } else {
+      throw new Error(data.message || 'Failed to delete remarks');
+    }
+  } catch (error) {
+    Alert.alert('Error', error.message);
+  }
+};
   const fetchSectionDetails = async () => {
     try {
       const response = await fetch(
@@ -325,11 +393,27 @@ console.log('sssssssss'+courseId)
                 <Text style={styles.studentName}>{student.name}</Text>
                 <Text style={styles.studentRegNo}>{student.RegNo}</Text>
                 <Text style={styles.studentCGPA}>CGPA: {student.CGPA}</Text>
+       
               </View>
-            </View>
+              <TouchableOpacity
+  style={styles.remarksButton}
+  onPress={() => handleAddRemarks(student)}
+>
+  <Text style={styles.remarksButtonText}>
+    {student.remarks ? 'Update Remarks' : 'Add Remarks'}
+  </Text>
+</TouchableOpacity>
 
-            {/* Performance Cards */}
+            </View>
+      
+        {student.remarks && (
+  <View style={styles.remarksContainer}>
+    <Text style={styles.remarksLabel}>Remarks:</Text>
+    <Text style={styles.remarksText}>{student.remarks}</Text>
+  </View>
+)}
             <View style={styles.performanceContainer}>
+              
               {renderPerformanceCard(
                 'Attendance',
                 student.attendance.percentage,
@@ -394,6 +478,78 @@ console.log('sssssssss'+courseId)
           </View>
         )}
       </ScrollView>
+       <Modal
+        animationType="fade"
+        transparent={true}
+        visible={remarksModalVisible}
+        onRequestClose={() => setRemarksModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <TouchableOpacity 
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setRemarksModalVisible(false)}
+          />
+          
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {isUpdatingRemarks ? 'Update Remarks' : 'Add Remarks'}
+              </Text>
+              <Text style={styles.modalSubtitle}>
+                {currentStudent?.name} ({currentStudent?.RegNo})
+              </Text>
+            </View>
+
+            <TextInput
+              style={styles.remarksInput}
+              multiline
+              placeholder="Enter your remarks about this student..."
+              placeholderTextColor="#999"
+              
+              value={remarksText}
+              onChangeText={setRemarksText}
+              autoFocus={true}
+            />
+
+            <View style={styles.charCountContainer}>
+              <Text style={styles.charCountText}>
+                {remarksText.length}/500 characters
+              </Text>
+            </View>
+
+            <View style={styles.modalFooter}>
+              {isUpdatingRemarks && (
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.deleteButton]}
+                  onPress={handleDeleteRemarks}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setRemarksModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton, 
+                       !remarksText.trim() && styles.disabledButton]}
+                onPress={handleSaveRemarks}
+                disabled={!remarksText.trim()}
+              >
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
@@ -427,7 +583,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
+  },bremarksContainer: {
+  marginTop: 10,
+  padding: 10,
+  backgroundColor: '#f5f5f5',
+
+  orderRadius: 5,
+},
+remarksLabel: {
+  fontWeight: 'bold',
+  marginBottom: 5,
+  color: '#555',
+},
+
+
+
+
   courseIconContainer: {
     alignSelf: 'flex-start',
     marginBottom: 12,
@@ -545,7 +716,7 @@ const styles = StyleSheet.create({
   performanceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginVertical: 16,
   },
   performanceCard: {
     flex: 1,
@@ -655,6 +826,147 @@ const styles = StyleSheet.create({
   noResultsSubtext: {
     fontSize: 14,
     color: '#999',
+  },modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  remarksInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  charCountContainer: {
+    alignItems: 'flex-end',
+    marginTop: 5,
+  },
+  charCountText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 5,
+  },
+  saveButton: {
+    backgroundColor: '#5B9BD5',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  deleteButton: {
+    backgroundColor: '#F44336',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+
+  remarksButton: {
+    backgroundColor: '#5B9BD5',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  
+
+    elevation: 2,
+  },
+  remarksButtonText: {
+    color: 'white',
+    fontSize: 10,
+
+  },
+  remarksContainer: {
+    marginTop: 10,
+    padding: 12,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#5B9BD5',
+  },
+  remarksLabel: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#555',
+    fontSize: 14,
+  },
+  remarksText: {
+    color: '#333',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+   remarksInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 15,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    color: '#000', // Changed to black
   },
 });
 
