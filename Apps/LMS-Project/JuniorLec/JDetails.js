@@ -1,11 +1,13 @@
+import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
+import React from 'react';
+import {Navbar} from '../ControlsAPI/Comps';
 
-import { StyleSheet, Text, View, Image, ScrollView } from 'react-native'
-import React from 'react'
-import { Navbar } from '../ControlsAPI/Comps';
-
-const Details = ({navigation,route}) => {
-  const userData= route.params.userData;
-  const formattedDate = userData['Date Of Birth'].split('-').reverse().join('-');
+const Details = ({navigation, route}) => {
+  const userData = route.params.userData;
+  const formattedDate = userData['Date Of Birth']
+    .split('-')
+    .reverse()
+    .join('-');
   return (
     <View style={styles.container}>
       <Navbar
@@ -15,21 +17,17 @@ const Details = ({navigation,route}) => {
         showBackButton={true}
         onLogout={() => navigation.replace('Login')}
       />
-      
+
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <View style={styles.profileSection}>
-          <Image 
-            source={{ uri: userData.image }}
-            style={styles.profileImage}
-          />
+          <Image source={{uri: userData.image}} style={styles.profileImage} />
           <Text style={styles.nameText}>{userData.name}</Text>
-          
+
           <View style={styles.detailsContainer}>
-            
-          <DetailRow 
-  label="Date of Birth" 
-  value={userData['Date Of Birth'].split('-').reverse().join('-')} 
-/>
+            <DetailRow
+              label="Date of Birth"
+              value={userData['Date Of Birth'].split('-').reverse().join('-')}
+            />
             <DetailRow label="Session" value={userData.Session} />
             <DetailRow label="Username" value={userData.Username} />
             <DetailRow label="Gender" value={userData.gender} />
@@ -37,8 +35,8 @@ const Details = ({navigation,route}) => {
         </View>
       </ScrollView>
     </View>
-  )
-}
+  );
+};
 
 const DetailRow = ({label, value}) => (
   <View style={styles.detailRow}>
@@ -47,7 +45,7 @@ const DetailRow = ({label, value}) => (
   </View>
 );
 
-export default Details
+export default Details;
 
 const styles = StyleSheet.create({
   container: {
@@ -82,7 +80,7 @@ const styles = StyleSheet.create({
     padding: 20,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
@@ -104,4 +102,4 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
-})
+});

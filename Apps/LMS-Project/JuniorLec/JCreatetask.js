@@ -1,43 +1,47 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
-  Alert, 
-  ActivityIndicator, 
-  StatusBar, 
-  Linking, 
+import React, {useState, useEffect, useMemo} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  StatusBar,
+  Linking,
   Modal,
-  Platform
+  Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { API_URL } from '../ControlsAPI/Comps';
-import { Navbar } from '../ControlsAPI/Comps';
-import Icon from "react-native-vector-icons/MaterialIcons";
+import {API_URL} from '../ControlsAPI/Comps';
+import {Navbar} from '../ControlsAPI/Comps';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import CheckBox from '@react-native-community/checkbox';
 
 // Color theme constants
 const COLORS = {
-  primary: '#1E88E5',       // Primary blue
-  primaryDark: '#1565C0',   // Darker blue for buttons
-  secondary: '#64B5F6',     // Light blue for backgrounds
-  accent: '#2979FF',        // Accent blue for highlights
+  primary: '#1E88E5', // Primary blue
+  primaryDark: '#1565C0', // Darker blue for buttons
+  secondary: '#64B5F6', // Light blue for backgrounds
+  accent: '#2979FF', // Accent blue for highlights
   white: '#FFFFFF',
-  lightGray: '#F5F7FA',     // Light background
-  midGray: '#E3E8F0',       // For cards and separators
-  darkGray: '#546E7A',      // For secondary text
-  black: '#263238',         // For primary text
-}
+  lightGray: '#F5F7FA', // Light background
+  midGray: '#E3E8F0', // For cards and separators
+  darkGray: '#546E7A', // For secondary text
+  black: '#263238', // For primary text
+};
 
-const Createtask = ({ navigation, route }) => {
+const Createtask = ({navigation, route}) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [expandedWeeks, setExpandedWeeks] = useState({});
-  const [datePicker, setDatePicker] = useState({ visible: false, type: '', mode: 'date' });
+  const [datePicker, setDatePicker] = useState({
+    visible: false,
+    type: '',
+    mode: 'date',
+  });
   const [assignmentState, setAssignmentState] = useState({
     points: '',
     startDate: new Date(),
@@ -54,8 +58,8 @@ const Createtask = ({ navigation, route }) => {
       weeks: Object.entries(course.task_details).map(([weekNumber, tasks]) => ({
         weekNumber,
         tasks,
-        expanded: expandedWeeks[weekNumber] || false
-      }))
+        expanded: expandedWeeks[weekNumber] || false,
+      })),
     }));
   }, [courses, expandedWeeks]);
 
@@ -65,12 +69,13 @@ const Createtask = ({ navigation, route }) => {
 
   const fetchUnassignedTasks = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/JuniorLec/task/un-assigned?teacher_id=${userData.id}`);
+      const response = await fetch(
+        `${API_URL}/api/JuniorLec/task/un-assigned?teacher_id=${userData.id}`,
+      );
       const data = await response.json();
       if (data.status) {
         setCourses(Object.values(data.data).flat());
       }
-
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch tasks');
     } finally {
@@ -78,25 +83,25 @@ const Createtask = ({ navigation, route }) => {
     }
   };
 
-  const toggleWeek = (weekNumber) => {
+  const toggleWeek = weekNumber => {
     setExpandedWeeks(prev => ({
       ...prev,
-      [weekNumber]: !prev[weekNumber]
+      [weekNumber]: !prev[weekNumber],
     }));
   };
 
   const handleDateTimeChange = (event, selectedDate) => {
     if (event.type === 'dismissed') {
-      setDatePicker(p => ({ ...p, visible: false }));
+      setDatePicker(p => ({...p, visible: false}));
       return;
     }
-  
+
     const newDate = selectedDate || new Date();
     const dateKey = datePicker.type;
-  
+
     // Create a NEW Date object instead of modifying the existing one
     let updatedDate = new Date(newDate);
-  
+
     // For time mode, preserve the existing date parts and update time
     if (datePicker.mode === 'time') {
       const prevDate = new Date(assignmentState[dateKey]);
@@ -105,99 +110,111 @@ const Createtask = ({ navigation, route }) => {
         prevDate.getMonth(),
         prevDate.getDate(),
         newDate.getHours(),
-        newDate.getMinutes()
+        newDate.getMinutes(),
       );
     }
-  
+
     setAssignmentState(prev => ({
       ...prev,
-      [dateKey]: updatedDate
+      [dateKey]: updatedDate,
     }));
-  
+
     // Switch to time picker after date selection
     if (datePicker.mode === 'date') {
-      setDatePicker({ visible: true, type: dateKey, mode: 'time' });
+      setDatePicker({visible: true, type: dateKey, mode: 'time'});
     } else {
-      setDatePicker({ visible: false, type: '', mode: 'date' });
+      setDatePicker({visible: false, type: '', mode: 'date'});
     }
   };
 
-  const formatDateTime = (date) => {
-    const pad = (n) => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
-           `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+  const formatDateTime = date => {
+    const pad = n => n.toString().padStart(2, '0');
+    return (
+      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+        date.getDate(),
+      )} ` + `${pad(date.getHours())}:${pad(date.getMinutes())}:00`
+    );
   };
 
- const handleAssignTask = async () => {
-  // Validation
-  if (!assignmentState.points || assignmentState.selectedSections.length === 0) {
-    Alert.alert('Missing Information', 'Please fill all fields and select at least one section');
-    return;
-  }
-
-  console.log('Assignment State:', {
-    selectedSections: assignmentState.selectedSections,
-    selectedTask: selectedTask,
-    points: assignmentState.points,
-    dates: {
-      start: assignmentState.startDate,
-      due: assignmentState.dueDate
+  const handleAssignTask = async () => {
+    // Validation
+    if (
+      !assignmentState.points ||
+      assignmentState.selectedSections.length === 0
+    ) {
+      Alert.alert(
+        'Missing Information',
+        'Please fill all fields and select at least one section',
+      );
+      return;
     }
-  });
 
-  setLoading(true);
-  
-  try {
-    const requests = assignmentState.selectedSections.map(section => {
-      const payload = {
-        teacher_offered_course_id: section.teacher_offered_course_id,
-        coursecontent_id: selectedTask.id,
-        points: parseInt(assignmentState.points),
-        start_date: formatDateTime(assignmentState.startDate),
-        due_date: formatDateTime(assignmentState.dueDate),
-      };
-
-      console.log('Sending payload for section:', section.section_name, payload);
-
-      return fetch(`${API_URL}/api/JuniorLec/create/task`, {
-        method: 'POST',
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(payload),
-      })
-      .then(async response => {
-        const data = await response.json();
-        console.log('API response for section:', section.section_name, {
-          status: response.status,
-          data: data
-        });
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to assign task');
-        }
-        return data;
-      });
+    console.log('Assignment State:', {
+      selectedSections: assignmentState.selectedSections,
+      selectedTask: selectedTask,
+      points: assignmentState.points,
+      dates: {
+        start: assignmentState.startDate,
+        due: assignmentState.dueDate,
+      },
     });
 
-    const results = await Promise.all(requests);
-    console.log('All assignments completed:', results);
-    
-    Alert.alert('Success', 'Task assigned successfully');
-    setSelectedTask(null);
-    fetchUnassignedTasks(); // Refresh the task list
-  } catch (error) {
-    console.error('Assignment error:', error);
-    Alert.alert('Error', error.message || 'Failed to assign task');
-  } finally {
-    setLoading(false);
-  }
-};
-  const handleViewContent = (content) => {
+    setLoading(true);
+
+    try {
+      const requests = assignmentState.selectedSections.map(section => {
+        const payload = {
+          teacher_offered_course_id: section.teacher_offered_course_id,
+          coursecontent_id: selectedTask.id,
+          points: parseInt(assignmentState.points),
+          start_date: formatDateTime(assignmentState.startDate),
+          due_date: formatDateTime(assignmentState.dueDate),
+        };
+
+        console.log(
+          'Sending payload for section:',
+          section.section_name,
+          payload,
+        );
+
+        return fetch(`${API_URL}/api/JuniorLec/create/task`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }).then(async response => {
+          const data = await response.json();
+          console.log('API response for section:', section.section_name, {
+            status: response.status,
+            data: data,
+          });
+
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to assign task');
+          }
+          return data;
+        });
+      });
+
+      const results = await Promise.all(requests);
+      console.log('All assignments completed:', results);
+
+      Alert.alert('Success', 'Task assigned successfully');
+      setSelectedTask(null);
+      fetchUnassignedTasks(); // Refresh the task list
+    } catch (error) {
+      console.error('Assignment error:', error);
+      Alert.alert('Error', error.message || 'Failed to assign task');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleViewContent = content => {
     // Handle both string URLs and array content
     let fileUrl = content;
-    
+
     if (Array.isArray(content)) {
       if (content.length > 0) {
         fileUrl = content[0].content; // Assuming first item has the content URL
@@ -206,10 +223,10 @@ const Createtask = ({ navigation, route }) => {
         return;
       }
     }
-    
+
     if (fileUrl) {
       Linking.openURL(fileUrl).catch(err => {
-        console.error("Failed to open URL:", err);
+        console.error('Failed to open URL:', err);
         Alert.alert('Error', 'Failed to open file', 'Please try again later');
       });
     } else {
@@ -219,21 +236,20 @@ const Createtask = ({ navigation, route }) => {
 
   const renderWeekTasks = (courseId, week) => (
     <View key={`${courseId}-${week.weekNumber}`} style={styles.weekContainer}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.weekHeader, week.expanded && styles.weekHeaderExpanded]}
         onPress={() => toggleWeek(week.weekNumber)}
-        activeOpacity={0.7}
-      >
+        activeOpacity={0.7}>
         <Text style={styles.weekTitle}>Week {week.weekNumber}</Text>
         <View style={styles.iconContainer}>
-          <Icon 
-            name={week.expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} 
-            size={24} 
-            color={COLORS.primary} 
+          <Icon
+            name={week.expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+            size={24}
+            color={COLORS.primary}
           />
         </View>
       </TouchableOpacity>
-      
+
       {week.expanded && (
         <View style={styles.tasksContainer}>
           {week.tasks.map(task => (
@@ -244,18 +260,22 @@ const Createtask = ({ navigation, route }) => {
                   <Text style={styles.taskTypeText}>{task.type}</Text>
                 </View>
               </View>
-              
+
               <View style={styles.taskButtonsContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.taskButton, styles.viewButton]}
                   onPress={() => handleViewContent(task.content)}
-                  activeOpacity={0.8}
-                >
-                  <Icon name="visibility" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  activeOpacity={0.8}>
+                  <Icon
+                    name="visibility"
+                    size={18}
+                    color={COLORS.white}
+                    style={styles.buttonIcon}
+                  />
                   <Text style={styles.taskButtonText}>View Content</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={[styles.taskButton, styles.assignButton]}
                   onPress={() => {
                     setSelectedTask(task);
@@ -266,9 +286,13 @@ const Createtask = ({ navigation, route }) => {
                       selectedSections: [],
                     });
                   }}
-                  activeOpacity={0.8}
-                >
-                  <Icon name="assignment" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  activeOpacity={0.8}>
+                  <Icon
+                    name="assignment"
+                    size={18}
+                    color={COLORS.white}
+                    style={styles.buttonIcon}
+                  />
                   <Text style={styles.taskButtonText}>Assign Task</Text>
                 </TouchableOpacity>
               </View>
@@ -304,26 +328,33 @@ const Createtask = ({ navigation, route }) => {
 
       <View style={styles.headerContainer}>
         <Text style={styles.pageTitle}>Unassigned Tasks</Text>
-        <Text style={styles.pageSubtitle}>Assign tasks to your class sections</Text>
+        <Text style={styles.pageSubtitle}>
+          Assign tasks to your class sections
+        </Text>
       </View>
 
       {courses.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="assignment-turned-in" size={64} color={COLORS.secondary} />
+          <Icon
+            name="assignment-turned-in"
+            size={64}
+            color={COLORS.secondary}
+          />
           <Text style={styles.emptyText}>No unassigned tasks available</Text>
         </View>
       ) : (
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           {structuredCourses.map(course => (
             <View key={course.offered_course_id} style={styles.courseContainer}>
               <View style={styles.courseTitleContainer}>
                 <Icon name="school" size={24} color={COLORS.primary} />
                 <Text style={styles.courseTitle}>{course.course_name}</Text>
               </View>
-              {course.weeks.map(week => renderWeekTasks(course.offered_course_id, week))}
+              {course.weeks.map(week =>
+                renderWeekTasks(course.offered_course_id, week),
+              )}
             </View>
           ))}
         </ScrollView>
@@ -333,24 +364,21 @@ const Createtask = ({ navigation, route }) => {
         visible={!!selectedTask}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setSelectedTask(null)}
-      >
+        onRequestClose={() => setSelectedTask(null)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{selectedTask?.title}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setSelectedTask(null)}
-                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-              >
+                hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}>
                 <Icon name="close" size={24} color={COLORS.darkGray} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               contentContainerStyle={styles.modalContent}
-              showsVerticalScrollIndicator={false}
-            >
+              showsVerticalScrollIndicator={false}>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Points</Text>
                 <TextInput
@@ -359,7 +387,9 @@ const Createtask = ({ navigation, route }) => {
                   placeholderTextColor={COLORS.darkGray}
                   keyboardType="numeric"
                   value={assignmentState.points}
-                  onChangeText={text => setAssignmentState(p => ({ ...p, points: text }))}
+                  onChangeText={text =>
+                    setAssignmentState(p => ({...p, points: text}))
+                  }
                 />
               </View>
 
@@ -367,28 +397,51 @@ const Createtask = ({ navigation, route }) => {
               <View style={styles.dateContainer}>
                 <TouchableOpacity
                   style={styles.dateButton}
-                  onPress={() => setDatePicker({ visible: true, type: 'startDate', mode: 'date' })}
-                >
-                  <Icon name="calendar-today" size={20} color={COLORS.primary} />
+                  onPress={() =>
+                    setDatePicker({
+                      visible: true,
+                      type: 'startDate',
+                      mode: 'date',
+                    })
+                  }>
+                  <Icon
+                    name="calendar-today"
+                    size={20}
+                    color={COLORS.primary}
+                  />
                   <Text style={styles.dateText}>
                     Start Date: {assignmentState.startDate.toLocaleDateString()}
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setDatePicker({ visible: true, type: 'startDate', mode: 'time' })}
-                >
-                  <Icon name="access-time" size={20} color={COLORS.primary} />
-                  <Text style={styles.dateText}>
-                    Start Time: {assignmentState.startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.dateButton}
-                  onPress={() => setDatePicker({ visible: true, type: 'dueDate', mode: 'date' })}
-                >
+                  onPress={() =>
+                    setDatePicker({
+                      visible: true,
+                      type: 'startDate',
+                      mode: 'time',
+                    })
+                  }>
+                  <Icon name="access-time" size={20} color={COLORS.primary} />
+                  <Text style={styles.dateText}>
+                    Start Time:{' '}
+                    {assignmentState.startDate.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() =>
+                    setDatePicker({
+                      visible: true,
+                      type: 'dueDate',
+                      mode: 'date',
+                    })
+                  }>
                   <Icon name="event" size={20} color={COLORS.primary} />
                   <Text style={styles.dateText}>
                     Due Date: {assignmentState.dueDate.toLocaleDateString()}
@@ -397,78 +450,106 @@ const Createtask = ({ navigation, route }) => {
 
                 <TouchableOpacity
                   style={styles.dateButton}
-                  onPress={() => setDatePicker({ visible: true, type: 'dueDate', mode: 'time' })}
-                >
+                  onPress={() =>
+                    setDatePicker({
+                      visible: true,
+                      type: 'dueDate',
+                      mode: 'time',
+                    })
+                  }>
                   <Icon name="access-time" size={20} color={COLORS.primary} />
                   <Text style={styles.dateText}>
-                    Due Time: {assignmentState.dueDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    Due Time:{' '}
+                    {assignmentState.dueDate.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <Text style={styles.sectionTitle}>Available Sections</Text>
               {selectedTask?.un_assigned_to?.length === 0 ? (
-                <Text style={styles.noSectionText}>No sections available for assignment</Text>
+                <Text style={styles.noSectionText}>
+                  No sections available for assignment
+                </Text>
               ) : (
                 selectedTask?.un_assigned_to?.map(section => (
                   <TouchableOpacity
-                    key={section.teacher_offered_course_id} 
+                    key={section.teacher_offered_course_id}
                     style={styles.checkboxContainer}
                     onPress={() => {
                       setAssignmentState(prev => ({
                         ...prev,
-                        selectedSections: prev.selectedSections.some(s => 
-                          s.teacher_offered_course_id === section.teacher_offered_course_id
-                        ) 
-                          ? prev.selectedSections.filter(s => 
-                              s.teacher_offered_course_id !== section.teacher_offered_course_id
+                        selectedSections: prev.selectedSections.some(
+                          s =>
+                            s.teacher_offered_course_id ===
+                            section.teacher_offered_course_id,
+                        )
+                          ? prev.selectedSections.filter(
+                              s =>
+                                s.teacher_offered_course_id !==
+                                section.teacher_offered_course_id,
                             )
-                          : [...prev.selectedSections, section]
+                          : [...prev.selectedSections, section],
                       }));
-                    }}
-                  >
+                    }}>
                     <CheckBox
-                      value={assignmentState.selectedSections.some(s => 
-                        s.teacher_offered_course_id === section.teacher_offered_course_id
+                      value={assignmentState.selectedSections.some(
+                        s =>
+                          s.teacher_offered_course_id ===
+                          section.teacher_offered_course_id,
                       )}
                       onValueChange={() => {
                         setAssignmentState(prev => ({
                           ...prev,
-                          selectedSections: prev.selectedSections.some(s => 
-                            s.teacher_offered_course_id === section.teacher_offered_course_id
-                          ) 
-                            ? prev.selectedSections.filter(s => 
-                                s.teacher_offered_course_id !== section.teacher_offered_course_id
+                          selectedSections: prev.selectedSections.some(
+                            s =>
+                              s.teacher_offered_course_id ===
+                              section.teacher_offered_course_id,
+                          )
+                            ? prev.selectedSections.filter(
+                                s =>
+                                  s.teacher_offered_course_id !==
+                                  section.teacher_offered_course_id,
                               )
-                            : [...prev.selectedSections, section]
+                            : [...prev.selectedSections, section],
                         }));
                       }}
-                      tintColors={{ true: COLORS.primary, false: COLORS.darkGray }}
+                      tintColors={{
+                        true: COLORS.primary,
+                        false: COLORS.darkGray,
+                      }}
                     />
-                    <Text style={styles.sectionText}>{section.section_name}</Text>
+                    <Text style={styles.sectionText}>
+                      {section.section_name}
+                    </Text>
                   </TouchableOpacity>
                 ))
               )}
             </ScrollView>
 
             <View style={styles.modalFooter}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setSelectedTask(null)}
-              >
+                onPress={() => setSelectedTask(null)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[styles.confirmButton, loading && styles.disabledButton]}
                 onPress={handleAssignTask}
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading ? (
                   <ActivityIndicator color={COLORS.white} size="small" />
                 ) : (
                   <>
-                    <Icon name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                    <Icon
+                      name="check"
+                      size={18}
+                      color={COLORS.white}
+                      style={styles.buttonIcon}
+                    />
                     <Text style={styles.confirmButtonText}>Assign Task</Text>
                   </>
                 )}
@@ -738,7 +819,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.lightGray,
     padding: 12,
-    borderRadius: 8, 
+    borderRadius: 8,
     marginVertical: 6,
   },
   sectionText: {

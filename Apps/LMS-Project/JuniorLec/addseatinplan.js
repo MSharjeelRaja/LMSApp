@@ -1,45 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  ScrollView, 
-  Alert, 
+import React, {useState, useEffect} from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
   Dimensions,
   Image,
   Modal,
-  TextInput
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { API_URL } from '../ControlsAPI/Comps';
+import {API_URL} from '../ControlsAPI/Comps';
 import img from '../images/as.png';
 import colors from '../ControlsAPI/colors';
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const AddseatingPlan = ({ route, navigation }) => {
-  const { classData, apiResponse } = route.params;
+const AddseatingPlan = ({route, navigation}) => {
+  const {classData, apiResponse} = route.params;
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [classroomLayout, setClassroomLayout] = useState([]);
   const [tempRows, setTempRows] = useState('6');
   const [tempCols, setTempCols] = useState('5');
-  const [layoutConfig, setLayoutConfig] = useState({ rows: 6, cols: 5 });
+  const [layoutConfig, setLayoutConfig] = useState({rows: 6, cols: 5});
   const [showLayoutModal, setShowLayoutModal] = useState(false);
   console.log('API Response:', apiResponse);
-const { refreshAttendance } = route.params;
+  const {refreshAttendance} = route.params;
   const getSeatSize = () => {
     const maxColumns = 5; // Base number of columns
     const columnCount = Math.max(layoutConfig.cols, 1); // Ensure at least 1 column
     const scaleFactor = columnCount > maxColumns ? maxColumns / columnCount : 1;
     const baseSize = width * 0.18; // Base size for 5 columns
-    
+
     return {
       width: baseSize * scaleFactor,
       height: baseSize * scaleFactor,
       fontSize: Math.max(10 * scaleFactor, 8), // Minimum font size of 8
-      avatarSize: Math.max(28 * scaleFactor, 20) // Minimum avatar size of 20
+      avatarSize: Math.max(28 * scaleFactor, 20), // Minimum avatar size of 20
     };
   };
 
@@ -58,11 +58,11 @@ const { refreshAttendance } = route.params;
       }
     });
 
-    const layout = Array.from({ length: rows }, (_, rowIndex) => {
-      return Array.from({ length: cols }, (_, colIndex) => {
+    const layout = Array.from({length: rows}, (_, rowIndex) => {
+      return Array.from({length: cols}, (_, colIndex) => {
         const seatNumber = rowIndex * cols + colIndex + 1;
         const student = assignedStudents.find(s => s.SeatNumber === seatNumber);
-        return { seatNo: seatNumber, student: student || null };
+        return {seatNo: seatNumber, student: student || null};
       });
     });
 
@@ -83,89 +83,97 @@ const { refreshAttendance } = route.params;
   const applyNewLayout = () => {
     const newRows = parseInt(tempRows) || 6;
     const newCols = parseInt(tempCols) || 5;
-    
+
     if (newRows > 0 && newCols > 0) {
-      setLayoutConfig({ rows: newRows, cols: newCols });
+      setLayoutConfig({rows: newRows, cols: newCols});
       setShowLayoutModal(false);
     } else {
       Alert.alert('Invalid Input', 'Rows and columns must be positive numbers');
     }
   };
 
-  const handleSeatSelect = (seat) => {
+  const handleSeatSelect = seat => {
     if (!selectedStudent) return;
 
     setClassroomLayout(prevLayout => {
-      return prevLayout.map(row => row.map(s => {
-        if (s.student?.student_id === selectedStudent.student_id) {
-          setStudents(prev => [...prev, s.student]);
-          return { ...s, student: null };
-        }
-        if (s.seatNo === seat.seatNo) {
-          const previousStudent = s.student;
-          if (previousStudent) {
-            setStudents(prev => [...prev, previousStudent]);
+      return prevLayout.map(row =>
+        row.map(s => {
+          if (s.student?.student_id === selectedStudent.student_id) {
+            setStudents(prev => [...prev, s.student]);
+            return {...s, student: null};
           }
-          return { ...s, student: selectedStudent };
-        }
-        return s;
-      }));
+          if (s.seatNo === seat.seatNo) {
+            const previousStudent = s.student;
+            if (previousStudent) {
+              setStudents(prev => [...prev, previousStudent]);
+            }
+            return {...s, student: selectedStudent};
+          }
+          return s;
+        }),
+      );
     });
 
-    setStudents(prev => prev.filter(s => s.student_id !== selectedStudent.student_id));
+    setStudents(prev =>
+      prev.filter(s => s.student_id !== selectedStudent.student_id),
+    );
     setSelectedStudent(null);
   };
 
-const handleSubmit = async () => {
-  try {
-    const assignedStudents = classroomLayout.flatMap(row => 
-      row.filter(seat => seat.student).map(seat => ({
-        student_id: seat.student.student_id,
-        seatNo: seat.seatNo
-      }))
-    );
+  const handleSubmit = async () => {
+    try {
+      const assignedStudents = classroomLayout.flatMap(row =>
+        row
+          .filter(seat => seat.student)
+          .map(seat => ({
+            student_id: seat.student.student_id,
+            seatNo: seat.seatNo,
+          })),
+      );
 
-    const payload = {
-      teacher_offered_course_id: classData.teacher_offered_course_id,
-      students: assignedStudents
-    };
+      const payload = {
+        teacher_offered_course_id: classData.teacher_offered_course_id,
+        students: assignedStudents,
+      };
 
-    const response = await fetch(`${API_URL}/api/JuniorLec/add-sequence-attendance`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch(
+        `${API_URL}/api/JuniorLec/add-sequence-attendance`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload),
+        },
+      );
 
-    const result = await response.json();
-    
-    if (response.ok) {
-      Alert.alert('Success', 'Seating plan saved successfully');
-      // Call the refresh function if it exists before navigating back
-      if (route.params?.refreshAttendance) {
-        route.params.refreshAttendance();
+      const result = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', 'Seating plan saved successfully');
+        // Call the refresh function if it exists before navigating back
+        if (route.params?.refreshAttendance) {
+          route.params.refreshAttendance();
+        }
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', result.message || 'Failed to save seating plan');
       }
-      navigation.goBack();
-    } else {
-      Alert.alert('Error', result.message || 'Failed to save seating plan');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save seating plan');
+      console.error('Submission error:', error);
     }
-  } catch (error) {
-    Alert.alert('Error', 'Failed to save seating plan');
-    console.error('Submission error:', error);
-  }
-};
+  };
 
-
-  const renderStudentItem = (student) => (
+  const renderStudentItem = student => (
     <TouchableOpacity
       key={student.student_id}
       style={[
         styles.studentCard,
-        selectedStudent?.student_id === student.student_id && styles.selectedStudent
+        selectedStudent?.student_id === student.student_id &&
+          styles.selectedStudent,
       ]}
-      onPress={() => setSelectedStudent(student)}
-    >
+      onPress={() => setSelectedStudent(student)}>
       <Image
-        source={student.image ? { uri: student.image } : img}
+        source={student.image ? {uri: student.image} : img}
         style={styles.studentImage}
       />
       <View style={styles.studentInfo}>
@@ -176,17 +184,21 @@ const handleSubmit = async () => {
           {student.RegNo}
         </Text>
       </View>
-      <Icon 
-        name={selectedStudent?.student_id === student.student_id ? "check-circle" : "touch-app"} 
-        size={20} 
-        color="#FF6B6B" 
+      <Icon
+        name={
+          selectedStudent?.student_id === student.student_id
+            ? 'check-circle'
+            : 'touch-app'
+        }
+        size={20}
+        color="#FF6B6B"
       />
     </TouchableOpacity>
   );
 
-  const renderSeat = (seat) => {
+  const renderSeat = seat => {
     const seatSize = getSeatSize();
-    
+
     return (
       <TouchableOpacity
         key={seat.seatNo}
@@ -197,29 +209,44 @@ const handleSubmit = async () => {
             height: seatSize.height,
           },
           seat.student && styles.occupiedSeat,
-          selectedStudent && styles.activeSeat
+          selectedStudent && styles.activeSeat,
         ]}
-        onPress={() => handleSeatSelect(seat)}
-      >
+        onPress={() => handleSeatSelect(seat)}>
         {seat.student ? (
           <>
             <Image
-              source={seat.student.image ? { uri: seat.student.image } : img}
-              style={[styles.seatAvatar, { width: seatSize.avatarSize, height: seatSize.avatarSize }]}
+              source={seat.student.image ? {uri: seat.student.image} : img}
+              style={[
+                styles.seatAvatar,
+                {width: seatSize.avatarSize, height: seatSize.avatarSize},
+              ]}
             />
-            <Text style={[styles.seatName, { fontSize: seatSize.fontSize }]} numberOfLines={2}>
+            <Text
+              style={[styles.seatName, {fontSize: seatSize.fontSize}]}
+              numberOfLines={2}>
               {seat.student.name.replace(/Muhammad/g, 'M.')}
             </Text>
-            <Text style={[styles.seatNumber, { fontSize: seatSize.fontSize - 1 }]}>
+            <Text
+              style={[styles.seatNumber, {fontSize: seatSize.fontSize - 1}]}>
               Seat {seat.seatNo}
             </Text>
           </>
         ) : (
           <>
-            <Text style={[styles.emptySeatNumber, { fontSize: seatSize.fontSize + 4 }]}>
+            <Text
+              style={[
+                styles.emptySeatNumber,
+                {fontSize: seatSize.fontSize + 4},
+              ]}>
               {seat.seatNo}
             </Text>
-            {selectedStudent && <Icon name="add-circle" size={seatSize.avatarSize * 0.7} color="#4ECDC4" />}
+            {selectedStudent && (
+              <Icon
+                name="add-circle"
+                size={seatSize.avatarSize * 0.7}
+                color="#4ECDC4"
+              />
+            )}
           </>
         )}
       </TouchableOpacity>
@@ -243,12 +270,13 @@ const handleSubmit = async () => {
         <View style={styles.classroomPanel}>
           <View style={styles.panelHeader}>
             <Icon name="class" size={20} color="#FFF" />
-            <Text style={styles.panelTitle}>Classroom Layout ({layoutConfig.rows}x{layoutConfig.cols})</Text>
+            <Text style={styles.panelTitle}>
+              Classroom Layout ({layoutConfig.rows}x{layoutConfig.cols})
+            </Text>
           </View>
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.classroomGrid}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             {classroomLayout.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.seatRow}>
                 {row.map(seat => renderSeat(seat))}
@@ -261,12 +289,13 @@ const handleSubmit = async () => {
         <View style={styles.studentPanel}>
           <View style={styles.panelHeader}>
             <Icon name="people" size={20} color="#FFF" />
-            <Text style={styles.panelTitle}>Unassigned ({students.length})</Text>
+            <Text style={styles.panelTitle}>
+              Unassigned ({students.length})
+            </Text>
           </View>
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.studentList}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             {students.map(renderStudentItem)}
             {students.length === 0 && (
               <View style={styles.emptyState}>
@@ -279,15 +308,11 @@ const handleSubmit = async () => {
       </View>
 
       {/* Layout Configuration Modal */}
-      <Modal
-        visible={showLayoutModal}
-        transparent={true}
-        animationType="slide"
-      >
+      <Modal visible={showLayoutModal} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Change Classroom Layout</Text>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Rows:</Text>
               <TextInput
@@ -297,7 +322,7 @@ const handleSubmit = async () => {
                 keyboardType="numeric"
               />
             </View>
-            
+
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Columns:</Text>
               <TextInput
@@ -309,16 +334,14 @@ const handleSubmit = async () => {
             </View>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowLayoutModal(false)}
-              >
+                onPress={() => setShowLayoutModal(false)}>
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.modalButton, styles.applyButton]}
-                onPress={applyNewLayout}
-              >
+                onPress={applyNewLayout}>
                 <Text style={styles.buttonText}>Apply</Text>
               </TouchableOpacity>
             </View>

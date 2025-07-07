@@ -1,10 +1,18 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useEffect, useState, useRef } from 'react';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
-import { Table, Row, Rows } from 'react-native-table-component';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
+import {Table, Row, Rows} from 'react-native-table-component';
 import colors from '../ControlsAPI/colors';
 
-const FullTimetable = ({ route, navigation }) => {
+const FullTimetable = ({route, navigation}) => {
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState('');
@@ -13,45 +21,51 @@ const FullTimetable = ({ route, navigation }) => {
   console.log('User Data: in timetable ', userData); // Debugging line
   const daysScrollRef = useRef(null);
   const ITEM_WIDTH = 90;
-
-  // Updated days array with Sunday
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const formatTimeTo12Hour = (timeStr) => {
+  const days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+  const formatTimeTo12Hour = timeStr => {
     const [hour, minute] = timeStr.split(':');
     const h = parseInt(hour);
-  
+
     // Custom AM/PM logic
     let ampm = 'AM';
     if (h >= 12 || h <= 7) {
       ampm = 'PM';
-    } else if (h >= 8 && h <12 ) {
+    } else if (h >= 8 && h < 12) {
       ampm = 'AM';
     }
-  
+
     const formattedHour = h % 12 === 0 ? 12 : h % 12;
     return `${formattedHour}:${minute} ${ampm}`;
   };
-  
-  
+
   useEffect(() => {
     if (!Tid) return;
     const fetchTimetable = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/Students/FullTimetable?student_id=${Tid}`);
+        const response = await fetch(
+          `${API_URL}/api/Students/FullTimetable?student_id=${Tid}`,
+        );
         const data = await response.json();
         console.log('Fetched timetable data:', data); // Debugging line
         if (data.status === 'success' && Array.isArray(data.data)) {
           setTimetable(data.data);
           const current = getCurrentDay();
           setSelectedDay(current);
-          
+
           // Scroll to current day after data load
           setTimeout(() => {
             const index = days.indexOf(current);
             if (daysScrollRef.current && index !== -1) {
               daysScrollRef.current.scrollToOffset({
                 offset: index * ITEM_WIDTH,
-                animated: true
+                animated: true,
               });
             }
           }, 100);
@@ -79,71 +93,75 @@ const FullTimetable = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Navbar
-                   title="TimeTable"
-                   userName={userData.name}
-                   des={'Student'}
-                   showBackButton={true}
-                   onLogout={() => navigation.replace('Login')}
-                 />
-          
+        title="TimeTable"
+        userName={userData.name}
+        des={'Student'}
+        showBackButton={true}
+        onLogout={() => navigation.replace('Login')}
+      />
 
       <FlatList
         ref={daysScrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         data={days}
-        keyExtractor={(item) => item}
-        renderItem={({ item: day }) => ( 
+        keyExtractor={item => item}
+        renderItem={({item: day}) => (
           <TouchableOpacity
-  key={day}
-  style={[
-    styles.dayButton,
-    selectedDay === day && styles.selectedDayButton,
-    day === getCurrentDay() && styles.currentDayButton // Add this line
-  ]}
-  onPress={() => setSelectedDay(day)}
->
-  <Text style={[
-    styles.dayButtonText, 
-    selectedDay === day && styles.selectedDayButtonText,
-    day === getCurrentDay() && styles.currentDayText // Optional text color change
-  ]}>
-    {day.slice(0,3)}
-  </Text>
-</TouchableOpacity>
+            key={day}
+            style={[
+              styles.dayButton,
+              selectedDay === day && styles.selectedDayButton,
+              day === getCurrentDay() && styles.currentDayButton, // Add this line
+            ]}
+            onPress={() => setSelectedDay(day)}>
+            <Text
+              style={[
+                styles.dayButtonText,
+                selectedDay === day && styles.selectedDayButtonText,
+                day === getCurrentDay() && styles.currentDayText, // Optional text color change
+              ]}>
+              {day.slice(0, 3)}
+            </Text>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.daysContainer}
         getItemLayout={(data, index) => ({
           length: ITEM_WIDTH,
           offset: ITEM_WIDTH * index,
-          index
+          index,
         })}
       />
 
       {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          style={styles.loader}
+        />
       ) : filteredTimetable.length > 0 ? (
         <FlatList
           data={filteredTimetable}
-          keyExtractor={(item) => item.day}
-          renderItem={({ item }) => (
+          keyExtractor={item => item.day}
+          renderItem={({item}) => (
             <View style={[styles.tableContainer, styles.highlight]}>
-              <Text style={styles.dayHeader}>
-                {item.day}'s Schedule
-              </Text>
-              <Table borderStyle={{ borderWidth: 1, borderColor: colors.primary }}>
+              <Text style={styles.dayHeader}>{item.day}'s Schedule</Text>
+              <Table
+                borderStyle={{borderWidth: 1, borderColor: colors.primary}}>
                 <Row
-                  data={["Time", "Course", "Venue", "Section"]}
+                  data={['Time', 'Course', 'Venue', 'Section']}
                   style={[styles.head, styles.highlightHead]}
                   textStyle={styles.headText}
                 />
                 <Rows
                   data={item.schedule?.map(sch => [
-                   `${formatTimeTo12Hour(sch.start_time)}\n${formatTimeTo12Hour(sch.end_time)}`,
+                    `${formatTimeTo12Hour(
+                      sch.start_time,
+                    )}\n${formatTimeTo12Hour(sch.end_time)}`,
 
                     sch.description || 'N/A',
                     sch.venue || 'N/A',
-                    sch.section || 'N/A'
+                    sch.section || 'N/A',
                   ])}
                   textStyle={styles.text}
                 />
@@ -152,26 +170,27 @@ const FullTimetable = ({ route, navigation }) => {
           )}
         />
       ) : (
-        <Text style={styles.noDataText}>No classes scheduled for {selectedDay}</Text>
+        <Text style={styles.noDataText}>
+          No classes scheduled for {selectedDay}
+        </Text>
       )}
     </View>
   );
 };
 
-// Add to your existing styles:
 const styles = StyleSheet.create({
   currentDayButton: {
-  borderWidth: 2,
-  borderColor: colors.blueNavy,backgroundColor:colors.primary
-},
-currentDayText: {
-  color: colors.white,
-},
+    borderWidth: 2,
+    borderColor: colors.blueNavy,
+    backgroundColor: colors.primary,
+  },
+  currentDayText: {
+    color: colors.white,
+  },
   daysContainer: {
     paddingVertical: 10,
     backgroundColor: colors.primaryLight,
     paddingHorizontal: 5,
-   
   },
   dayButton: {
     width: 80,
@@ -182,13 +201,11 @@ currentDayText: {
     alignItems: 'center',
     justifyContent: 'center',
   },
- 
+
   container: {
-    
     backgroundColor: '#fff',
   },
-  
-  
+
   selectedDayButton: {
     backgroundColor: colors.primary,
   },
@@ -205,11 +222,13 @@ currentDayText: {
     alignItems: 'center',
   },
   tableContainer: {
-    margin: 12,padding:5,paddingBottom:25,
+    margin: 12,
+    padding: 5,
+    paddingBottom: 25,
     borderRadius: 12,
     backgroundColor: colors.white,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -250,8 +269,8 @@ currentDayText: {
     fontSize: 20,
     color: colors.gray,
     marginTop: 120,
-    
-    height:200
+
+    height: 200,
   },
 });
 

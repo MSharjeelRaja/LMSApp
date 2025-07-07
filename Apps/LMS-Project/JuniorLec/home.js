@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  TouchableOpacity, 
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
   FlatList,
-  StatusBar
-} from "react-native";
-import JAddContent from "./JAddContent";
+  StatusBar,
+} from 'react-native';
+import JAddContent from './JAddContent';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Icon from "react-native-vector-icons/MaterialIcons";
-import Pendingtasks from "../StudentScreens/Pendingtasks";
-import CourseContent from "../TeacherScreens/CourseContentMarked";
-import { MyBtn, Navbar } from "../ControlsAPI/Comps";
-import JCreatetask from "./JCreatetask";
-import MarkAttendece from "../TeacherScreens/MarkAttendece";
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Pendingtasks from '../StudentScreens/Pendingtasks';
+import CourseContent from '../TeacherScreens/CourseContentMarked';
+import {MyBtn, Navbar} from '../ControlsAPI/Comps';
+import JCreatetask from './JCreatetask';
+import MarkAttendece from '../TeacherScreens/MarkAttendece';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import JCourseSections from "./JCourseSections";
-import JCourses from "./JCourses";
+import JCourseSections from './JCourseSections';
+import JCourses from './JCourses';
 
-import colors from "../ControlsAPI/colors";
+import colors from '../ControlsAPI/colors';
 
-const J_Home = ({ navigation, route }) => {
+const J_Home = ({navigation, route}) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -36,26 +36,28 @@ const J_Home = ({ navigation, route }) => {
 
   const isCurrentClass = (start, end) => {
     // Convert API times to minutes (24h format)
-    const toMinutes = (time) => {
+    const toMinutes = time => {
       const [h, m] = time.slice(0, 5).split(':').map(Number);
       return h * 60 + m;
     };
-  
+
     // Get current time with 12h-24h fix
     const now = new Date();
     let hours = now.getHours();
     const isPM = hours >= 12;
-    
+
     // Convert to proper 24h format if system clock is misconfigured
     if (isPM && hours > 12) hours -= 12;
     if (!isPM && hours === 0) hours = 12;
-  
+
     const currentMinutes = hours * 60 + now.getMinutes();
-  
+
     // Compare with class times
-    return currentMinutes >= toMinutes(start) && currentMinutes <= toMinutes(end);
+    return (
+      currentMinutes >= toMinutes(start) && currentMinutes <= toMinutes(end)
+    );
   };
- 
+
   const userData = route.params?.userData || {};
   global.tuserid = userData.user_id;
   global.Tid = userData.id;
@@ -66,7 +68,7 @@ const J_Home = ({ navigation, route }) => {
 
   // Format date for header
   const formatDate = () => {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    const options = {weekday: 'long', month: 'long', day: 'numeric'};
     return currentTime.toLocaleDateString('en-US', options);
   };
 
@@ -74,114 +76,118 @@ const J_Home = ({ navigation, route }) => {
   const quickActions = [
     {
       id: 1,
-      title: "Notifications",
-      icon: "notification",
-      iconType: "AntDesign",
+      title: 'Notifications',
+      icon: 'notification',
+      iconType: 'AntDesign',
       color: colors.primary,
-      onPress: () => navigation.navigate("Jnotification", { userData })
+      onPress: () => navigation.navigate('Jnotification', {userData}),
     },
     {
       id: 2,
-      title: "Courses",
-      icon: "book",
-      iconType: "AntDesign",
+      title: 'Courses',
+      icon: 'book',
+      iconType: 'AntDesign',
       color: colors.info,
-      onPress: () => navigation.navigate("JCourses", { userData })
+      onPress: () => navigation.navigate('JCourses', {userData}),
     },
     {
       id: 3,
-      title: "Contested",
-      icon: "exclamation-triangle",
-      iconType: "FontAwesome5",
+      title: 'Contested',
+      icon: 'exclamation-triangle',
+      iconType: 'FontAwesome5',
       color: colors.warning,
-      onPress: () => navigation.navigate("JContestattendence", { userData })
+      onPress: () => navigation.navigate('JContestattendence', {userData}),
     },
     {
       id: 4,
-      title: "Mark Attendence",
-      icon: "users",
-      iconType: "FontAwesome5",
+      title: 'Mark Attendence',
+      icon: 'users',
+      iconType: 'FontAwesome5',
       color: colors.success,
-      onPress: () => navigation.navigate("JAttendenceList", { userData })
+      onPress: () => navigation.navigate('JAttendenceList', {userData}),
     },
-    
+
     {
       id: 5,
-      title: "View Tasks",
-      icon: "assignment",
-      iconType: "MaterialIcons",
+      title: 'View Tasks',
+      icon: 'assignment',
+      iconType: 'MaterialIcons',
       color: colors.orange,
-      onPress: () => navigation.navigate("Jtaskget", { userData })
-    },   {
+      onPress: () => navigation.navigate('Jtaskget', {userData}),
+    },
+    {
       id: 6,
-      title: "Assign tasks",
-      icon: "assignment",
-      iconType: "MaterialIcons",
+      title: 'Assign tasks',
+      icon: 'assignment',
+      iconType: 'MaterialIcons',
       color: colors.orange,
-      onPress: () => navigation.navigate("JCreatetask", { userData })
-    }
-     , {
+      onPress: () => navigation.navigate('JCreatetask', {userData}),
+    },
+    {
       id: 7,
-      title: "Considered tasks",
-      icon: "assignment",
-      iconType: "MaterialIcons",
+      title: 'Considered tasks',
+      icon: 'assignment',
+      iconType: 'MaterialIcons',
       color: colors.blueNavy,
-      onPress: () => navigation.navigate("ConsiderTaskJ", { userData })
-    }
+      onPress: () => navigation.navigate('ConsiderTaskJ', {userData}),
+    },
   ];
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={colors.primaryDark} barStyle="light-content" />
-     
-      <Navbar 
-        title="LMS" 
-        userName={userData.name} 
-        des={'Junior Lecturer'} 
+      <StatusBar
+        backgroundColor={colors.primaryDark}
+        barStyle="light-content"
+      />
+
+      <Navbar
+        title="LMS"
+        userName={userData.name}
+        des={'Junior Lecturer'}
         onLogout={() => navigation.navigate('Login')}
       />
-      
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
         {/* Date Header */}
-       
+
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          
           <View style={styles.profileImageContainer}>
-            <Image 
-              source={{ uri: userData.image }} 
-              style={styles.profileImage} 
+            <Image
+              source={{uri: userData.image}}
+              style={styles.profileImage}
               resizeMode="cover"
             />
           </View>
-          
+
           <View style={styles.profileInfo}>
-          <View style={styles.dateHeader}>
-          <Text style={styles.dateText}>{formatDate()}</Text>
-            <Text style={styles.dateText}>Current Week :{userData.week}</Text>
-        </View>
-        
+            <View style={styles.dateHeader}>
+              <Text style={styles.dateText}>{formatDate()}</Text>
+              <Text style={styles.dateText}>Current Week :{userData.week}</Text>
+            </View>
+
             <Text style={styles.userName}>{userData.name}</Text>
             <Text style={styles.userInfo}>{userData.Username}</Text>
             <View style={styles.badgeContainer}>
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>Teacher</Text>
               </View>
-              <View style={[styles.badge, { backgroundColor: colors.info }]}>
+              <View style={[styles.badge, {backgroundColor: colors.info}]}>
                 <Text style={styles.badgeText}>{userData.Session}</Text>
               </View>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.accountButton}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("JDetails", { userData })}
-            >
+              onPress={() => navigation.navigate('JDetails', {userData})}>
               <Text style={styles.buttonText}>Account Details</Text>
               <Icon name="arrow-forward" size={16} color={colors.white} />
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Course Stats Cards */}
         <View style={styles.statsCardsContainer}>
           <View style={styles.statsCard}>
@@ -193,7 +199,7 @@ const J_Home = ({ navigation, route }) => {
               <Text style={styles.statsLabel}>Courses</Text>
             </View>
           </View>
-          
+
           <View style={styles.statsCard}>
             <View style={styles.statsIconContainer}>
               <FontAwesome5 name="users" size={24} color={colors.info} />
@@ -204,44 +210,63 @@ const J_Home = ({ navigation, route }) => {
             </View>
           </View>
         </View>
-        
-      
+
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Today's Schedule</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.seeAllButton}
-              onPress={() => navigation.navigate("JTimetable", { userData })}
-            >
-
+              onPress={() => navigation.navigate('JTimetable', {userData})}>
               <Text style={styles.seeAllText}>See All</Text>
               <Icon name="chevron-right" size={18} color={colors.primary} />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.timetableContainer}>
             <View style={styles.tableHeader}>
               <Text style={styles.headerCell}>Time</Text>
               <Text style={styles.headerCell}>Course</Text>
               <Text style={styles.headerCell}>Venue</Text>
             </View>
-            
+
             {timetable.length > 0 ? (
               <FlatList
                 data={timetable}
                 scrollEnabled={false}
-                keyExtractor={(item, index) => `${item.start_time}-${item.coursename}-${index}`}
-                renderItem={({ item }) => {
-                  const isActive = isCurrentClass(item.start_time, item.end_time);
+                keyExtractor={(item, index) =>
+                  `${item.start_time}-${item.coursename}-${index}`
+                }
+                renderItem={({item}) => {
+                  const isActive = isCurrentClass(
+                    item.start_time,
+                    item.end_time,
+                  );
                   return (
-                    <View style={[styles.tableRow, isActive && styles.currentClass]}>
-                      <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
-                        {item.start_time.split(":").slice(0, 2).join(":")} - {item.end_time.split(":").slice(0, 2).join(":")}
+                    <View
+                      style={[
+                        styles.tableRow,
+                        isActive && styles.currentClass,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.tableCell,
+                          isActive && styles.currentClassText,
+                        ]}>
+                        {item.start_time.split(':').slice(0, 2).join(':')} -{' '}
+                        {item.end_time.split(':').slice(0, 2).join(':')}
                       </Text>
-                      <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
+                      <Text
+                        style={[
+                          styles.tableCell,
+                          isActive && styles.currentClassText,
+                        ]}>
                         {item.coursename}
                       </Text>
-                      <Text style={[styles.tableCell, isActive && styles.currentClassText]}>
+                      <Text
+                        style={[
+                          styles.tableCell,
+                          isActive && styles.currentClassText,
+                        ]}>
                         {item.venue}
                       </Text>
                     </View>
@@ -250,39 +275,60 @@ const J_Home = ({ navigation, route }) => {
               />
             ) : (
               <View style={styles.noDataContainer}>
-                <FontAwesome5 name="calendar-times" size={24} color={colors.gray} style={styles.noDataIcon} />
-                <Text style={styles.noDataText}>No classes scheduled for today</Text>
+                <FontAwesome5
+                  name="calendar-times"
+                  size={24}
+                  color={colors.gray}
+                  style={styles.noDataIcon}
+                />
+                <Text style={styles.noDataText}>
+                  No classes scheduled for today
+                </Text>
               </View>
             )}
           </View>
         </View>
-       
+
         {/* Quick Actions Section - UPDATED */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsContainer}>
-            <ScrollView 
+            <ScrollView
               nestedScrollEnabled={true}
               style={styles.quickActionsScroll}
               contentContainerStyle={styles.quickActionsScrollContent}
-              showsVerticalScrollIndicator={true}
-            >
+              showsVerticalScrollIndicator={true}>
               <View style={styles.quickActionsGrid}>
-                {quickActions.map((action) => (
+                {quickActions.map(action => (
                   <TouchableOpacity
                     key={action.id}
                     style={styles.actionButton}
-                    onPress={action.onPress}
-                  >
-                    <View style={[styles.actionIconContainer, { backgroundColor: action.color }]}>
-                      {action.iconType === "AntDesign" && (
-                        <AntDesign name={action.icon} size={22} color={colors.white} />
+                    onPress={action.onPress}>
+                    <View
+                      style={[
+                        styles.actionIconContainer,
+                        {backgroundColor: action.color},
+                      ]}>
+                      {action.iconType === 'AntDesign' && (
+                        <AntDesign
+                          name={action.icon}
+                          size={22}
+                          color={colors.white}
+                        />
                       )}
-                      {action.iconType === "FontAwesome5" && (
-                        <FontAwesome5 name={action.icon} size={22} color={colors.white} />
+                      {action.iconType === 'FontAwesome5' && (
+                        <FontAwesome5
+                          name={action.icon}
+                          size={22}
+                          color={colors.white}
+                        />
                       )}
-                      {action.iconType === "MaterialIcons" && (
-                        <Icon name={action.icon} size={22} color={colors.white} />
+                      {action.iconType === 'MaterialIcons' && (
+                        <Icon
+                          name={action.icon}
+                          size={22}
+                          color={colors.white}
+                        />
                       )}
                     </View>
                     <Text style={styles.actionButtonText}>{action.title}</Text>
@@ -292,38 +338,27 @@ const J_Home = ({ navigation, route }) => {
             </ScrollView>
           </View>
         </View>
-      
-
-        
       </ScrollView>
     </View>
   );
 };
 
+import {Animated} from 'react-native';
 
-
-import {  Animated } from 'react-native';
-
-import CourseSections from "../TeacherScreens/CourseSections";
-import Courses from "../TeacherScreens/Courses";
-import JAttendenceList from "./attendencesheet";
+import CourseSections from '../TeacherScreens/CourseSections';
+import Courses from '../TeacherScreens/Courses';
+import JAttendenceList from './attendencesheet';
 
 const Tab = createBottomTabNavigator();
 
-const TabBarIcon = ({ focused, name, size, color, iconFamily }) => {
-
-  
-
+const TabBarIcon = ({focused, name, size, color, iconFamily}) => {
   return (
     <Animated.View
       style={{
-        alignItems: "center",
-        justifyContent: "center",
-        
-    
-      }}
-    >
-      {iconFamily === "AntDesign" ? (
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      {iconFamily === 'AntDesign' ? (
         <AntDesign name={name} size={24} color={color} />
       ) : (
         <FontAwesome5 name={name} size={22} color={color} />
@@ -333,34 +368,33 @@ const TabBarIcon = ({ focused, name, size, color, iconFamily }) => {
   );
 };
 
-const JTabs = ({ navigation, route }) => {
+const JTabs = ({navigation, route}) => {
   const userData = route.params?.userData || {};
-console.log('id is ='+userData.id)
-console.log('user id is ='+userData.user_id)
+  console.log('id is =' + userData.id);
+  console.log('user id is =' + userData.user_id);
   global.Juserid = userData.user_id;
   global.Jid = userData.id;
-  console.log('global user id is ='+global.tuserid)
-  console.log('global id is ='+global.Tid)
+  console.log('global user id is =' + global.tuserid);
+  console.log('global id is =' + global.Tid);
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({route}) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color }) => {
+        tabBarIcon: ({focused, color}) => {
           let iconName, iconFamily;
 
-          if (route.name === "Home") {
-            iconName = "home";
-            iconFamily = "AntDesign";
-          } else if (route.name === "JAttendencelist") {
-            iconName = "clipboard-check";
-            iconFamily = "FontAwesome5";
-          } else if (route.name === "Course Content") {
-            iconName = "book";
-            iconFamily = "FontAwesome5";
-          }
-          else if (route.name === "Courses") {
-            iconName = "book";
-            iconFamily = "FontAwesome5";
+          if (route.name === 'Home') {
+            iconName = 'home';
+            iconFamily = 'AntDesign';
+          } else if (route.name === 'JAttendencelist') {
+            iconName = 'clipboard-check';
+            iconFamily = 'FontAwesome5';
+          } else if (route.name === 'Course Content') {
+            iconName = 'book';
+            iconFamily = 'FontAwesome5';
+          } else if (route.name === 'Courses') {
+            iconName = 'book';
+            iconFamily = 'FontAwesome5';
           }
           return (
             <TabBarIcon
@@ -376,8 +410,7 @@ console.log('user id is ='+userData.user_id)
         tabBarInactiveTintColor: colors.inactive,
         tabBarStyle: styles.tabBarStyle,
         tabBarLabelStyle: styles.tabBarLabelStyle,
-      })}
-    >
+      })}>
       <Tab.Screen name="Home" component={J_Home} initialParams={route.params} />
       <Tab.Screen
         name="JAttendencelist"
@@ -389,16 +422,14 @@ console.log('user id is ='+userData.user_id)
       <Tab.Screen
         name="JAddContent"
         component={JAddContent}
-     
         options={{
-          tabBarLabel: "",
-          
-          tabBarButton: (props) => (
+          tabBarLabel: '',
+
+          tabBarButton: props => (
             <TouchableOpacity
               {...props}
               style={styles.floatingButtonContainer}
-              onPress={() => navigation.navigate("JAddContent", { userData })}
-            >
+              onPress={() => navigation.navigate('JAddContent', {userData})}>
               <View style={styles.floatingIcon}>
                 <AntDesign name="plus" size={26} color={colors.white} />
               </View>
@@ -411,19 +442,17 @@ console.log('user id is ='+userData.user_id)
         name="Course Content"
         component={JCourseSections}
         initialParams={route.params}
-      /> 
-       <Tab.Screen
-      name="Courses"
-      component={JCourses}
-      initialParams={route.params}
-    />
+      />
+      <Tab.Screen
+        name="Courses"
+        component={JCourses}
+        initialParams={route.params}
+      />
     </Tab.Navigator>
   );
 };
 
 export default JTabs;
-
-
 
 const styles = StyleSheet.create({
   tabBarStyle: {
@@ -435,78 +464,67 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    position: "absolute",
-    
+    position: 'absolute',
   },
   tabBarLabelStyle: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
     marginBottom: 5,
   },
   activeIndicator: {
     width: 6,
     height: 6,
     borderRadius: 0,
-   
+
     marginTop: 3,
   },
   floatingButtonContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: -20, // Keeps button properly aligned
     width: 70,
     height: 60,
     borderRadius: 35,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   floatingIcon: {
     backgroundColor: colors.secondary,
     width: 55,
     height: 55,
     borderRadius: 32.5,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 3,
-   
   },
-  
-  
 
-
-
-
-
-
-
-
-
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: colors.primaryFaint,
   },
   scrollContent: {
     paddingBottom: 20,
   },
-  
-  // Date Header
+
   dateHeader: {
-left:-120,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   dateText: {
     fontSize: 14,
     color: colors.blueLight,
     fontWeight: '600',
   },
-  
+
   // Profile Card
-  profileCard: { 
-    flexDirection: "row", 
-    backgroundColor: colors.primaryDark, 
-    padding: 12, 
-    borderRadius: 16, 
-    alignItems: "center", 
+  profileCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.primaryDark,
+    padding: 12,
+    borderRadius: 16,
+    alignItems: 'center',
     margin: 7,
-    marginTop:4,
+    marginTop: 4,
     elevation: 4,
   },
   profileImageContainer: {
@@ -515,62 +533,62 @@ left:-120,
     backgroundColor: colors.white,
     elevation: 2,
   },
-  profileImage: { 
-    width: 80, 
-    height: 80, 
+  profileImage: {
+    width: 80,
+    height: 80,
     borderRadius: 40,
   },
-  profileInfo: { 
+  profileInfo: {
     flex: 1,
     marginLeft: 36,
   },
-  userName: { 
-    fontSize: 22, 
-    fontWeight: "bold", 
+  userName: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: colors.white,
   },
-  userInfo: { 
-    color: colors.white, 
+  userInfo: {
+    color: colors.white,
     fontSize: 14,
     opacity: 0.7,
-    marginBottom: 4
+    marginBottom: 4,
   },
-  
+
   // Badge styles
   badgeContainer: {
     flexDirection: 'row',
-    marginBottom: 5
+    marginBottom: 5,
   },
   badge: {
     backgroundColor: colors.blueNavy,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 12,
-    marginRight: 8
+    marginRight: 8,
   },
   badgeText: {
     color: colors.white,
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: '600',
   },
-  
+
   // Button styles
-  accountButton: { 
-    backgroundColor: colors.orange, 
+  accountButton: {
+    backgroundColor: colors.orange,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8, 
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-start'
+    alignSelf: 'flex-start',
   },
-  buttonText: { 
+  buttonText: {
     color: colors.white,
     fontWeight: '600',
-    marginRight: 4
+    marginRight: 4,
   },
-  
+
   // Stats Cards
   statsCardsContainer: {
     flexDirection: 'row',
@@ -600,13 +618,14 @@ left:-120,
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.title2,
-    marginBottom: 2,marginLeft:5
+    marginBottom: 2,
+    marginLeft: 5,
   },
   statsLabel: {
     fontSize: 14,
     color: colors.gray,
   },
-  
+
   // Section Container
   sectionContainer: {
     marginHorizontal: 10,
@@ -636,10 +655,10 @@ left:-120,
     color: colors.primary,
     fontWeight: '600',
   },
-  
+
   // Timetable styles
-  timetableContainer: { 
-    backgroundColor: colors.white, 
+  timetableContainer: {
+    backgroundColor: colors.white,
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
@@ -658,18 +677,18 @@ left:-120,
     color: colors.primaryDark,
     fontSize: 14,
   },
-  tableRow: { 
-    flexDirection: "row", 
+  tableRow: {
+    flexDirection: 'row',
     paddingVertical: 6,
     paddingHorizontal: 3,
-    borderBottomWidth: 1, 
+    borderBottomWidth: 1,
     borderColor: colors.primaryFaint,
     alignItems: 'center',
   },
-  tableCell: { 
-    flex: 1, 
-    textAlign: "center", 
-    fontSize: 14, 
+  tableCell: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 14,
     color: colors.black,
   },
   currentClass: {
@@ -690,7 +709,7 @@ left:-120,
     color: colors.gray,
     fontSize: 14,
   },
-  
+
   // Quick Actions Section - UPDATED
   section: {
     backgroundColor: colors.white,
@@ -738,7 +757,7 @@ left:-120,
     fontWeight: '600',
     flex: 1,
   },
-  
+
   // Grader Buttons
   graderButtonsScrollContainer: {
     paddingVertical: 15,

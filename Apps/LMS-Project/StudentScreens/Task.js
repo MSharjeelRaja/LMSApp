@@ -8,7 +8,11 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {API_URL, Navbar} from '../ControlsAPI/Comps';
-import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import colors from '../ControlsAPI/colors';
 
@@ -34,8 +38,7 @@ const Task = () => {
         `${API_URL}/api/Students/task/details?student_id=${Tid}`,
       );
       const data = await response.json();
-console.log('task data:', data); // ✅ Properly logs the object
-
+      console.log('task data:', data); // ✅ Properly logs the object
 
       setTasks({
         ongoing: data.TaskDetails.Active_Tasks,
@@ -82,13 +85,12 @@ console.log('task data:', data); // ✅ Properly logs the object
     };
     return colors[type] || colors.Default;
   };
- useFocusEffect(
+  useFocusEffect(
     React.useCallback(() => {
       fetchTasks();
     }, [Tid]),
   );
 
- 
   const calculateTimeLeft = startDate => {
     const start = new Date(startDate);
     const now = new Date();
@@ -249,7 +251,7 @@ console.log('task data:', data); // ✅ Properly logs the object
               completedFilter === 'All' && styles.selectedOption,
             ]}
             onPress={() => setCompletedFilter('All')}>
-            <Text style={{color:colors.black}}>All</Text>
+            <Text style={{color: colors.black}}>All</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -257,7 +259,7 @@ console.log('task data:', data); // ✅ Properly logs the object
               completedFilter === 'Marked' && styles.selectedOption,
             ]}
             onPress={() => setCompletedFilter('Marked')}>
-            <Text style={{color:colors.black}}>Marked</Text>
+            <Text style={{color: colors.black}}>Marked</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -265,7 +267,7 @@ console.log('task data:', data); // ✅ Properly logs the object
               completedFilter === 'Pending' && styles.selectedOption,
             ]}
             onPress={() => setCompletedFilter('Pending')}>
-            <Text style={{color:colors.black}}>Pending</Text>
+            <Text style={{color: colors.black}}>Pending</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -426,13 +428,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     backgroundColor: '#F1F5F9',
-    
   },
 
   selectedOption: {
     backgroundColor: '#93C5FD',
     borderColor: '#3B82F6',
-  
   },
 
   statusText: {

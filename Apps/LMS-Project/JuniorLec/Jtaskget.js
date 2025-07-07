@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  ScrollView, 
+import React, {useState, useEffect} from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
   ActivityIndicator,
   Linking,
   FlatList,
-  Alert
+  Alert,
 } from 'react-native';
 import colors from '../ControlsAPI/colors';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const TaskGetScreen = ({ navigation, route }) => {
+const TaskGetScreen = ({navigation, route}) => {
   const Tid = global.Tid;
   const userData = route.params?.userData || {};
   const [loading, setLoading] = useState(true);
@@ -23,28 +23,30 @@ const TaskGetScreen = ({ navigation, route }) => {
     completed: [],
     upcoming: [],
     ongoing: [],
-    unmarked: []
+    unmarked: [],
   });
 
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/JuniorLec/task/get?teacher_id=${userData.id}`);
+      const response = await fetch(
+        `${API_URL}/api/JuniorLec/task/get?teacher_id=${userData.id}`,
+      );
       const data = await response.json();
-      console.log("Fetched tasks:", data);
+      console.log('Fetched tasks:', data);
 
-      if (data.status === "success") {
+      if (data.status === 'success') {
         setTasks({
           completed: data.Tasks.completed_tasks || [],
           upcoming: data.Tasks.upcoming_tasks || [],
           ongoing: data.Tasks.ongoing_tasks || [],
-          unmarked: data.Tasks.unmarked_tasks || []
+          unmarked: data.Tasks.unmarked_tasks || [],
         });
       }
-      console.log("Tasks state updated:", tasks);
+      console.log('Tasks state updated:', tasks);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
-      Alert.alert("Error", "Failed to fetch tasks");
+      console.error('Error fetching tasks:', error);
+      Alert.alert('Error', 'Failed to fetch tasks');
     } finally {
       setLoading(false);
     }
@@ -54,113 +56,98 @@ const TaskGetScreen = ({ navigation, route }) => {
     fetchTasks();
   }, []);
 
-  const handleViewFile = (fileUrl) => {
+  const handleViewFile = fileUrl => {
     if (!fileUrl) {
-      Alert.alert("Error", "No file available");
+      Alert.alert('Error', 'No file available');
       return;
     }
     Linking.openURL(fileUrl).catch(err => {
-      Alert.alert("Error", "Failed to open file");
-      console.error("Failed to open URL:", err);
+      Alert.alert('Error', 'Failed to open file');
+      console.error('Failed to open URL:', err);
     });
   };
 
- 
-
- 
-
-
- 
-
-  const handleViewSubmissions = (  taskId,taskname,points, userData ) => {
-     navigation.navigate('JMarkTask', {  taskId,taskname,points, userData  });
+  const handleViewSubmissions = (taskId, taskname, points, userData) => {
+    navigation.navigate('JMarkTask', {taskId, taskname, points, userData});
   };
 
-  const handleViewQuestions = (taskId) => {
-    Alert.alert("View Questions", `View questions for task ${taskId}`);
+  const handleViewQuestions = taskId => {
+    Alert.alert('View Questions', `View questions for task ${taskId}`);
     // Implement your view questions logic here
   };
 
-  const handleMarkTask = (taskId,taskname,points) => {
-   navigation.navigate('JMarkTask', {  taskId,taskname,points, userData  });
+  const handleMarkTask = (taskId, taskname, points) => {
+    navigation.navigate('JMarkTask', {taskId, taskname, points, userData});
   };
 
-  
-  const renderTaskButtons = (task) => {
+  const renderTaskButtons = task => {
     switch (activeTab) {
       case 'upcoming':
         return (
           <View style={styles.buttonContainer}>
-           
-            
             {task.File && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.button, styles.viewButton]}
-                onPress={() => handleViewFile(task.File)}
-              >
+                onPress={() => handleViewFile(task.File)}>
                 <Icon name="visibility" size={16} color="white" />
                 <Text style={styles.buttonText}>View File</Text>
               </TouchableOpacity>
             )}
-            
-           
           </View>
         );
-      
+
       case 'completed':
         return (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.button, styles.viewButton]}
-              onPress={() => handleViewSubmissions(task.task_id,task.title,task.points)}
-            >
+              onPress={() =>
+                handleViewSubmissions(task.task_id, task.title, task.points)
+              }>
               <Icon name="list-alt" size={16} color="white" />
               <Text style={styles.buttonText}>View Submissions</Text>
             </TouchableOpacity>
-            
+
             {task.MCQS && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.button, styles.viewButton]}
-                onPress={() => handleViewQuestions(task.task_id)}
-              >
+                onPress={() => handleViewQuestions(task.task_id)}>
                 <Icon name="question-answer" size={16} color="white" />
                 <Text style={styles.buttonText}>View Questions</Text>
               </TouchableOpacity>
             )}
           </View>
         );
-      
+
       case 'unmarked':
         return (
           <View style={styles.buttonContainer}>
-           
-            
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.button, styles.markButton]}
-                 onPress={() =>handleMarkTask(task.task_id,task.title,task.points)}
-            >
+              onPress={() =>
+                handleMarkTask(task.task_id, task.title, task.points)
+              }>
               <Icon name="check-circle" size={16} color="white" />
               <Text style={styles.buttonText}>Mark Task</Text>
             </TouchableOpacity>
-            
+
             {task.File && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.button, styles.viewButton]}
-                onPress={() => handleViewFile(task.File)}
-              >
+                onPress={() => handleViewFile(task.File)}>
                 <Icon name="visibility" size={16} color="white" />
                 <Text style={styles.buttonText}>View File</Text>
               </TouchableOpacity>
             )}
           </View>
         );
-      
+
       default:
         return null;
     }
   };
 
-  const renderTaskItem = ({ item }) => (
+  const renderTaskItem = ({item}) => (
     <View style={styles.taskCard}>
       <View style={styles.taskHeader}>
         <Text style={styles.taskTitle}>{item.title}</Text>
@@ -168,39 +155,41 @@ const TaskGetScreen = ({ navigation, route }) => {
           <Text style={styles.taskTypeText}>{item.type}</Text>
         </View>
       </View>
-      
+
       <View style={styles.taskDetails}>
         <View style={styles.detailRow}>
           <Icon name="class" size={16} color="#000000" />
           <Text style={styles.taskInfo}>{item.Section}</Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Icon name="book" size={16} color="#000000" />
           <Text style={styles.taskInfo}>{item['Course Name']}</Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Icon name="star" size={16} color="#000000" />
           <Text style={styles.taskInfo}>{item.points} points</Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Icon name="schedule" size={16} color="#000000" />
-          <Text style={styles.taskInfo}>Start: {formatDate(item.start_date)}</Text>
+          <Text style={styles.taskInfo}>
+            Start: {formatDate(item.start_date)}
+          </Text>
         </View>
-        
+
         <View style={styles.detailRow}>
           <Icon name="event" size={16} color="#000000" />
           <Text style={styles.taskInfo}>Due: {formatDate(item.due_date)}</Text>
         </View>
       </View>
-      
+
       {renderTaskButtons(item)}
     </View>
   );
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -213,8 +202,10 @@ const TaskGetScreen = ({ navigation, route }) => {
           <FlatList
             data={tasks.ongoing}
             renderItem={renderTaskItem}
-            keyExtractor={(item) => item.task_id.toString()}
-            ListEmptyComponent={<Text style={styles.emptyText}>No ongoing tasks</Text>}
+            keyExtractor={item => item.task_id.toString()}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No ongoing tasks</Text>
+            }
             contentContainerStyle={styles.listContent}
           />
         );
@@ -223,8 +214,10 @@ const TaskGetScreen = ({ navigation, route }) => {
           <FlatList
             data={tasks.upcoming}
             renderItem={renderTaskItem}
-            keyExtractor={(item) => item.task_id.toString()}
-            ListEmptyComponent={<Text style={styles.emptyText}>No upcoming tasks</Text>}
+            keyExtractor={item => item.task_id.toString()}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No upcoming tasks</Text>
+            }
             contentContainerStyle={styles.listContent}
           />
         );
@@ -233,8 +226,10 @@ const TaskGetScreen = ({ navigation, route }) => {
           <FlatList
             data={tasks.completed}
             renderItem={renderTaskItem}
-            keyExtractor={(item) => item.task_id.toString()}
-            ListEmptyComponent={<Text style={styles.emptyText}>No completed tasks</Text>}
+            keyExtractor={item => item.task_id.toString()}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No completed tasks</Text>
+            }
             contentContainerStyle={styles.listContent}
           />
         );
@@ -243,8 +238,10 @@ const TaskGetScreen = ({ navigation, route }) => {
           <FlatList
             data={tasks.unmarked}
             renderItem={renderTaskItem}
-            keyExtractor={(item) => item.task_id.toString()}
-            ListEmptyComponent={<Text style={styles.emptyText}>No unmarked tasks</Text>}
+            keyExtractor={item => item.task_id.toString()}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No unmarked tasks</Text>
+            }
             contentContainerStyle={styles.listContent}
           />
         );
@@ -262,7 +259,7 @@ const TaskGetScreen = ({ navigation, route }) => {
         onLogout={() => navigation.replace('Login')}
         showBackButton={true}
       />
-      
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -271,56 +268,93 @@ const TaskGetScreen = ({ navigation, route }) => {
       ) : (
         <>
           <View style={styles.tabsContainer}>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              contentContainerStyle={styles.tabsContent}
-            >
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tabsContent}>
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'ongoing' && styles.activeTab]}
-                onPress={() => setActiveTab('ongoing')}
-              >
-                <Icon name="hourglass-full" size={16} color={activeTab === 'ongoing' ? '#FFFFFF' : '#000000'} />
-                <Text style={[styles.tabText, activeTab === 'ongoing' && styles.activeTabText]}>
+                style={[
+                  styles.tab,
+                  activeTab === 'ongoing' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('ongoing')}>
+                <Icon
+                  name="hourglass-full"
+                  size={16}
+                  color={activeTab === 'ongoing' ? '#FFFFFF' : '#000000'}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'ongoing' && styles.activeTabText,
+                  ]}>
                   Ongoing ({tasks.ongoing.length})
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
-                onPress={() => setActiveTab('upcoming')}
-              >
-                <Icon name="event-upcoming" size={16} color={activeTab === 'upcoming' ? '#FFFFFF' : '#000000'} />
-                <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>
+                style={[
+                  styles.tab,
+                  activeTab === 'upcoming' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('upcoming')}>
+                <Icon
+                  name="event-upcoming"
+                  size={16}
+                  color={activeTab === 'upcoming' ? '#FFFFFF' : '#000000'}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'upcoming' && styles.activeTabText,
+                  ]}>
                   Upcoming ({tasks.upcoming.length})
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-                onPress={() => setActiveTab('completed')}
-              >
-                <Icon name="check-circle" size={16} color={activeTab === 'completed' ? '#FFFFFF' : '#000000'} />
-                <Text style={[styles.tabText, activeTab === 'completed' && styles.activeTabText]}>
+                style={[
+                  styles.tab,
+                  activeTab === 'completed' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('completed')}>
+                <Icon
+                  name="check-circle"
+                  size={16}
+                  color={activeTab === 'completed' ? '#FFFFFF' : '#000000'}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'completed' && styles.activeTabText,
+                  ]}>
                   Completed ({tasks.completed.length})
                 </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'unmarked' && styles.activeTab]}
-                onPress={() => setActiveTab('unmarked')}
-              >
-                <Icon name="assignment-late" size={16} color={activeTab === 'unmarked' ? '#FFFFFF' : '#000000'} />
-                <Text style={[styles.tabText, activeTab === 'unmarked' && styles.activeTabText]}>
+                style={[
+                  styles.tab,
+                  activeTab === 'unmarked' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('unmarked')}>
+                <Icon
+                  name="assignment-late"
+                  size={16}
+                  color={activeTab === 'unmarked' ? '#FFFFFF' : '#000000'}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    activeTab === 'unmarked' && styles.activeTabText,
+                  ]}>
                   Unmarked ({tasks.unmarked.length})
                 </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
-          
-          <View style={styles.tabContent}>
-            {renderTabContent()}
-          </View>
+
+          <View style={styles.tabContent}>{renderTabContent()}</View>
         </>
       )}
     </View>
@@ -342,16 +376,17 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginTop: 10,
   },
-  tabsContainer: { marginTop:10,
+  tabsContainer: {
+    marginTop: 10,
     backgroundColor: colors.darkGray,
     height: 50, // Reduced height
   },
   tabsContent: {
-   
     paddingHorizontal: 8,
     height: 50, // Match container height
   },
-  tab: { margin:20,
+  tab: {
+    margin: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -388,7 +423,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -459,7 +494,7 @@ const styles = StyleSheet.create({
   viewButton: {
     backgroundColor: colors.primary,
   },
-  
+
   markButton: {
     backgroundColor: colors.success,
   },

@@ -17,7 +17,7 @@ import RNFetchBlob from 'react-native-blob-util';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useAlert} from '../ControlsAPI/alert';
 import {SelectList} from 'react-native-dropdown-select-list';
-import { Modal } from 'react-native-paper';
+import {Modal} from 'react-native-paper';
 
 const Child_info = ({route, navigation}) => {
   const userData = route.params?.parentData || {};
@@ -49,7 +49,6 @@ const Child_info = ({route, navigation}) => {
 
   useEffect(() => {
     if (s_id && p_id) {
-  
       fetchStudentData();
     }
   }, [s_id, p_id]);
@@ -264,346 +263,469 @@ const Child_info = ({route, navigation}) => {
     }
   };
 
+  useEffect(() => {
+    if (examData.length > 0) {
+      const uniqueSessions = new Set();
+      const sessions = [{key: 'all', value: 'All Sessions'}];
 
-useEffect(() => {
-  if (examData.length > 0) {
-    const uniqueSessions = new Set();
-    const sessions = [{key: 'all', value: 'All Sessions'}];
+      examData.forEach(course => {
+        // Add the course's session if it exists
+        if (course.session && !uniqueSessions.has(course.session)) {
+          uniqueSessions.add(course.session);
+          sessions.push({key: course.session, value: course.session});
+        }
 
-    examData.forEach(course => {
-      // Add the course's session if it exists
-      if (course.session && !uniqueSessions.has(course.session)) {
-        uniqueSessions.add(course.session);
-        sessions.push({key: course.session, value: course.session});
-      }
-
-      // Also check exam_results for sessions
-      if (course.exam_results) {
-        if (Array.isArray(course.exam_results)) {
-          course.exam_results.forEach(exam => {
-            if (exam.session && !uniqueSessions.has(exam.session)) {
-              uniqueSessions.add(exam.session);
-              sessions.push({key: exam.session, value: exam.session});
-            }
-          });
-        } else if (typeof course.exam_results === 'object') {
-          Object.values(course.exam_results).forEach(examGroup => {
-            const exams = Array.isArray(examGroup) ? examGroup : [examGroup];
-            exams.forEach(exam => {
+        // Also check exam_results for sessions
+        if (course.exam_results) {
+          if (Array.isArray(course.exam_results)) {
+            course.exam_results.forEach(exam => {
               if (exam.session && !uniqueSessions.has(exam.session)) {
                 uniqueSessions.add(exam.session);
                 sessions.push({key: exam.session, value: exam.session});
               }
             });
-          });
-        }
-      }
-    });
-
-    setExamSessions(sessions);
-  }
-}, [examData]);
- // In Child_info.js
-const renderTabButton = (tabName, title, icon) => (
-  <TouchableOpacity
-    style={[
-      styles.tabButton,
-      activeTab === tabName && styles.activeTabButton,
-    ]}
-    onPress={() => {
-      if (tabName === 'tasks') {
-        // Navigate to ParentTask with necessary data
-        navigation.navigate('parenttask', {
-          userData: {
-            parentData: userData.parent,
-            taskData: taskData,
-          },
-          taskFilter,
-          setTaskFilter,
-        });
-      } else {
-        setActiveTab(tabName);
-      }
-    }}>
-    <MaterialIcons
-      name={icon}
-      size={17}
-      color={activeTab === tabName ? colors.primary : colors.gray}
-    />
-    <Text
-      style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
-      {title}
-    </Text>
-  </TouchableOpacity>
-);
-
-// Remove the entire renderTasks function from Child_info.js
-
-
-
-const filterExams = () => {
-  if (!examData || examData.length === 0) return [];
-
-  if (examSessionFilter === 'all') {
-    return examData;
-  }
-
-  return examData
-    .filter(course => {
-      // First check if the course session matches
-      if (course.session === examSessionFilter) {
-        return true;
-      }
-
-      // Then check exam_results for matching sessions
-      if (course.exam_results) {
-        // Handle array format
-        if (Array.isArray(course.exam_results)) {
-          return course.exam_results.some(
-            exam => exam.session === examSessionFilter
-          );
-        }
-        // Handle object format
-        else if (typeof course.exam_results === 'object') {
-          return Object.values(course.exam_results).some(examGroup => {
-            const exams = Array.isArray(examGroup) ? examGroup : [examGroup];
-            return exams.some(exam => exam.session === examSessionFilter);
-          });
-        }
-      }
-
-      return false;
-    })
-    .map(course => {
-      // If the course session matches, return as is
-      if (course.session === examSessionFilter) {
-        return course;
-      }
-
-      // Otherwise filter exam_results to only include matching sessions
-      if (course.exam_results) {
-        // Handle array format
-        if (Array.isArray(course.exam_results)) {
-          return {
-            ...course,
-            exam_results: course.exam_results.filter(
-              exam => exam.session === examSessionFilter
-            )
-          };
-        }
-        // Handle object format
-        else if (typeof course.exam_results === 'object') {
-          const filteredExamResults = {};
-          
-          Object.entries(course.exam_results).forEach(([examType, examGroup]) => {
-            const exams = Array.isArray(examGroup) ? examGroup : [examGroup];
-            const matchingExams = exams.filter(
-              exam => exam.session === examSessionFilter
-            );
-            
-            if (matchingExams.length > 0) {
-              filteredExamResults[examType] = matchingExams.length === 1 ? matchingExams[0] : matchingExams;
-            }
-          });
-
-          if (Object.keys(filteredExamResults).length > 0) {
-            return {
-              ...course,
-              exam_results: filteredExamResults
-            };
+          } else if (typeof course.exam_results === 'object') {
+            Object.values(course.exam_results).forEach(examGroup => {
+              const exams = Array.isArray(examGroup) ? examGroup : [examGroup];
+              exams.forEach(exam => {
+                if (exam.session && !uniqueSessions.has(exam.session)) {
+                  uniqueSessions.add(exam.session);
+                  sessions.push({key: exam.session, value: exam.session});
+                }
+              });
+            });
           }
         }
-      }
+      });
 
-      return course;
-    });
-};
+      setExamSessions(sessions);
+    }
+  }, [examData]);
+  // In Child_info.js
+  const renderTabButton = (tabName, title, icon) => (
+    <TouchableOpacity
+      style={[
+        styles.tabButton,
+        activeTab === tabName && styles.activeTabButton,
+      ]}
+      onPress={() => {
+        if (tabName === 'tasks') {
+          // Navigate to ParentTask with necessary data
+          navigation.navigate('parenttask', {
+            userData: {
+              parentData: userData.parent,
+              taskData: taskData,
+            },
+            taskFilter,
+            setTaskFilter,
+          });
+        } else {
+          setActiveTab(tabName);
+        }
+      }}>
+      <MaterialIcons
+        name={icon}
+        size={17}
+        color={activeTab === tabName ? colors.primary : colors.gray}
+      />
+      <Text
+        style={[styles.tabText, activeTab === tabName && styles.activeTabText]}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
 
+  // Remove the entire renderTasks function from Child_info.js
 
+  const filterExams = () => {
+    if (!examData || examData.length === 0) return [];
 
+    if (examSessionFilter === 'all') {
+      return examData;
+    }
 
+    return examData
+      .filter(course => {
+        // First check if the course session matches
+        if (course.session === examSessionFilter) {
+          return true;
+        }
 
+        // Then check exam_results for matching sessions
+        if (course.exam_results) {
+          // Handle array format
+          if (Array.isArray(course.exam_results)) {
+            return course.exam_results.some(
+              exam => exam.session === examSessionFilter,
+            );
+          }
+          // Handle object format
+          else if (typeof course.exam_results === 'object') {
+            return Object.values(course.exam_results).some(examGroup => {
+              const exams = Array.isArray(examGroup) ? examGroup : [examGroup];
+              return exams.some(exam => exam.session === examSessionFilter);
+            });
+          }
+        }
 
+        return false;
+      })
+      .map(course => {
+        // If the course session matches, return as is
+        if (course.session === examSessionFilter) {
+          return course;
+        }
 
+        // Otherwise filter exam_results to only include matching sessions
+        if (course.exam_results) {
+          // Handle array format
+          if (Array.isArray(course.exam_results)) {
+            return {
+              ...course,
+              exam_results: course.exam_results.filter(
+                exam => exam.session === examSessionFilter,
+              ),
+            };
+          }
+          // Handle object format
+          else if (typeof course.exam_results === 'object') {
+            const filteredExamResults = {};
 
+            Object.entries(course.exam_results).forEach(
+              ([examType, examGroup]) => {
+                const exams = Array.isArray(examGroup)
+                  ? examGroup
+                  : [examGroup];
+                const matchingExams = exams.filter(
+                  exam => exam.session === examSessionFilter,
+                );
 
-  
-const renderExams = () => {
-  const filteredExams = filterExams();
+                if (matchingExams.length > 0) {
+                  filteredExamResults[examType] =
+                    matchingExams.length === 1
+                      ? matchingExams[0]
+                      : matchingExams;
+                }
+              },
+            );
 
-  return (
-    <View style={styles.contentContainer}>
-      {/* Session Filter Dropdown */}
-      <View style={styles.filterContainer}>
-        <Text style={[styles.filterLabel, {color: colors.black}]}>Filter by Session:</Text>
-        <View style={styles.selectListContainer}>
-          <SelectList
-            setSelected={(val) => setExamSessionFilter(val)}
-            data={examSessions}
-            save="key"
-            defaultOption={{key: 'all', value: 'All Sessions'}}
-            search={false}
-            boxStyles={[styles.selectListBox, {borderColor: colors.primary}]}
-            inputStyles={[styles.selectListInput, {color: colors.black}]}
-            dropdownStyles={[styles.selectListDropdown, {borderColor: colors.primary}]}
-            dropdownItemStyles={[styles.selectListItem, {backgroundColor: colors.white}]}
-            dropdownTextStyles={[styles.selectListText, {color: colors.black}]}
-          />
+            if (Object.keys(filteredExamResults).length > 0) {
+              return {
+                ...course,
+                exam_results: filteredExamResults,
+              };
+            }
+          }
+        }
+
+        return course;
+      });
+  };
+
+  const renderExams = () => {
+    const filteredExams = filterExams();
+
+    return (
+      <View style={styles.contentContainer}>
+        {/* Session Filter Dropdown */}
+        <View style={styles.filterContainer}>
+          <Text style={[styles.filterLabel, {color: colors.black}]}>
+            Filter by Session:
+          </Text>
+          <View style={styles.selectListContainer}>
+            <SelectList
+              setSelected={val => setExamSessionFilter(val)}
+              data={examSessions}
+              save="key"
+              defaultOption={{key: 'all', value: 'All Sessions'}}
+              search={false}
+              boxStyles={[styles.selectListBox, {borderColor: colors.primary}]}
+              inputStyles={[styles.selectListInput, {color: colors.black}]}
+              dropdownStyles={[
+                styles.selectListDropdown,
+                {borderColor: colors.primary},
+              ]}
+              dropdownItemStyles={[
+                styles.selectListItem,
+                {backgroundColor: colors.white},
+              ]}
+              dropdownTextStyles={[
+                styles.selectListText,
+                {color: colors.black},
+              ]}
+            />
+          </View>
         </View>
-      </View>
 
-      {filteredExams.length > 0 ? (  // Changed from examData to filteredExams
-        filteredExams.map((course, index) => (  // Changed from examData to filteredExams
-          <View key={index} style={[styles.examCard, {backgroundColor: colors.white}]}>
-            <View style={styles.cardHeader}>
-              <MaterialIcons name="class" size={24} color={colors.primary} />
-              <Text style={[styles.cardTitle, {color: colors.black}]}>
-                {course.course_name} ({course.section})
-              </Text>
-               <Text style={[styles.examSummaryText, {color: colors.white,fontSize:9,backgroundColor:colors.primary,padding:5,borderRadius:10,fontWeight:'bold'}]}>
-                        {course.session || 'N/A'}
-                      </Text>
-            </View>
+        {filteredExams.length > 0 ? ( // Changed from examData to filteredExams
+          filteredExams.map(
+            (
+              course,
+              index, // Changed from examData to filteredExams
+            ) => (
+              <View
+                key={index}
+                style={[styles.examCard, {backgroundColor: colors.white}]}>
+                <View style={styles.cardHeader}>
+                  <MaterialIcons
+                    name="class"
+                    size={24}
+                    color={colors.primary}
+                  />
+                  <Text style={[styles.cardTitle, {color: colors.black}]}>
+                    {course.course_name} ({course.section})
+                  </Text>
+                  <Text
+                    style={[
+                      styles.examSummaryText,
+                      {
+                        color: colors.white,
+                        fontSize: 9,
+                        backgroundColor: colors.primary,
+                        padding: 5,
+                        borderRadius: 10,
+                        fontWeight: 'bold',
+                      },
+                    ]}>
+                    {course.session || 'N/A'}
+                  </Text>
+                </View>
 
-            {course.exam_results && (
-              <View>
-                {/* For array format */}
-                {Array.isArray(course.exam_results) && course.exam_results.length > 0 ? (
+                {course.exam_results && (
                   <View>
-                    <View style={styles.examSummary}>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Session: {course.session || 'N/A'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Total Marks: {course.total_marks || '0'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Obtained Marks: {course.obtained_marks || '0'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Solid Marks: {course.solid_marks || '0'}
-                      </Text>
-                    </View>
-                    
-                    {course.exam_results.map((exam, examIndex) => (
-                      <View key={examIndex} style={styles.examItem}>
-                        <Text style={[styles.examTypeHeader, {color: colors.black}]}>
-                          {exam.exam_type || 'Exam'}
-                        </Text>
-                        <Text style={[styles.examMarks, {color: colors.black}]}>
-                          Marks: {exam.obtained_marks || '0'} / {exam.total_marks}
-                        </Text>
-                        {exam.exam_question_paper && (
-                          <TouchableOpacity
-                            style={styles.viewPaperButton}
-                            onPress={() => Linking.openURL(exam.exam_question_paper)}>
-                            <Text style={styles.viewPaperText}>View Question Paper</Text>
-                          </TouchableOpacity>
-                        )}
-                        {exam.questions && (
-                          <View style={styles.questionsContainer}>
-                            <Text style={[styles.questionsTitle, {color: colors.black}]}>
-                              Questions:
+                    {/* For array format */}
+                    {Array.isArray(course.exam_results) &&
+                    course.exam_results.length > 0 ? (
+                      <View>
+                        <View style={styles.examSummary}>
+                          <Text
+                            style={[
+                              styles.examSummaryText,
+                              {color: colors.black},
+                            ]}>
+                            Session: {course.session || 'N/A'}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.examSummaryText,
+                              {color: colors.black},
+                            ]}>
+                            Total Marks: {course.total_marks || '0'}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.examSummaryText,
+                              {color: colors.black},
+                            ]}>
+                            Obtained Marks: {course.obtained_marks || '0'}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.examSummaryText,
+                              {color: colors.black},
+                            ]}>
+                            Solid Marks: {course.solid_marks || '0'}
+                          </Text>
+                        </View>
+
+                        {course.exam_results.map((exam, examIndex) => (
+                          <View key={examIndex} style={styles.examItem}>
+                            <Text
+                              style={[
+                                styles.examTypeHeader,
+                                {color: colors.black},
+                              ]}>
+                              {exam.exam_type || 'Exam'}
                             </Text>
-                            {exam.questions.map((q, qIndex) => (
-                              <View key={qIndex} style={styles.questionItem}>
-                                <Text style={[styles.questionText, {color: colors.black}]}>
-                                  Q{q.q_no}: {q.marks} marks
+                            <Text
+                              style={[styles.examMarks, {color: colors.black}]}>
+                              Marks: {exam.obtained_marks || '0'} /{' '}
+                              {exam.total_marks}
+                            </Text>
+                            {exam.exam_question_paper && (
+                              <TouchableOpacity
+                                style={styles.viewPaperButton}
+                                onPress={() =>
+                                  Linking.openURL(exam.exam_question_paper)
+                                }>
+                                <Text style={styles.viewPaperText}>
+                                  View Question Paper
                                 </Text>
-                                <Text style={[styles.questionText, {color: colors.black}]}>
-                                  Obtained: {q.obtained_marks || '0'}
+                              </TouchableOpacity>
+                            )}
+                            {exam.questions && (
+                              <View style={styles.questionsContainer}>
+                                <Text
+                                  style={[
+                                    styles.questionsTitle,
+                                    {color: colors.black},
+                                  ]}>
+                                  Questions:
                                 </Text>
+                                {exam.questions.map((q, qIndex) => (
+                                  <View
+                                    key={qIndex}
+                                    style={styles.questionItem}>
+                                    <Text
+                                      style={[
+                                        styles.questionText,
+                                        {color: colors.black},
+                                      ]}>
+                                      Q{q.q_no}: {q.marks} marks
+                                    </Text>
+                                    <Text
+                                      style={[
+                                        styles.questionText,
+                                        {color: colors.black},
+                                      ]}>
+                                      Obtained: {q.obtained_marks || '0'}
+                                    </Text>
+                                  </View>
+                                ))}
                               </View>
-                            ))}
+                            )}
                           </View>
-                        )}
+                        ))}
                       </View>
-                    ))}
-                  </View>
-                ) : null}
+                    ) : null}
 
-                {/* For object format */}
-                {!Array.isArray(course.exam_results) && Object.keys(course.exam_results).length > 0 && (
-                  <View>
-                    <View style={styles.examSummary}>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Session: {course.session || 'N/A'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Total Marks: {course.total_marks || '0'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Obtained Marks: {course.obtained_marks || '0'}
-                      </Text>
-                      <Text style={[styles.examSummaryText, {color: colors.black}]}>
-                        Solid Marks: {course.solid_marks || '0'}
-                      </Text>
-                    </View>
-                    
-                    {Object.entries(course.exam_results).map(([examType, exams], examTypeIndex) => {
-                      const examArray = Array.isArray(exams) ? exams : [exams];
-                      return examArray.map((exam, examIndex) => (
-                        <View key={`${examTypeIndex}-${examIndex}`} style={styles.examItem}>
-                          <Text style={[styles.examTypeHeader, {color: colors.black}]}>
-                            {examType}
-                          </Text>
-                          <Text style={[styles.examMarks, {color: colors.black}]}>
-                            Marks: {exam.obtained_marks || '0'} / {exam.total_marks}
-                          </Text>
-                          {exam.exam_question_paper && (
-                            <TouchableOpacity
-                              style={styles.viewPaperButton}
-                              onPress={() => Linking.openURL(exam.exam_question_paper)}>
-                              <Text style={styles.viewPaperText}>View Question Paper</Text>
-                            </TouchableOpacity>
-                          )}
-                          {exam.questions && (
-                            <View style={styles.questionsContainer}>
-                              <Text style={[styles.questionsTitle, {color: colors.black}]}>
-                                Questions:
-                              </Text>
-                              {exam.questions.map((q, qIndex) => (
-                                <View key={qIndex} style={styles.questionItem}>
-                                  <Text style={[styles.questionText, {color: colors.black}]}>
-                                    Q{q.q_no}: {q.marks} marks
+                    {/* For object format */}
+                    {!Array.isArray(course.exam_results) &&
+                      Object.keys(course.exam_results).length > 0 && (
+                        <View>
+                          <View style={styles.examSummary}>
+                            <Text
+                              style={[
+                                styles.examSummaryText,
+                                {color: colors.black},
+                              ]}>
+                              Session: {course.session || 'N/A'}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.examSummaryText,
+                                {color: colors.black},
+                              ]}>
+                              Total Marks: {course.total_marks || '0'}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.examSummaryText,
+                                {color: colors.black},
+                              ]}>
+                              Obtained Marks: {course.obtained_marks || '0'}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.examSummaryText,
+                                {color: colors.black},
+                              ]}>
+                              Solid Marks: {course.solid_marks || '0'}
+                            </Text>
+                          </View>
+
+                          {Object.entries(course.exam_results).map(
+                            ([examType, exams], examTypeIndex) => {
+                              const examArray = Array.isArray(exams)
+                                ? exams
+                                : [exams];
+                              return examArray.map((exam, examIndex) => (
+                                <View
+                                  key={`${examTypeIndex}-${examIndex}`}
+                                  style={styles.examItem}>
+                                  <Text
+                                    style={[
+                                      styles.examTypeHeader,
+                                      {color: colors.black},
+                                    ]}>
+                                    {examType}
                                   </Text>
-                                  <Text style={[styles.questionText, {color: colors.black}]}>
-                                    Obtained: {q.obtained_marks || '0'}
+                                  <Text
+                                    style={[
+                                      styles.examMarks,
+                                      {color: colors.black},
+                                    ]}>
+                                    Marks: {exam.obtained_marks || '0'} /{' '}
+                                    {exam.total_marks}
                                   </Text>
+                                  {exam.exam_question_paper && (
+                                    <TouchableOpacity
+                                      style={styles.viewPaperButton}
+                                      onPress={() =>
+                                        Linking.openURL(
+                                          exam.exam_question_paper,
+                                        )
+                                      }>
+                                      <Text style={styles.viewPaperText}>
+                                        View Question Paper
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                  {exam.questions && (
+                                    <View style={styles.questionsContainer}>
+                                      <Text
+                                        style={[
+                                          styles.questionsTitle,
+                                          {color: colors.black},
+                                        ]}>
+                                        Questions:
+                                      </Text>
+                                      {exam.questions.map((q, qIndex) => (
+                                        <View
+                                          key={qIndex}
+                                          style={styles.questionItem}>
+                                          <Text
+                                            style={[
+                                              styles.questionText,
+                                              {color: colors.black},
+                                            ]}>
+                                            Q{q.q_no}: {q.marks} marks
+                                          </Text>
+                                          <Text
+                                            style={[
+                                              styles.questionText,
+                                              {color: colors.black},
+                                            ]}>
+                                            Obtained: {q.obtained_marks || '0'}
+                                          </Text>
+                                        </View>
+                                      ))}
+                                    </View>
+                                  )}
                                 </View>
-                              ))}
-                            </View>
+                              ));
+                            },
                           )}
                         </View>
-                      ));
-                    })}
+                      )}
                   </View>
                 )}
-              </View>
-            )}
 
-            {(!course.exam_results || 
-              (Array.isArray(course.exam_results) && course.exam_results.length === 0) || 
-              (!Array.isArray(course.exam_results) && Object.keys(course.exam_results).length === 0)) && (
-              <Text style={[styles.noExamsText, {color: colors.black}]}>
-                No exam details available for this course
-              </Text>
-            )}
+                {(!course.exam_results ||
+                  (Array.isArray(course.exam_results) &&
+                    course.exam_results.length === 0) ||
+                  (!Array.isArray(course.exam_results) &&
+                    Object.keys(course.exam_results).length === 0)) && (
+                  <Text style={[styles.noExamsText, {color: colors.black}]}>
+                    No exam details available for this course
+                  </Text>
+                )}
+              </View>
+            ),
+          )
+        ) : (
+          <View style={styles.emptyContainer}>
+            <MaterialIcons name="quiz" size={48} color={colors.gray} />
+            <Text style={[styles.emptyText, {color: colors.black}]}>
+              {examSessionFilter === 'all'
+                ? 'No exam data available'
+                : `No exams found for ${examSessionFilter}`}
+            </Text>
           </View>
-        ))
-      ) : (
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="quiz" size={48} color={colors.gray} />
-          <Text style={[styles.emptyText, {color: colors.black}]}>
-            {examSessionFilter === 'all'
-              ? 'No exam data available'
-              : `No exams found for ${examSessionFilter}`}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-};
+        )}
+      </View>
+    );
+  };
 
   const renderStudentInfo = () => (
     <View style={styles.contentContainer}>
@@ -720,11 +842,11 @@ const renderExams = () => {
               <Text style={styles.courseTeacher}>
                 Teacher: {course.teacher_name}
               </Text>
-              {course.remarks && (
+              {/* {course.remarks && (
                 <Text style={styles.courseRemarks}>
                   Remarks: {course.remarks}
                 </Text>
-              )}
+              )} */}
             </View>
           ))
         ) : (
@@ -947,7 +1069,7 @@ const renderExams = () => {
 
   return (
     <View style={styles.container}>
-  <Navbar
+      <Navbar
         title="Student Tasks"
         userName={userData?.parent?.name}
         des="Parent"
@@ -976,32 +1098,29 @@ const renderExams = () => {
   );
 };
 
-
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  
+
   // Header Styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 15,
-   
+
     backgroundColor: '#ffffff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  
+
   backButton: {
     width: 36,
     height: 36,
@@ -1011,7 +1130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  
+
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -1026,7 +1145,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8fafc',
   },
-  
+
   loadingText: {
     marginTop: 12,
     fontSize: 16,
@@ -1052,7 +1171,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
@@ -1119,7 +1238,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
@@ -1233,7 +1352,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
@@ -1288,7 +1407,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
@@ -1371,7 +1490,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
@@ -1427,7 +1546,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
@@ -1564,7 +1683,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 16,
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -1585,7 +1704,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
@@ -1596,7 +1715,7 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-  
+
     padding: 3,
     borderRadius: 8,
     marginHorizontal: 1,
@@ -1640,6 +1759,5 @@ const styles = StyleSheet.create({
     height: 16,
   },
 });
-
 
 export default Child_info;

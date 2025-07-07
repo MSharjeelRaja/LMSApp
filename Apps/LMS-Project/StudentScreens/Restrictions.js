@@ -1,15 +1,15 @@
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  ScrollView, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
   ActivityIndicator,
   Animated,
-  Alert
-} from 'react-native'
-import React, { useState, useEffect, useRef } from 'react'
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+  Alert,
+} from 'react-native';
+import React, {useState, useEffect, useRef} from 'react';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const colors = {
@@ -22,7 +22,7 @@ const colors = {
   textSecondary: '#666666',
   background: '#ffffff',
   border: '#e0e0e0',
-  shadow: '#000000'
+  shadow: '#000000',
 };
 
 const Restrictions = ({route, navigation}) => {
@@ -37,7 +37,7 @@ const Restrictions = ({route, navigation}) => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${API_URL}/api/Students/parents-restrictions?student_id=${userData.id}`
+        `${API_URL}/api/Students/parents-restrictions?student_id=${userData.id}`,
       );
       const data = await response.json();
       if (data.status) {
@@ -60,25 +60,31 @@ const Restrictions = ({route, navigation}) => {
     fetchRestrictions();
   }, []);
 
-  const showConfirmationAlert = (parentId, courseId, restrictionType, restriction) => {
+  const showConfirmationAlert = (
+    parentId,
+    courseId,
+    restrictionType,
+    restriction,
+  ) => {
     const isAllowed = restriction.status === 'Allowed';
     const action = isAllowed ? 'restrict' : 'allow';
-    const restrictionName = restrictionType.charAt(0).toUpperCase() + restrictionType.slice(1);
-    
+    const restrictionName =
+      restrictionType.charAt(0).toUpperCase() + restrictionType.slice(1);
+
     Alert.alert(
-      "Confirm Action",
+      'Confirm Action',
       `Are you sure you want to ${action} ${restrictionName} access for this course?`,
       [
         {
-          text: "Cancel",
-          style: "cancel"
+          text: 'Cancel',
+          style: 'cancel',
         },
         {
-          text: "Confirm",
+          text: 'Confirm',
           onPress: () => toggleRestriction(parentId, courseId, restrictionType),
-          style: "destructive"
-        }
-      ]
+          style: 'destructive',
+        },
+      ],
     );
   };
 
@@ -87,38 +93,43 @@ const Restrictions = ({route, navigation}) => {
 
     // Create a deep copy of the current state
     const updatedRestrictions = JSON.parse(JSON.stringify(localRestrictions));
-    const parentIndex = updatedRestrictions.parents.findIndex(p => p.parent_id === parentId);
-    const courseIndex = updatedRestrictions.parents[parentIndex].course_restrictions.findIndex(
-      c => c.course_id === courseId
+    const parentIndex = updatedRestrictions.parents.findIndex(
+      p => p.parent_id === parentId,
     );
+    const courseIndex = updatedRestrictions.parents[
+      parentIndex
+    ].course_restrictions.findIndex(c => c.course_id === courseId);
 
-    const currentStatus = updatedRestrictions.parents[parentIndex]
-      .course_restrictions[courseIndex]
-      .restrictions[restrictionType].status;
+    const currentStatus =
+      updatedRestrictions.parents[parentIndex].course_restrictions[courseIndex]
+        .restrictions[restrictionType].status;
 
     // Immediately update local state
-    updatedRestrictions.parents[parentIndex]
-      .course_restrictions[courseIndex]
-      .restrictions[restrictionType].status = 
-        currentStatus === 'Allowed' ? 'Not Allowed' : 'Allowed';
+    updatedRestrictions.parents[parentIndex].course_restrictions[
+      courseIndex
+    ].restrictions[restrictionType].status =
+      currentStatus === 'Allowed' ? 'Not Allowed' : 'Allowed';
 
     setLocalRestrictions(updatedRestrictions);
 
     try {
       if (currentStatus === 'Allowed') {
         // Add restriction
-        const response = await fetch(`${API_URL}/api/Students/restricted-parent-courses/add`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `${API_URL}/api/Students/restricted-parent-courses/add`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              parent_id: parentId.toString(),
+              student_id: userData.id.toString(),
+              course_id: courseId.toString(),
+              restriction_type: restrictionType,
+            }),
           },
-          body: JSON.stringify({
-            parent_id: parentId.toString(),
-            student_id: userData.id.toString(),
-            course_id: courseId.toString(),
-            restriction_type: restrictionType
-          })
-        });
+        );
         const data = await response.json();
         if (!data.message.includes('successfully')) {
           // Revert if API fails
@@ -126,13 +137,14 @@ const Restrictions = ({route, navigation}) => {
         }
       } else {
         // Remove restriction
-        const restrictionId = updatedRestrictions.parents[parentIndex]
-          .course_restrictions[courseIndex]
-          .restrictions[restrictionType].restriction_id;
-        
+        const restrictionId =
+          updatedRestrictions.parents[parentIndex].course_restrictions[
+            courseIndex
+          ].restrictions[restrictionType].restriction_id;
+
         const response = await fetch(
-          `${API_URL}/api/Students/restricted-parent-courses/delete/${restrictionId}`, 
-          { method: 'DELETE' }
+          `${API_URL}/api/Students/restricted-parent-courses/delete/${restrictionId}`,
+          {method: 'DELETE'},
         );
         const data = await response.json();
         if (!data.message.includes('successfully')) {
@@ -147,7 +159,7 @@ const Restrictions = ({route, navigation}) => {
     }
   };
 
-  const getRestrictionIcon = (restrictionType) => {
+  const getRestrictionIcon = restrictionType => {
     switch (restrictionType) {
       case 'core':
         return 'home';
@@ -162,22 +174,33 @@ const Restrictions = ({route, navigation}) => {
     }
   };
 
-  const renderToggleButton = (parentId, courseId, restrictionType, restriction) => {
+  const renderToggleButton = (
+    parentId,
+    courseId,
+    restrictionType,
+    restriction,
+  ) => {
     const isAllowed = restriction.status === 'Allowed';
-    
+
     return (
       <TouchableOpacity
         style={[
           styles.toggleButton,
-          isAllowed ? styles.toggleAllowed : styles.toggleNotAllowed
+          isAllowed ? styles.toggleAllowed : styles.toggleNotAllowed,
         ]}
-        onPress={() => showConfirmationAlert(parentId, courseId, restrictionType, restriction)}
-        activeOpacity={0.7}
-      >
-        <Icon 
-          name={isAllowed ? 'check-circle' : 'block'} 
-          size={16} 
-          color={colors.background} 
+        onPress={() =>
+          showConfirmationAlert(
+            parentId,
+            courseId,
+            restrictionType,
+            restriction,
+          )
+        }
+        activeOpacity={0.7}>
+        <Icon
+          name={isAllowed ? 'check-circle' : 'block'}
+          size={16}
+          color={colors.background}
           style={styles.toggleIcon}
         />
         <Text style={styles.toggleText}>
@@ -225,43 +248,48 @@ const Restrictions = ({route, navigation}) => {
         onBackPress={() => navigation.goBack()}
         onLogout={() => navigation.replace('Login')}
       />
-      
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+
+      <Animated.View style={[styles.content, {opacity: fadeAnim}]}>
         {/* Parent tabs */}
         <View style={styles.parentTabsContainer}>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.parentTabsContent}
-          >
+            contentContainerStyle={styles.parentTabsContent}>
             {localRestrictions.parents.map((parent, index) => (
               <TouchableOpacity
                 key={parent.parent_id}
                 style={[
                   styles.parentTab,
-                  selectedParent === index && styles.selectedParentTab
+                  selectedParent === index && styles.selectedParentTab,
                 ]}
                 onPress={() => setSelectedParent(index)}
-                activeOpacity={0.7}
-              >
+                activeOpacity={0.7}>
                 <View style={styles.parentTabContent}>
-                  <Icon 
-                    name="person" 
-                    size={20} 
-                    color={selectedParent === index ? colors.background : colors.primary}
+                  <Icon
+                    name="person"
+                    size={20}
+                    color={
+                      selectedParent === index
+                        ? colors.background
+                        : colors.primary
+                    }
                     style={styles.parentIcon}
                   />
                   <View style={styles.parentInfo}>
-                    <Text style={[
-                      styles.parentName,
-                      selectedParent === index && styles.selectedParentName
-                    ]}>
+                    <Text
+                      style={[
+                        styles.parentName,
+                        selectedParent === index && styles.selectedParentName,
+                      ]}>
                       {parent.name}
                     </Text>
-                    <Text style={[
-                      styles.parentRelation,
-                      selectedParent === index && styles.selectedParentRelation
-                    ]}>
+                    <Text
+                      style={[
+                        styles.parentRelation,
+                        selectedParent === index &&
+                          styles.selectedParentRelation,
+                      ]}>
                       {parent.relation}
                     </Text>
                   </View>
@@ -272,94 +300,98 @@ const Restrictions = ({route, navigation}) => {
         </View>
 
         {/* Course cards */}
-        <ScrollView style={styles.coursesContainer} showsVerticalScrollIndicator={false}>
-          {localRestrictions.parents[selectedParent]?.course_restrictions.map((course) => (
-            <View key={course.course_id} style={styles.courseCard}>
-              <View style={styles.courseHeader}>
-                <Icon name="book" size={24} color={colors.primary} />
-                <Text style={styles.courseTitle}>{course.course_name}</Text>
+        <ScrollView
+          style={styles.coursesContainer}
+          showsVerticalScrollIndicator={false}>
+          {localRestrictions.parents[selectedParent]?.course_restrictions.map(
+            course => (
+              <View key={course.course_id} style={styles.courseCard}>
+                <View style={styles.courseHeader}>
+                  <Icon name="book" size={24} color={colors.primary} />
+                  <Text style={styles.courseTitle}>{course.course_name}</Text>
+                </View>
+
+                <View style={styles.permissionsContainer}>
+                  <View style={styles.permissionRow}>
+                    <View style={styles.permissionLabel}>
+                      <Icon
+                        name={getRestrictionIcon('core')}
+                        size={20}
+                        color={colors.textSecondary}
+                        style={styles.permissionIcon}
+                      />
+                      <Text style={styles.permissionText}>Core Access</Text>
+                    </View>
+                    {renderToggleButton(
+                      localRestrictions.parents[selectedParent].parent_id,
+                      course.course_id,
+                      'core',
+                      course.restrictions.core,
+                    )}
+                  </View>
+
+                  <View style={styles.permissionRow}>
+                    <View style={styles.permissionLabel}>
+                      <Icon
+                        name={getRestrictionIcon('attendance')}
+                        size={20}
+                        color={colors.textSecondary}
+                        style={styles.permissionIcon}
+                      />
+                      <Text style={styles.permissionText}>Attendance</Text>
+                    </View>
+                    {renderToggleButton(
+                      localRestrictions.parents[selectedParent].parent_id,
+                      course.course_id,
+                      'attendance',
+                      course.restrictions.attendance,
+                    )}
+                  </View>
+
+                  <View style={styles.permissionRow}>
+                    <View style={styles.permissionLabel}>
+                      <Icon
+                        name={getRestrictionIcon('task')}
+                        size={20}
+                        color={colors.textSecondary}
+                        style={styles.permissionIcon}
+                      />
+                      <Text style={styles.permissionText}>Tasks</Text>
+                    </View>
+                    {renderToggleButton(
+                      localRestrictions.parents[selectedParent].parent_id,
+                      course.course_id,
+                      'task',
+                      course.restrictions.task,
+                    )}
+                  </View>
+
+                  <View style={styles.permissionRow}>
+                    <View style={styles.permissionLabel}>
+                      <Icon
+                        name={getRestrictionIcon('exam')}
+                        size={20}
+                        color={colors.textSecondary}
+                        style={styles.permissionIcon}
+                      />
+                      <Text style={styles.permissionText}>Exams</Text>
+                    </View>
+                    {renderToggleButton(
+                      localRestrictions.parents[selectedParent].parent_id,
+                      course.course_id,
+                      'exam',
+                      course.restrictions.exam,
+                    )}
+                  </View>
+                </View>
               </View>
-              
-              <View style={styles.permissionsContainer}>
-                <View style={styles.permissionRow}>
-                  <View style={styles.permissionLabel}>
-                    <Icon 
-                      name={getRestrictionIcon('core')} 
-                      size={20} 
-                      color={colors.textSecondary}
-                      style={styles.permissionIcon}
-                    />
-                    <Text style={styles.permissionText}>Core Access</Text>
-                  </View>
-                  {renderToggleButton(
-                    localRestrictions.parents[selectedParent].parent_id,
-                    course.course_id,
-                    'core',
-                    course.restrictions.core
-                  )}
-                </View>
-
-                <View style={styles.permissionRow}>
-                  <View style={styles.permissionLabel}>
-                    <Icon 
-                      name={getRestrictionIcon('attendance')} 
-                      size={20} 
-                      color={colors.textSecondary}
-                      style={styles.permissionIcon}
-                    />
-                    <Text style={styles.permissionText}>Attendance</Text>
-                  </View>
-                  {renderToggleButton(
-                    localRestrictions.parents[selectedParent].parent_id,
-                    course.course_id,
-                    'attendance',
-                    course.restrictions.attendance
-                  )}
-                </View>
-
-                <View style={styles.permissionRow}>
-                  <View style={styles.permissionLabel}>
-                    <Icon 
-                      name={getRestrictionIcon('task')} 
-                      size={20} 
-                      color={colors.textSecondary}
-                      style={styles.permissionIcon}
-                    />
-                    <Text style={styles.permissionText}>Tasks</Text>
-                  </View>
-                  {renderToggleButton(
-                    localRestrictions.parents[selectedParent].parent_id,
-                    course.course_id,
-                    'task',
-                    course.restrictions.task
-                  )}
-                </View>
-
-                <View style={styles.permissionRow}>
-                  <View style={styles.permissionLabel}>
-                    <Icon 
-                      name={getRestrictionIcon('exam')} 
-                      size={20} 
-                      color={colors.textSecondary}
-                      style={styles.permissionIcon}
-                    />
-                    <Text style={styles.permissionText}>Exams</Text>
-                  </View>
-                  {renderToggleButton(
-                    localRestrictions.parents[selectedParent].parent_id,
-                    course.course_id,
-                    'exam',
-                    course.restrictions.exam
-                  )}
-                </View>
-              </View>
-            </View>
-          ))}
+            ),
+          )}
         </ScrollView>
       </Animated.View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -410,7 +442,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     minWidth: 120,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -456,7 +488,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,

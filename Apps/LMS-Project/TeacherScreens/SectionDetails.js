@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,97 +7,101 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,Modal,
+  Alert,
+  Modal,
   ActivityIndicator,
   KeyboardAvoidingView,
 } from 'react-native';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 import colors from '../ControlsAPI/colors';
 
-const SectionDetails = ({ route, navigation }) => {
-  const { courseId, userData } = route.params;
+const SectionDetails = ({route, navigation}) => {
+  const {courseId, userData} = route.params;
   const [sectionData, setSectionData] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState({});
   const [remarksModalVisible, setRemarksModalVisible] = useState(false);
-const [currentStudent, setCurrentStudent] = useState(null);
-const [remarksText, setRemarksText] = useState('');
-const [isUpdatingRemarks, setIsUpdatingRemarks] = useState(false);
-console.log('COURSE ID :'+courseId)
+  const [currentStudent, setCurrentStudent] = useState(null);
+  const [remarksText, setRemarksText] = useState('');
+  const [isUpdatingRemarks, setIsUpdatingRemarks] = useState(false);
+  console.log('COURSE ID :' + courseId);
   useEffect(() => {
     fetchSectionDetails();
   }, []);
-const handleAddRemarks = (student) => {
-  setCurrentStudent(student);
-  setRemarksText(student.remarks || '');
-  setIsUpdatingRemarks(!!student.remarks);
-  setRemarksModalVisible(true);
-};
+  const handleAddRemarks = student => {
+    setCurrentStudent(student);
+    setRemarksText(student.remarks || '');
+    setIsUpdatingRemarks(!!student.remarks);
+    setRemarksModalVisible(true);
+  };
 
-const handleSaveRemarks = async () => {
-  if (!remarksText.trim() || !currentStudent) return;
+  const handleSaveRemarks = async () => {
+    if (!remarksText.trim() || !currentStudent) return;
 
-  try {
-    const response = await fetch(`${API_URL}/api/Teachers/remarks/add_or_update`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        teacher_offered_course_id: courseId,
-        student_id: currentStudent.student_id,
-        remarks: remarksText.trim()
-      })
-    });
+    try {
+      const response = await fetch(
+        `${API_URL}/api/Teachers/remarks/add_or_update`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            teacher_offered_course_id: courseId,
+            student_id: currentStudent.student_id,
+            remarks: remarksText.trim(),
+          }),
+        },
+      );
 
-    const data = await response.json();
-    if (data.status === 'success') {
-      Alert.alert('Success', data.message);
-      fetchSectionDetails(); // Refresh data
-      setRemarksModalVisible(false);
-    } else {
-      throw new Error(data.message || 'Failed to save remarks');
+      const data = await response.json();
+      if (data.status === 'success') {
+        Alert.alert('Success', data.message);
+        fetchSectionDetails(); // Refresh data
+        setRemarksModalVisible(false);
+      } else {
+        throw new Error(data.message || 'Failed to save remarks');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
-  } catch (error) {
-    Alert.alert('Error', error.message);
-  }
-};
+  };
 
-const handleDeleteRemarks = async () => {
-  if (!currentStudent) return;
+  const handleDeleteRemarks = async () => {
+    if (!currentStudent) return;
 
-  try {
-    const response = await fetch(`${API_URL}/api/Teachers/remarks/delete`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        teacher_offered_course_id: courseId,
-        student_id: currentStudent.student_id
-      })
-    });
+    try {
+      const response = await fetch(`${API_URL}/api/Teachers/remarks/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teacher_offered_course_id: courseId,
+          student_id: currentStudent.student_id,
+        }),
+      });
 
-    const data = await response.json();
-    if (data.status === 'success') {
-      Alert.alert('Success', data.message);
-      fetchSectionDetails(); // Refresh data
-      setRemarksModalVisible(false);
-    } else {
-      throw new Error(data.message || 'Failed to delete remarks');
+      const data = await response.json();
+      if (data.status === 'success') {
+        Alert.alert('Success', data.message);
+        fetchSectionDetails(); // Refresh data
+        setRemarksModalVisible(false);
+      } else {
+        throw new Error(data.message || 'Failed to delete remarks');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
     }
-  } catch (error) {
-    Alert.alert('Error', error.message);
-  }
-};
+  };
   const fetchSectionDetails = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/Teachers/section/details/${courseId}`
+        `${API_URL}/api/Teachers/section/details/${courseId}`,
       );
       const data = await response.json();
-      console.log(data)
+      console.log(data);
       if (data.success) {
         setSectionData(data);
       }
@@ -108,24 +112,30 @@ const handleDeleteRemarks = async () => {
     }
   };
 
-  const filteredStudents = sectionData?.students?.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.RegNo.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredStudents =
+    sectionData?.students?.filter(
+      student =>
+        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.RegNo.toLowerCase().includes(searchQuery.toLowerCase()),
+    ) || [];
 
   const toggleExpanded = (studentId, section) => {
     const key = `${studentId}_${section}`;
     setExpandedCards(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
   };
 
-  const getInitials = (name) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const getInitials = name => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
 
-  const getPerformanceColor = (percentage) => {
+  const getPerformanceColor = percentage => {
     if (percentage >= 80) return '#4CAF50';
     if (percentage >= 60) return '#FF9800';
     if (percentage >= 40) return '#FF5722';
@@ -133,43 +143,48 @@ const handleDeleteRemarks = async () => {
   };
 
   const renderPerformanceCard = (title, percentage, icon, color) => (
-    <View style={[styles.performanceCard, { backgroundColor: color + '15' }]}>
-      <Text style={[styles.performanceIcon, { color }]}>{icon}</Text>
-      <Text style={[styles.performancePercentage, { color }]}>
+    <View style={[styles.performanceCard, {backgroundColor: color + '15'}]}>
+      <Text style={[styles.performanceIcon, {color}]}>{icon}</Text>
+      <Text style={[styles.performancePercentage, {color}]}>
         {percentage?.toFixed(0) || 0}%
       </Text>
       <Text style={styles.performanceTitle}>{title}</Text>
     </View>
   );
 
-  const renderExpandableSection = (student, sectionKey, title, icon, content) => {
+  const renderExpandableSection = (
+    student,
+    sectionKey,
+    title,
+    icon,
+    content,
+  ) => {
     const key = `${student.student_id}_${sectionKey}`;
     const isExpanded = expandedCards[key];
 
     return (
       <TouchableOpacity
         style={styles.expandableSection}
-        onPress={() => toggleExpanded(student.student_id, sectionKey)}
-      >
+        onPress={() => toggleExpanded(student.student_id, sectionKey)}>
         <View style={styles.expandableHeader}>
           <View style={styles.expandableHeaderLeft}>
             <Text style={styles.expandableIcon}>{icon}</Text>
             <Text style={styles.expandableTitle}>{title}</Text>
           </View>
-          <Text style={[styles.expandableArrow, { transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }]}>
+          <Text
+            style={[
+              styles.expandableArrow,
+              {transform: [{rotate: isExpanded ? '180deg' : '0deg'}]},
+            ]}>
             ▼
           </Text>
         </View>
-        {isExpanded && (
-          <View style={styles.expandableContent}>
-            {content}
-          </View>
-        )}
+        {isExpanded && <View style={styles.expandableContent}>{content}</View>}
       </TouchableOpacity>
     );
   };
 
-  const renderBasicInfo = (student) => (
+  const renderBasicInfo = student => (
     <View style={styles.infoContent}>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Registration No:</Text>
@@ -204,34 +219,46 @@ const handleDeleteRemarks = async () => {
     </View>
   );
 
-  const renderAttendanceDetails = (student) => (
+  const renderAttendanceDetails = student => (
     <View style={styles.infoContent}>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Total Classes:</Text>
-        <Text style={styles.infoValue}>{student.attendance.total_classes_conducted}</Text>
+        <Text style={styles.infoValue}>
+          {student.attendance.total_classes_conducted}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Present:</Text>
-        <Text style={[styles.infoValue, { color: '#4CAF50' }]}>{student.attendance.total_present}</Text>
+        <Text style={[styles.infoValue, {color: '#4CAF50'}]}>
+          {student.attendance.total_present}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Absent:</Text>
-        <Text style={[styles.infoValue, { color: '#F44336' }]}>{student.attendance.total_absent}</Text>
+        <Text style={[styles.infoValue, {color: '#F44336'}]}>
+          {student.attendance.total_absent}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Percentage:</Text>
-        <Text style={[styles.infoValue, { color: getPerformanceColor(student.attendance.percentage) }]}>
+        <Text
+          style={[
+            styles.infoValue,
+            {color: getPerformanceColor(student.attendance.percentage)},
+          ]}>
           {student.attendance.percentage.toFixed(2)}%
         </Text>
       </View>
     </View>
   );
 
-  const renderTaskPerformance = (student) => (
+  const renderTaskPerformance = student => (
     <View style={styles.infoContent}>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Total Tasks:</Text>
-        <Text style={styles.infoValue}>{student.task.total_tasks_conducted}</Text>
+        <Text style={styles.infoValue}>
+          {student.task.total_tasks_conducted}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Total Points:</Text>
@@ -239,11 +266,17 @@ const handleDeleteRemarks = async () => {
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Marks Obtained:</Text>
-        <Text style={styles.infoValue}>{student.task.total_marks_obtained}</Text>
+        <Text style={styles.infoValue}>
+          {student.task.total_marks_obtained}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Percentage:</Text>
-        <Text style={[styles.infoValue, { color: getPerformanceColor(student.task.percentage) }]}>
+        <Text
+          style={[
+            styles.infoValue,
+            {color: getPerformanceColor(student.task.percentage)},
+          ]}>
           {student.task.percentage.toFixed(2)}%
         </Text>
       </View>
@@ -251,22 +284,34 @@ const handleDeleteRemarks = async () => {
       <Text style={styles.subSectionTitle}>With Consideration Policy:</Text>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Total Marks:</Text>
-        <Text style={styles.infoValue}>{student.task.total_marks_by_consideration_policy}</Text>
+        <Text style={styles.infoValue}>
+          {student.task.total_marks_by_consideration_policy}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Obtained:</Text>
-        <Text style={styles.infoValue}>{student.task.total_obtained_by_consideration}</Text>
+        <Text style={styles.infoValue}>
+          {student.task.total_obtained_by_consideration}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Percentage:</Text>
-        <Text style={[styles.infoValue, { color: getPerformanceColor(student.task.percentage_by_consideration) }]}>
+        <Text
+          style={[
+            styles.infoValue,
+            {
+              color: getPerformanceColor(
+                student.task.percentage_by_consideration,
+              ),
+            },
+          ]}>
           {student.task.percentage_by_consideration.toFixed(2)}%
         </Text>
       </View>
     </View>
   );
 
-  const renderExamResults = (student) => (
+  const renderExamResults = student => (
     <View style={styles.infoContent}>
       <Text style={styles.subSectionTitle}>Mid Exam:</Text>
       <View style={styles.infoRow}>
@@ -275,30 +320,44 @@ const handleDeleteRemarks = async () => {
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Equivalent:</Text>
-        <Text style={styles.infoValue}>{student.Mid_Exam.solid_equivalent}</Text>
+        <Text style={styles.infoValue}>
+          {student.Mid_Exam.solid_equivalent}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>Percentage:</Text>
-        <Text style={[styles.infoValue, { color: getPerformanceColor(student.Mid_Exam.percentage) }]}>
+        <Text
+          style={[
+            styles.infoValue,
+            {color: getPerformanceColor(student.Mid_Exam.percentage)},
+          ]}>
           {student.Mid_Exam.percentage.toFixed(2)}%
         </Text>
       </View>
-      
+
       {student.Final_Exam ? (
         <>
           <View style={styles.divider} />
           <Text style={styles.subSectionTitle}>Final Exam:</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Solid Marks:</Text>
-            <Text style={styles.infoValue}>{student.Final_Exam.solid_marks}</Text>
+            <Text style={styles.infoValue}>
+              {student.Final_Exam.solid_marks}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Equivalent:</Text>
-            <Text style={styles.infoValue}>{student.Final_Exam.solid_equivalent}</Text>
+            <Text style={styles.infoValue}>
+              {student.Final_Exam.solid_equivalent}
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Percentage:</Text>
-            <Text style={[styles.infoValue, { color: getPerformanceColor(student.Final_Exam.percentage) }]}>
+            <Text
+              style={[
+                styles.infoValue,
+                {color: getPerformanceColor(student.Final_Exam.percentage)},
+              ]}>
               {student.Final_Exam.percentage.toFixed(2)}%
             </Text>
           </View>
@@ -342,7 +401,7 @@ const handleDeleteRemarks = async () => {
         onBackPress={() => navigation.goBack()}
         onLogout={() => navigation.replace('Login')}
       />
-      
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Course Header */}
         <View style={styles.courseHeader}>
@@ -350,7 +409,9 @@ const handleDeleteRemarks = async () => {
             <Text style={styles.courseIcon}>🎓</Text>
           </View>
           <View style={styles.courseInfo}>
-            <Text style={styles.courseName}>{sectionData?.['Course Name']}</Text>
+            <Text style={styles.courseName}>
+              {sectionData?.['Course Name']}
+            </Text>
             <Text style={styles.courseDetails}>
               {sectionData?.['Section Name']} • {sectionData?.['Session Name']}
             </Text>
@@ -382,10 +443,12 @@ const handleDeleteRemarks = async () => {
             <View style={styles.studentHeader}>
               <View style={styles.avatarContainer}>
                 {student.Image ? (
-                  <Image source={{ uri: student.Image }} style={styles.avatar} />
+                  <Image source={{uri: student.Image}} style={styles.avatar} />
                 ) : (
                   <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarText}>{getInitials(student.name)}</Text>
+                    <Text style={styles.avatarText}>
+                      {getInitials(student.name)}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -393,44 +456,41 @@ const handleDeleteRemarks = async () => {
                 <Text style={styles.studentName}>{student.name}</Text>
                 <Text style={styles.studentRegNo}>{student.RegNo}</Text>
                 <Text style={styles.studentCGPA}>CGPA: {student.CGPA}</Text>
-       
               </View>
-              <TouchableOpacity
+              {/* <TouchableOpacity
   style={styles.remarksButton}
   onPress={() => handleAddRemarks(student)}
 >
   <Text style={styles.remarksButtonText}>
     {student.remarks ? 'Update Remarks' : 'Add Remarks'}
   </Text>
-</TouchableOpacity>
-
+</TouchableOpacity> */}
             </View>
-      
-        {student.remarks && (
+
+            {/* {student.remarks && (
   <View style={styles.remarksContainer}>
     <Text style={styles.remarksLabel}>Remarks:</Text>
     <Text style={styles.remarksText}>{student.remarks}</Text>
   </View>
-)}
+)} */}
             <View style={styles.performanceContainer}>
-              
               {renderPerformanceCard(
                 'Attendance',
                 student.attendance.percentage,
                 '📅',
-                getPerformanceColor(student.attendance.percentage)
+                getPerformanceColor(student.attendance.percentage),
               )}
               {renderPerformanceCard(
                 'Tasks',
                 student.task.percentage_by_consideration,
                 '✅',
-                getPerformanceColor(student.task.percentage_by_consideration)
+                getPerformanceColor(student.task.percentage_by_consideration),
               )}
               {renderPerformanceCard(
                 'Mid Exam',
                 student.Mid_Exam.percentage,
                 '📊',
-                getPerformanceColor(student.Mid_Exam.percentage)
+                getPerformanceColor(student.Mid_Exam.percentage),
               )}
             </View>
 
@@ -440,7 +500,7 @@ const handleDeleteRemarks = async () => {
               'basic',
               'Basic Information',
               'ℹ️',
-              renderBasicInfo(student)
+              renderBasicInfo(student),
             )}
 
             {renderExpandableSection(
@@ -448,7 +508,7 @@ const handleDeleteRemarks = async () => {
               'attendance',
               'Attendance Details',
               '📅',
-              renderAttendanceDetails(student)
+              renderAttendanceDetails(student),
             )}
 
             {renderExpandableSection(
@@ -456,7 +516,7 @@ const handleDeleteRemarks = async () => {
               'tasks',
               'Task Performance',
               '✅',
-              renderTaskPerformance(student)
+              renderTaskPerformance(student),
             )}
 
             {renderExpandableSection(
@@ -464,7 +524,7 @@ const handleDeleteRemarks = async () => {
               'exams',
               'Exam Results',
               '📊',
-              renderExamResults(student)
+              renderExamResults(student),
             )}
           </View>
         ))}
@@ -478,22 +538,20 @@ const handleDeleteRemarks = async () => {
           </View>
         )}
       </ScrollView>
-       <Modal
+      <Modal
         animationType="fade"
         transparent={true}
         visible={remarksModalVisible}
-        onRequestClose={() => setRemarksModalVisible(false)}
-      >
+        onRequestClose={() => setRemarksModalVisible(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
-          <TouchableOpacity 
+          style={styles.modalContainer}>
+          <TouchableOpacity
             style={styles.modalBackdrop}
             activeOpacity={1}
             onPress={() => setRemarksModalVisible(false)}
           />
-          
+
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -509,7 +567,6 @@ const handleDeleteRemarks = async () => {
               multiline
               placeholder="Enter your remarks about this student..."
               placeholderTextColor="#999"
-              
               value={remarksText}
               onChangeText={setRemarksText}
               autoFocus={true}
@@ -525,25 +582,25 @@ const handleDeleteRemarks = async () => {
               {isUpdatingRemarks && (
                 <TouchableOpacity
                   style={[styles.modalButton, styles.deleteButton]}
-                  onPress={handleDeleteRemarks}
-                >
+                  onPress={handleDeleteRemarks}>
                   <Text style={styles.buttonText}>Delete</Text>
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setRemarksModalVisible(false)}
-              >
+                onPress={() => setRemarksModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, 
-                       !remarksText.trim() && styles.disabledButton]}
+                style={[
+                  styles.modalButton,
+                  styles.saveButton,
+                  !remarksText.trim() && styles.disabledButton,
+                ]}
                 onPress={handleSaveRemarks}
-                disabled={!remarksText.trim()}
-              >
+                disabled={!remarksText.trim()}>
                 <Text style={styles.buttonText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -580,24 +637,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },bremarksContainer: {
-  marginTop: 10,
-  padding: 10,
-  backgroundColor: '#f5f5f5',
+  },
+  bremarksContainer: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
 
-  orderRadius: 5,
-},
-remarksLabel: {
-  fontWeight: 'bold',
-  marginBottom: 5,
-  color: '#555',
-},
-
-
-
+    orderRadius: 5,
+  },
+  remarksLabel: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#555',
+  },
 
   courseIconContainer: {
     alignSelf: 'flex-start',
@@ -647,7 +702,7 @@ remarksLabel: {
     marginBottom: 20,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
@@ -668,7 +723,7 @@ remarksLabel: {
     marginBottom: 16,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
@@ -826,7 +881,8 @@ remarksLabel: {
   noResultsSubtext: {
     fontSize: 14,
     color: '#999',
-  },modalContainer: {
+  },
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -845,7 +901,7 @@ remarksLabel: {
     borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
@@ -921,7 +977,6 @@ remarksLabel: {
     fontSize: 16,
   },
 
-
   remarksButton: {
     backgroundColor: '#5B9BD5',
     paddingVertical: 8,
@@ -929,14 +984,12 @@ remarksLabel: {
     borderRadius: 10,
     marginTop: 10,
     alignSelf: 'flex-start',
-  
 
     elevation: 2,
   },
   remarksButtonText: {
     color: 'white',
     fontSize: 10,
-
   },
   remarksContainer: {
     marginTop: 10,
@@ -957,7 +1010,7 @@ remarksLabel: {
     fontSize: 14,
     lineHeight: 20,
   },
-   remarksInput: {
+  remarksInput: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,

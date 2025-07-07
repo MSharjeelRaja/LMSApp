@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,17 @@ import {
   ActivityIndicator,
   RefreshControl,
   Dimensions,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native';
-import { Card, Button, IconButton } from 'react-native-paper';
-import { API_URL, Navbar } from '../ControlsAPI/Comps'; // Changed Navbars to Navbar
-import { useAlert } from '../ControlsAPI/alert';
+import {Card, Button, IconButton} from 'react-native-paper';
+import {API_URL, Navbar} from '../ControlsAPI/Comps'; // Changed Navbars to Navbar
+import {useAlert} from '../ControlsAPI/alert';
 import colors from '../ControlsAPI/colors';
-import { useNavigation } from '@react-navigation/native'; // Added for navigation
+import {useNavigation} from '@react-navigation/native'; // Added for navigation
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
-const ContestListScreen = ({ navigation, route }) => {
+const ContestListScreen = ({navigation, route}) => {
   const [contests, setContests] = useState([]);
   const [filteredContests, setFilteredContests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,9 @@ const ContestListScreen = ({ navigation, route }) => {
   const fetchContests = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/JuniorLec/contest-list?teacher_id=${Tid}`);
+      const response = await fetch(
+        `${API_URL}/api/JuniorLec/contest-list?teacher_id=${Tid}`,
+      );
       const data = await response.json();
       console.log('Contest data:', data); // Log the fetched data
       if (data.success) {
@@ -51,14 +53,15 @@ const ContestListScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleSearch = (text) => {
+  const handleSearch = text => {
     setSearchQuery(text);
     if (text === '') {
       setFilteredContests(contests);
     } else {
-      const filtered = contests.filter(contest => 
-        contest['Student Name'].toLowerCase().includes(text.toLowerCase()) ||
-        contest['Student Reg NO'].toLowerCase().includes(text.toLowerCase())
+      const filtered = contests.filter(
+        contest =>
+          contest['Student Name'].toLowerCase().includes(text.toLowerCase()) ||
+          contest['Student Reg NO'].toLowerCase().includes(text.toLowerCase()),
       );
       setFilteredContests(filtered);
     }
@@ -78,7 +81,7 @@ const ContestListScreen = ({ navigation, route }) => {
     fetchContests();
   }, []);
 
-  const handleProcessContest = async (verification) => {
+  const handleProcessContest = async verification => {
     if (!selectedContest) return;
 
     setProcessing(true);
@@ -90,17 +93,23 @@ const ContestListScreen = ({ navigation, route }) => {
         },
         body: JSON.stringify({
           verification: verification,
-          contest_id: selectedContest.contested_id
-        })
+          contest_id: selectedContest.contested_id,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alertContext.showAlert('success', `Contest ${verification} successfully`);
+        alertContext.showAlert(
+          'success',
+          `Contest ${verification} successfully`,
+        );
         fetchContests();
       } else {
-        alertContext.showAlert('error', data.message || 'Failed to process contest');
+        alertContext.showAlert(
+          'error',
+          data.message || 'Failed to process contest',
+        );
       }
     } catch (error) {
       alertContext.showAlert('error', 'Network error');
@@ -111,7 +120,7 @@ const ContestListScreen = ({ navigation, route }) => {
     }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <Card style={styles.card}>
       <Card.Content style={styles.cardContent}>
         <View style={styles.cardHeader}>
@@ -119,11 +128,15 @@ const ContestListScreen = ({ navigation, route }) => {
             <Text style={styles.studentName}>{item['Student Name']}</Text>
             <Text style={styles.regNo}>{item['Student Reg NO']}</Text>
           </View>
-          <View style={[
-            styles.statusBadge,
-            item.Status === 'Pending' ? styles.pendingStatus : 
-              (item.Status === 'Approved' ? styles.approvedStatus : styles.rejectedStatus)
-          ]}>
+          <View
+            style={[
+              styles.statusBadge,
+              item.Status === 'Pending'
+                ? styles.pendingStatus
+                : item.Status === 'Approved'
+                ? styles.approvedStatus
+                : styles.rejectedStatus,
+            ]}>
             <Text style={styles.statusText}>{item.Status}</Text>
           </View>
         </View>
@@ -133,7 +146,7 @@ const ContestListScreen = ({ navigation, route }) => {
             <IconButton icon="book" size={16} color="#1E88E5" />
             <Text style={styles.detailValue}>{item.Course}</Text>
           </View>
-          
+
           <View style={styles.detailRow}>
             <IconButton icon="calendar" size={16} color="#1E88E5" />
             <Text style={styles.detailValue}>{item['Date & Time']}</Text>
@@ -150,15 +163,14 @@ const ContestListScreen = ({ navigation, route }) => {
           }}
           style={styles.reviewButton}
           labelStyle={styles.buttonLabel}
-          icon="eye"
-        >
+          icon="eye">
           Review
         </Button>
       </Card.Actions>
     </Card>
   );
 
-  const DetailRow = ({ icon, label, value }) => (
+  const DetailRow = ({icon, label, value}) => (
     <View style={styles.detailRow}>
       <IconButton icon={icon} size={18} color="#1E88E5" />
       <View style={styles.detailTextContainer}>
@@ -179,14 +191,14 @@ const ContestListScreen = ({ navigation, route }) => {
   try {
     return (
       <View style={styles.container}>
-       <Navbar
-  title="LMS"
-  userName={userData?.name || ''}
-  des={'Junior Lecturer'}
-  onLogout={() => navigation.replace('Login')}
-  showBackButton={true}  // or false to hide the back button
-/>
-        
+        <Navbar
+          title="LMS"
+          userName={userData?.name || ''}
+          des={'Junior Lecturer'}
+          onLogout={() => navigation.replace('Login')}
+          showBackButton={true} // or false to hide the back button
+        />
+
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
@@ -208,26 +220,26 @@ const ContestListScreen = ({ navigation, route }) => {
           <View style={styles.emptyContainer}>
             <IconButton icon="alert-circle-outline" size={48} color="#90A4AE" />
             <Text style={styles.emptyText}>
-              {searchQuery ? 'No matching results found' : 'No contested attendances found'}
+              {searchQuery
+                ? 'No matching results found'
+                : 'No contested attendances found'}
             </Text>
           </View>
         ) : (
           <FlatList
-  data={filteredContests}
-  renderItem={renderItem}
-  keyExtractor={(item) => item.contested_id.toString()}
-  initialNumToRender={10}
-  maxToRenderPerBatch={10}
-  windowSize={5}
-  updateCellsBatchingPeriod={50}
-  removeClippedSubviews={true}
-
+            data={filteredContests}
+            renderItem={renderItem}
+            keyExtractor={item => item.contested_id.toString()}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
+            removeClippedSubviews={true}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 colors={['#1E88E5']}
-                
               />
             }
           />
@@ -237,17 +249,15 @@ const ContestListScreen = ({ navigation, route }) => {
           animationType="fade"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => !processing && setModalVisible(false)}
-        >
+          onRequestClose={() => !processing && setModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Attendance Review</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setModalVisible(false)}
-                  disabled={processing}
-                >
+                  disabled={processing}>
                   <IconButton icon="close" size={24} color="#ffffff" />
                 </TouchableOpacity>
               </View>
@@ -262,9 +272,21 @@ const ContestListScreen = ({ navigation, route }) => {
               </View>
 
               <View style={styles.detailsContainer}>
-                <DetailRow icon="book" label="Course" value={selectedContest?.Course} />
-                <DetailRow icon="calendar" label="Date" value={selectedContest?.['Date & Time']} />
-                <DetailRow icon="map-marker" label="Venue" value={selectedContest?.Venue} />
+                <DetailRow
+                  icon="book"
+                  label="Course"
+                  value={selectedContest?.Course}
+                />
+                <DetailRow
+                  icon="calendar"
+                  label="Date"
+                  value={selectedContest?.['Date & Time']}
+                />
+                <DetailRow
+                  icon="map-marker"
+                  label="Venue"
+                  value={selectedContest?.Venue}
+                />
               </View>
 
               <View style={styles.actionButtons}>
@@ -275,8 +297,7 @@ const ContestListScreen = ({ navigation, route }) => {
                   onPress={() => handleProcessContest('Accepted')}
                   loading={processing}
                   disabled={processing}
-                  icon="check"
-                >
+                  icon="check">
                   Approve
                 </Button>
                 <Button
@@ -285,8 +306,7 @@ const ContestListScreen = ({ navigation, route }) => {
                   labelStyle={styles.rejectLabel}
                   onPress={() => handleProcessContest('Rejected')}
                   disabled={processing}
-                  icon="close"
-                >
+                  icon="close">
                   Reject
                 </Button>
               </View>
@@ -319,7 +339,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     elevation: 4,
     shadowColor: '#1E88E5',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
@@ -335,7 +355,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     elevation: 4,
     shadowColor: '#1E88E5',
-    
   },
   cardContent: {
     padding: 10,
@@ -365,12 +384,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 5,
-    
   },
   detailValue: {
     fontSize: 14,
     color: '#37474F',
-   
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -433,7 +450,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     elevation: 8,
-    
   },
   modalHeader: {
     flexDirection: 'row',
@@ -446,7 +462,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: '#FFFFFF',
-    fontSize: 20,marginLeft:10,
+    fontSize: 20,
+    marginLeft: 10,
     fontWeight: '600',
   },
   closeButton: {
@@ -456,7 +473,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor:' rgba(84, 84, 84, 0.25)',
+    borderBottomColor: ' rgba(84, 84, 84, 0.25)',
   },
   modalStudentName: {
     fontSize: 18,
@@ -494,8 +511,8 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     flex: 1,
-    borderColor:colors.red1,
-    backgroundColor:colors.red1,
+    borderColor: colors.red1,
+    backgroundColor: colors.red1,
     borderRadius: 8,
   },
   rejectLabel: {

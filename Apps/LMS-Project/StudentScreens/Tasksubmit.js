@@ -379,7 +379,7 @@ const TaskSubmit = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-     } );
+      });
 
       console.log('Quiz submit response status:', response.status);
 
@@ -407,15 +407,21 @@ const TaskSubmit = () => {
         totalMarks: result['Total Marks of Task'] || 0,
         quizData: result['Quiz Data'] || [],
         yourSubmissions: result['Your Submissions'] || [],
-        correctAnswers: result['Your Submissions']?.filter(submission => {
-          const question = result['Quiz Data']?.find(q => q['Question NO'] === submission.QNo);
-          return question && submission.StudentAnswer === question.Answer;
-        }).length || 0,
-        wrongAnswers: (result['Quiz Data']?.length || 0) - 
-          (result['Your Submissions']?.filter(submission => {
-            const question = result['Quiz Data']?.find(q => q['Question NO'] === submission.QNo);
+        correctAnswers:
+          result['Your Submissions']?.filter(submission => {
+            const question = result['Quiz Data']?.find(
+              q => q['Question NO'] === submission.QNo,
+            );
             return question && submission.StudentAnswer === question.Answer;
-          }).length || 0)
+          }).length || 0,
+        wrongAnswers:
+          (result['Quiz Data']?.length || 0) -
+          (result['Your Submissions']?.filter(submission => {
+            const question = result['Quiz Data']?.find(
+              q => q['Question NO'] === submission.QNo,
+            );
+            return question && submission.StudentAnswer === question.Answer;
+          }).length || 0),
       });
 
       setResultModalVisible(true);
@@ -507,9 +513,10 @@ const TaskSubmit = () => {
   const renderQuizResultModal = () => {
     if (!quizResult) return null;
 
-    const percentageScore = quizResult.totalMarks > 0 
-      ? (quizResult.obtainedMarks / quizResult.totalMarks) * 100 
-      : 0;
+    const percentageScore =
+      quizResult.totalMarks > 0
+        ? (quizResult.obtainedMarks / quizResult.totalMarks) * 100
+        : 0;
 
     return (
       <Modal visible={resultModalVisible} animationType="slide" transparent>
@@ -523,7 +530,9 @@ const TaskSubmit = () => {
             <View style={styles.scoreContainer}>
               <View style={styles.scoreBox}>
                 <Text style={styles.scoreLabel}>Obtained Marks</Text>
-                <Text style={styles.scoreValue}>{quizResult.obtainedMarks}</Text>
+                <Text style={styles.scoreValue}>
+                  {quizResult.obtainedMarks}
+                </Text>
               </View>
               <View style={styles.scoreBox}>
                 <Text style={styles.scoreLabel}>Total Marks</Text>
@@ -531,31 +540,47 @@ const TaskSubmit = () => {
               </View>
               <View style={styles.scoreBox}>
                 <Text style={styles.scoreLabel}>Correct Answers</Text>
-                <Text style={styles.scoreValue}>{quizResult.correctAnswers}/{quizResult.quizData.length}</Text>
+                <Text style={styles.scoreValue}>
+                  {quizResult.correctAnswers}/{quizResult.quizData.length}
+                </Text>
               </View>
             </View>
 
             <View style={styles.percentageContainer}>
-              <Text style={styles.percentageText}>Score: {Math.round(percentageScore)}%</Text>
+              <Text style={styles.percentageText}>
+                Score: {Math.round(percentageScore)}%
+              </Text>
             </View>
 
             <View style={styles.answersContainer}>
               <Text style={styles.answersTitle}>Question-wise Results:</Text>
               {quizResult.quizData.map((question, index) => {
-                const submission = quizResult.yourSubmissions.find(s => s.QNo === question['Question NO']);
+                const submission = quizResult.yourSubmissions.find(
+                  s => s.QNo === question['Question NO'],
+                );
                 const isCorrect = submission?.StudentAnswer === question.Answer;
-                
+
                 return (
-                  <View key={index} style={[
-                    styles.answerItem,
-                    isCorrect ? styles.correctAnswer : styles.wrongAnswer
-                  ]}>
-                    <Text style={styles.questionText}>Q{question['Question NO']}: {question.Question}</Text>
-                    <Text style={styles.answerText}>Your Answer: {submission?.StudentAnswer || 'Not answered'}</Text>
+                  <View
+                    key={index}
+                    style={[
+                      styles.answerItem,
+                      isCorrect ? styles.correctAnswer : styles.wrongAnswer,
+                    ]}>
+                    <Text style={styles.questionText}>
+                      Q{question['Question NO']}: {question.Question}
+                    </Text>
+                    <Text style={styles.answerText}>
+                      Your Answer: {submission?.StudentAnswer || 'Not answered'}
+                    </Text>
                     {!isCorrect && (
-                      <Text style={styles.correctAnswerText}>Correct Answer: {question.Answer}</Text>
+                      <Text style={styles.correctAnswerText}>
+                        Correct Answer: {question.Answer}
+                      </Text>
                     )}
-                    <Text style={styles.pointsText}>Points: {question.Points} {isCorrect ? '✓' : '✗'}</Text>
+                    <Text style={styles.pointsText}>
+                      Points: {question.Points} {isCorrect ? '✓' : '✗'}
+                    </Text>
                   </View>
                 );
               })}
@@ -566,9 +591,10 @@ const TaskSubmit = () => {
               onPress={() => {
                 setResultModalVisible(false);
                 navigation.goBack();
-              }}
-            >
-              <Text style={styles.closeModalButtonText}>Return to Dashboard</Text>
+              }}>
+              <Text style={styles.closeModalButtonText}>
+                Return to Dashboard
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

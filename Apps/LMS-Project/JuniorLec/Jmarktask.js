@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,19 +11,19 @@ import {
   SafeAreaView,
   ScrollView,
   Linking,
-  RefreshControl
+  RefreshControl,
 } from 'react-native';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import colors from '../ControlsAPI/colors';
 
-const JMarkTask = ({ navigation, route }) => {
+const JMarkTask = ({navigation, route}) => {
   // Route params
-  const { taskId, taskname,points, userData = {} } = route.params;
-  console.log("Task ID:", taskId);
-  console.log("Task Name:", taskname);
-  console.log("Points:", points);
-  console.log("User Data:", userData);
+  const {taskId, taskname, points, userData = {}} = route.params;
+  console.log('Task ID:', taskId);
+  console.log('Task Name:', taskname);
+  console.log('Points:', points);
+  console.log('User Data:', userData);
   // State management
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,21 +34,23 @@ const JMarkTask = ({ navigation, route }) => {
 
   // Task information state
   const [taskInfo, setTaskInfo] = useState({
-    title:taskname,
-    assignment: "",
+    title: taskname,
+    assignment: '',
     totalPoints: points,
     totalStudents: 0,
     submitted: 0,
-    pending: 0
+    pending: 0,
   });
 
   // Fetch students data
   const fetchStudents = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/Grader/ListOfStudent?task_id=${taskId}`);
+      const response = await fetch(
+        `${API_URL}/api/Grader/ListOfStudent?task_id=${taskId}`,
+      );
       const data = await response.json();
-      
-      if (data.message === "Fetched Successfully") {
+
+      if (data.message === 'Fetched Successfully') {
         const studentsList = data['assigned Tasks'] || [];
         setStudents(studentsList);
 
@@ -56,7 +58,8 @@ const JMarkTask = ({ navigation, route }) => {
         const initialMarks = {};
         studentsList.forEach(student => {
           if (student?.Student_id !== undefined) {
-            initialMarks[student.Student_id] = student.ObtainedMarks?.toString() || "";
+            initialMarks[student.Student_id] =
+              student.ObtainedMarks?.toString() || '';
           }
         });
         setMarks(initialMarks);
@@ -66,11 +69,11 @@ const JMarkTask = ({ navigation, route }) => {
           ...prev,
           totalStudents: studentsList.length,
           submitted: studentsList.filter(s => s?.Answer !== null).length,
-          pending: studentsList.filter(s => s?.Answer === null).length
+          pending: studentsList.filter(s => s?.Answer === null).length,
         }));
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to load students");
+      Alert.alert('Error', 'Failed to load students');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,7 +81,9 @@ const JMarkTask = ({ navigation, route }) => {
   };
 
   // Initial load and refresh
-  useEffect(() => { fetchStudents(); }, []);
+  useEffect(() => {
+    fetchStudents();
+  }, []);
   const onRefresh = () => {
     setRefreshing(true);
     fetchStudents();
@@ -88,8 +93,10 @@ const JMarkTask = ({ navigation, route }) => {
   const filteredStudents = students
     .filter(student => {
       const query = searchQuery.toLowerCase();
-      return student.name?.toLowerCase().includes(query) ||
-             student.RegNo?.toLowerCase().includes(query);
+      return (
+        student.name?.toLowerCase().includes(query) ||
+        student.RegNo?.toLowerCase().includes(query)
+      );
     })
     .sort((a, b) => {
       const marksA = parseInt(marks[a.Student_id] || 0);
@@ -98,48 +105,49 @@ const JMarkTask = ({ navigation, route }) => {
     });
 
   // Handle viewing submission files
-  const handleViewFile = (fileUrl) => {
+  const handleViewFile = fileUrl => {
     if (!fileUrl) {
-      Alert.alert("Error", "No file available");
+      Alert.alert('Error', 'No file available');
       return;
     }
-    Linking.openURL(fileUrl).catch(() => 
-      Alert.alert("Error", "Could not open file")
+    Linking.openURL(fileUrl).catch(() =>
+      Alert.alert('Error', 'Could not open file'),
     );
   };
 
-  
   const handleMarkChange = (studentId, value) => {
     const numericValue = value.replace(/[^0-9]/g, '');
     if (numericValue === '' || parseInt(numericValue) <= points) {
-      setMarks(prev => ({ ...prev, [studentId]: numericValue }));
+      setMarks(prev => ({...prev, [studentId]: numericValue}));
     }
   };
 
   // Submission handling
   const submitResults = async () => {
     const incomplete = students.filter(
-      student => marks[student.Student_id] === "" || marks[student.Student_id] === undefined
+      student =>
+        marks[student.Student_id] === '' ||
+        marks[student.Student_id] === undefined,
     );
 
     if (incomplete.length > 0) {
       Alert.alert(
-        "Unassigned Marks",
+        'Unassigned Marks',
         "Some students don't have marks assigned. Assign 0 marks to them?",
         [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Continue", 
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Continue',
             onPress: () => {
               const updatedMarks = {...marks};
               incomplete.forEach(student => {
-                updatedMarks[student.Student_id] = "0";
+                updatedMarks[student.Student_id] = '0';
               });
               setMarks(updatedMarks);
               performSubmission();
-            }
-          }
-        ]
+            },
+          },
+        ],
       );
     } else {
       performSubmission();
@@ -150,69 +158,74 @@ const JMarkTask = ({ navigation, route }) => {
   const performSubmission = async () => {
     try {
       setSubmitting(true);
-      
+
       const submissions = students.map(student => ({
         student_id: student.Student_id,
-        obtainedMarks: marks[student.Student_id] ? parseInt(marks[student.Student_id]) : 0
+        obtainedMarks: marks[student.Student_id]
+          ? parseInt(marks[student.Student_id])
+          : 0,
       }));
-      
-      const response = await fetch(`${API_URL}/api/Grader/SubmitTaskResultList`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_id: taskId, submissions })
-      });
-      
+
+      const response = await fetch(
+        `${API_URL}/api/Grader/SubmitTaskResultList`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({task_id: taskId, submissions}),
+        },
+      );
+
       const result = await response.json();
-      if (result.message === "Submitted Successfully") {
-        Alert.alert("Success", "Marks submitted successfully", [
-          { text: "OK", onPress: () => navigation.goBack() }
+      if (result.message === 'Submitted Successfully') {
+        Alert.alert('Success', 'Marks submitted successfully', [
+          {text: 'OK', onPress: () => navigation.goBack()},
         ]);
       } else {
         throw new Error(result.message);
       }
     } catch (error) {
-      Alert.alert("Error", error.message || "Submission failed");
+      Alert.alert('Error', error.message || 'Submission failed');
     } finally {
       setSubmitting(false);
     }
   };
 
   // Student list item component
-  const StudentCard = ({ item }) => (
+  const StudentCard = ({item}) => (
     <View style={styles.studentCard}>
       <View style={styles.studentHeader}>
-        <Text style={styles.studentName}>{item.name || "Unknown"}</Text>
-        <Text style={styles.regNo}>{item.RegNo || "N/A"}</Text>
+        <Text style={styles.studentName}>{item.name || 'Unknown'}</Text>
+        <Text style={styles.regNo}>{item.RegNo || 'N/A'}</Text>
       </View>
-      
+
       <View style={styles.statusRow}>
-        <View style={[
-          styles.statusBadge,
-          item.Answer ? styles.submittedBadge : styles.pendingBadge
-        ]}>
+        <View
+          style={[
+            styles.statusBadge,
+            item.Answer ? styles.submittedBadge : styles.pendingBadge,
+          ]}>
           <Text style={styles.statusText}>
             {item.Answer ? 'Submitted' : 'Pending'}
           </Text>
         </View>
-        
+
         {item.Answer && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.viewButton}
-            onPress={() => handleViewFile(item.Answer)}
-          >
+            onPress={() => handleViewFile(item.Answer)}>
             <Icon name="visibility" size={18} color={colors.primary} />
             <Text style={styles.viewButtonText}>View</Text>
           </TouchableOpacity>
         )}
       </View>
-      
+
       <TextInput
         style={styles.marksInput}
         placeholder={`0-${points}`}
         placeholderTextColor="#888"
         keyboardType="numeric"
-        value={marks[item.Student_id] || ""}
-        onChangeText={(v) => handleMarkChange(item.Student_id, v)}
+        value={marks[item.Student_id] || ''}
+        onChangeText={v => handleMarkChange(item.Student_id, v)}
         maxLength={String(points).length}
         editable={!submitting}
       />
@@ -247,7 +260,7 @@ const JMarkTask = ({ navigation, route }) => {
         onLogout={() => navigation.replace('Login')}
         showBackButton={true}
       />
-      
+
       <ScrollView
         refreshControl={
           <RefreshControl
@@ -256,13 +269,12 @@ const JMarkTask = ({ navigation, route }) => {
             colors={[colors.primary]}
           />
         }
-        style={styles.scrollView}
-      >
+        style={styles.scrollView}>
         {/* Task Header */}
         <View style={styles.taskHeader}>
           <Text style={styles.taskTitle}>{taskInfo.title}</Text>
           <Text style={styles.taskSubtitle}>{taskname}</Text>
-          
+
           <View style={styles.taskStats}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{taskInfo.totalStudents}</Text>
@@ -302,8 +314,8 @@ const JMarkTask = ({ navigation, route }) => {
         {/* Students List */}
         <FlatList
           data={filteredStudents}
-          renderItem={({ item }) => <StudentCard item={item} />}
-          keyExtractor={(item) => item.Student_id.toString()}
+          renderItem={({item}) => <StudentCard item={item} />}
+          keyExtractor={item => item.Student_id.toString()}
           scrollEnabled={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
@@ -314,10 +326,12 @@ const JMarkTask = ({ navigation, route }) => {
 
         {/* Submit Button */}
         <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+          style={[
+            styles.submitButton,
+            submitting && styles.submitButtonDisabled,
+          ]}
           onPress={submitResults}
-          disabled={submitting}
-        >
+          disabled={submitting}>
           {submitting ? (
             <ActivityIndicator color="white" />
           ) : (
@@ -357,7 +371,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     margin: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -408,7 +422,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
@@ -426,7 +440,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 1,
@@ -495,7 +509,7 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,

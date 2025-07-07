@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Image, 
-  ScrollView, 
-  TextInput, 
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  TextInput,
   Alert,
   Modal,
   RefreshControl,
@@ -15,14 +15,14 @@ import {
   Linking,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {launchImageLibrary} from 'react-native-image-picker';
 import colors from '../ControlsAPI/colors';
-import { API_URL, Navbar } from '../ControlsAPI/Comps';
+import {API_URL, Navbar} from '../ControlsAPI/Comps';
 
-const NotificationScreen = ({ navigation ,route}) => {
+const NotificationScreen = ({navigation, route}) => {
   // State management
   const [broadcast, setBroadcast] = useState(false);
   const [studentId, setStudentId] = useState('');
@@ -41,7 +41,7 @@ const NotificationScreen = ({ navigation ,route}) => {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [filteredSections, setFilteredSections] = useState([]);
-  
+
   // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -61,7 +61,7 @@ const NotificationScreen = ({ navigation ,route}) => {
       await Promise.all([
         fetchSections(),
         fetchStudents(),
-        fetchNotifications()
+        fetchNotifications(),
       ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to load initial data');
@@ -70,7 +70,6 @@ const NotificationScreen = ({ navigation ,route}) => {
     }
   };
 
- 
   const fetchStudents = async () => {
     try {
       const response = await fetch(`${API_URL}/api/Dropdown/AllStudentData`);
@@ -82,10 +81,12 @@ const NotificationScreen = ({ navigation ,route}) => {
       throw error;
     }
   };
-console.log('Student ID:', global.Jid);
+  console.log('Student ID:', global.Jid);
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/JuniorLec/get/notifications?teacher_id=${global.Jid}`);
+      const response = await fetch(
+        `${API_URL}/api/JuniorLec/get/notifications?teacher_id=${global.Jid}`,
+      );
       const data = await response.json();
       if (data.status && data.data) {
         setNotifications(data.data);
@@ -109,9 +110,14 @@ console.log('Student ID:', global.Jid);
 
   useEffect(() => {
     if (searchStudentQuery) {
-      const filtered = students.filter(student => 
-        (student.name?.toLowerCase() || '').includes(searchStudentQuery.toLowerCase()) || 
-        (student.regno?.toLowerCase() || '').includes(searchStudentQuery.toLowerCase())
+      const filtered = students.filter(
+        student =>
+          (student.name?.toLowerCase() || '').includes(
+            searchStudentQuery.toLowerCase(),
+          ) ||
+          (student.regno?.toLowerCase() || '').includes(
+            searchStudentQuery.toLowerCase(),
+          ),
       );
       setFilteredStudents(filtered);
     } else {
@@ -121,8 +127,10 @@ console.log('Student ID:', global.Jid);
 
   useEffect(() => {
     if (searchSectionQuery) {
-      const filtered = sections.filter(section => 
-        (section.name?.toLowerCase() || '').includes(searchSectionQuery.toLowerCase())
+      const filtered = sections.filter(section =>
+        (section.name?.toLowerCase() || '').includes(
+          searchSectionQuery.toLowerCase(),
+        ),
       );
       setFilteredSections(filtered);
     } else {
@@ -136,15 +144,17 @@ console.log('Student ID:', global.Jid);
         mediaType: 'photo',
         quality: 0.8,
       });
-      
+
       if (!result.didCancel && result.assets?.[0]) {
         const asset = result.assets[0];
         setSelectedImage(asset.uri);
-        setPickedFiles([{
-          uri: asset.uri,
-          name: asset.fileName || `image_${Date.now()}.jpg`,
-          type: asset.type || 'image/jpeg',
-        }]);
+        setPickedFiles([
+          {
+            uri: asset.uri,
+            name: asset.fileName || `image_${Date.now()}.jpg`,
+            type: asset.type || 'image/jpeg',
+          },
+        ]);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image');
@@ -156,28 +166,28 @@ console.log('Student ID:', global.Jid);
       Alert.alert('Error', 'Title and description are required');
       return;
     }
-  
+
     if (!broadcast && !studentId && !sectionId) {
       Alert.alert('Error', 'Please select a student or section');
       return;
     }
-  
+
     try {
       setIsLoading(true);
-      
+
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
       formData.append('sender', 'JuniorLecturer');
       formData.append('sender_id', global.Juserid);
-  
+
       if (broadcast) {
         formData.append('Broadcast', 'true');
       } else {
         if (studentId) formData.append('Student_id', studentId);
         if (sectionId) formData.append('Student_Section', sectionId);
       }
-  
+
       if (mediaType === 'image' && pickedFiles.length > 0) {
         formData.append('image', {
           uri: pickedFiles[0].uri,
@@ -187,7 +197,7 @@ console.log('Student ID:', global.Jid);
       } else if (mediaType === 'link' && mediaLink) {
         formData.append('image', mediaLink);
       }
-  
+
       const response = await fetch(`${API_URL}/api/student/notification`, {
         method: 'POST',
         body: formData,
@@ -195,13 +205,13 @@ console.log('Student ID:', global.Jid);
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         throw new Error(data.message || 'Failed to send notification');
       }
-  
+
       Alert.alert('Success', 'Notification sent successfully');
       resetForm();
       fetchNotifications();
@@ -245,7 +255,7 @@ console.log('Student ID:', global.Jid);
       const data = await response.json();
       const formattedSections = data.map(section => ({
         id: section.id,
-        name: section.data
+        name: section.data,
       }));
       setSections(formattedSections);
       setFilteredSections(formattedSections);
@@ -254,7 +264,7 @@ console.log('Student ID:', global.Jid);
       throw error;
     }
   };
-  
+
   const handleSectionSelect = (id, name) => {
     setSectionId(id);
     setSectionName(name);
@@ -262,20 +272,17 @@ console.log('Student ID:', global.Jid);
     setStudentName('');
     setShowSectionList(false);
   };
-  
 
   const renderSendView = () => (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
-      <ScrollView 
+      style={{flex: 1}}>
+      <ScrollView
         style={styles.formContainer}
-        contentContainerStyle={{ paddingBottom: 50 }}
-        keyboardShouldPersistTaps="handled"
-      >
+        contentContainerStyle={{paddingBottom: 50}}
+        keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionTitle}>Notification Details</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="Title*"
@@ -283,7 +290,7 @@ console.log('Student ID:', global.Jid);
           value={title}
           onChangeText={setTitle}
         />
-        
+
         <TextInput
           style={[styles.input, styles.multilineInput]}
           placeholder="Description*"
@@ -295,7 +302,7 @@ console.log('Student ID:', global.Jid);
 
         <Text style={styles.sectionTitle}>Recipient</Text>
         <View style={styles.radioGroup}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.radioOption}
             onPress={() => {
               setBroadcast(!broadcast);
@@ -303,9 +310,9 @@ console.log('Student ID:', global.Jid);
               setSectionId('');
               setStudentName('');
               setSectionName('');
-            }}
-          >
-            <View style={[styles.radioCircle, broadcast && styles.radioSelected]}>
+            }}>
+            <View
+              style={[styles.radioCircle, broadcast && styles.radioSelected]}>
               {broadcast && <View style={styles.radioInnerCircle} />}
             </View>
             <Text style={styles.radioLabel}>Broadcast to All Sections</Text>
@@ -315,20 +322,22 @@ console.log('Student ID:', global.Jid);
             <>
               {/* Student Selection */}
               {!sectionId && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.input}
                   onPress={() => {
                     setShowStudentList(!showStudentList);
                     setShowSectionList(false);
-                  }}
-                >
-                  <Text style={studentName ? styles.inputText : styles.placeholderText}>
+                  }}>
+                  <Text
+                    style={
+                      studentName ? styles.inputText : styles.placeholderText
+                    }>
                     {studentName || 'Select Student'}
                   </Text>
-                  <Icon 
-                    name={showStudentList ? 'arrow-drop-up' : 'arrow-drop-down'} 
-                    size={24} 
-                    color={colors.black} 
+                  <Icon
+                    name={showStudentList ? 'arrow-drop-up' : 'arrow-drop-down'}
+                    size={24}
+                    color={colors.black}
                     style={styles.dropdownIcon}
                   />
                 </TouchableOpacity>
@@ -336,20 +345,22 @@ console.log('Student ID:', global.Jid);
 
               {/* Section Selection */}
               {!studentId && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.input}
                   onPress={() => {
                     setShowSectionList(!showSectionList);
                     setShowStudentList(false);
-                  }}
-                >
-                  <Text style={sectionName ? styles.inputText : styles.placeholderText}>
+                  }}>
+                  <Text
+                    style={
+                      sectionName ? styles.inputText : styles.placeholderText
+                    }>
                     {sectionName || 'Select Section'}
                   </Text>
-                  <Icon 
-                    name={showSectionList ? 'arrow-drop-up' : 'arrow-drop-down'} 
-                    size={24} 
-                    color={colors.black} 
+                  <Icon
+                    name={showSectionList ? 'arrow-drop-up' : 'arrow-drop-down'}
+                    size={24}
+                    color={colors.black}
                     style={styles.dropdownIcon}
                   />
                 </TouchableOpacity>
@@ -368,20 +379,25 @@ console.log('Student ID:', global.Jid);
                   <FlatList
                     data={filteredStudents}
                     keyExtractor={item => item.id.toString()}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
+                    renderItem={({item}) => (
+                      <TouchableOpacity
                         style={styles.studentItem}
-                        onPress={() => handleStudentSelect(item.id, item.name)}
-                      >
-                        <Text style={styles.studentName}>{item.name || 'No name'}</Text>
-                        <Text style={styles.studentRegNo}>{item.regno || 'No reg no'}</Text>
+                        onPress={() => handleStudentSelect(item.id, item.name)}>
+                        <Text style={styles.studentName}>
+                          {item.name || 'No name'}
+                        </Text>
+                        <Text style={styles.studentRegNo}>
+                          {item.regno || 'No reg no'}
+                        </Text>
                       </TouchableOpacity>
                     )}
-                    style={{ maxHeight: 200 }}
+                    style={{maxHeight: 200}}
                     keyboardShouldPersistTaps="always"
                     ListEmptyComponent={
                       <View style={styles.emptyDropdown}>
-                        <Text style={styles.emptyDropdownText}>No students found</Text>
+                        <Text style={styles.emptyDropdownText}>
+                          No students found
+                        </Text>
                       </View>
                     }
                   />
@@ -401,19 +417,22 @@ console.log('Student ID:', global.Jid);
                   <FlatList
                     data={filteredSections}
                     keyExtractor={item => item.id.toString()}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
+                    renderItem={({item}) => (
+                      <TouchableOpacity
                         style={styles.sectionItem}
-                        onPress={() => handleSectionSelect(item.id, item.name)}
-                      >
-                        <Text style={styles.sectionText}>{item.name || 'No section name'}</Text>
+                        onPress={() => handleSectionSelect(item.id, item.name)}>
+                        <Text style={styles.sectionText}>
+                          {item.name || 'No section name'}
+                        </Text>
                       </TouchableOpacity>
                     )}
-                    style={{ maxHeight: 200 }}
+                    style={{maxHeight: 200}}
                     keyboardShouldPersistTaps="always"
                     ListEmptyComponent={
                       <View style={styles.emptyDropdown}>
-                        <Text style={styles.emptyDropdownText}>No sections found</Text>
+                        <Text style={styles.emptyDropdownText}>
+                          No sections found
+                        </Text>
                       </View>
                     }
                   />
@@ -425,22 +444,28 @@ console.log('Student ID:', global.Jid);
 
         <Text style={styles.sectionTitle}>Media Attachment</Text>
         <View style={styles.mediaOptions}>
-          <TouchableOpacity 
-            style={[styles.mediaOption, mediaType === 'none' && styles.mediaOptionActive]}
-            onPress={() => setMediaType('none')}
-          >
+          <TouchableOpacity
+            style={[
+              styles.mediaOption,
+              mediaType === 'none' && styles.mediaOptionActive,
+            ]}
+            onPress={() => setMediaType('none')}>
             <Text style={styles.mediaOptionText}>None</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.mediaOption, mediaType === 'image' && styles.mediaOptionActive]}
-            onPress={() => setMediaType('image')}
-          >
+          <TouchableOpacity
+            style={[
+              styles.mediaOption,
+              mediaType === 'image' && styles.mediaOptionActive,
+            ]}
+            onPress={() => setMediaType('image')}>
             <Text style={styles.mediaOptionText}>Image</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.mediaOption, mediaType === 'link' && styles.mediaOptionActive]}
-            onPress={() => setMediaType('link')}
-          >
+          <TouchableOpacity
+            style={[
+              styles.mediaOption,
+              mediaType === 'link' && styles.mediaOptionActive,
+            ]}
+            onPress={() => setMediaType('link')}>
             <Text style={styles.mediaOptionText}>Link</Text>
           </TouchableOpacity>
         </View>
@@ -453,14 +478,16 @@ console.log('Student ID:', global.Jid);
             </TouchableOpacity>
             {selectedImage && (
               <View style={styles.imagePreview}>
-                <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-                <TouchableOpacity 
+                <Image
+                  source={{uri: selectedImage}}
+                  style={styles.previewImage}
+                />
+                <TouchableOpacity
                   style={styles.removeImage}
                   onPress={() => {
                     setSelectedImage(null);
                     setPickedFiles([]);
-                  }}
-                >
+                  }}>
                   <Icon name="close" size={20} color="white" />
                 </TouchableOpacity>
               </View>
@@ -479,13 +506,12 @@ console.log('Student ID:', global.Jid);
           />
         )}
 
-        <TouchableOpacity 
-          style={styles.submitButton} 
+        <TouchableOpacity
+          style={styles.submitButton}
           onPress={sendNotification}
-          disabled={isLoading}
-        >
+          disabled={isLoading}>
           {isLoading ? (
-           <ActivityIndicator size="large" color={colors.primaryDark} />
+            <ActivityIndicator size="large" color={colors.primaryDark} />
           ) : (
             <Text style={styles.submitButtonText}>Send Notification</Text>
           )}
@@ -500,16 +526,15 @@ console.log('Student ID:', global.Jid);
       keyExtractor={item => item.id.toString()}
       refreshControl={
         <RefreshControl
-        refreshing={refreshing}
-        onRefresh={handleRefresh}
-        colors={['white']}
-        tintColor="white" // Change this to your preferred color
-        progressBackgroundColor="#333" // Background color of the refresh indicator area
-       
-        progressViewOffset={50} // How far down the refresh control starts
-        title="Loading..." // Text that appears while refreshing
-        titleColor="white" // Color of the loading text
-      />
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          colors={['white']}
+          tintColor="white" // Change this to your preferred color
+          progressBackgroundColor="#333" // Background color of the refresh indicator area
+          progressViewOffset={50} // How far down the refresh control starts
+          title="Loading..." // Text that appears while refreshing
+          titleColor="white" // Color of the loading text
+        />
       }
       ListEmptyComponent={
         <View style={styles.emptyState}>
@@ -517,7 +542,7 @@ console.log('Student ID:', global.Jid);
           <Text style={styles.emptyText}>No notifications yet</Text>
         </View>
       }
-      renderItem={({ item }) => (
+      renderItem={({item}) => (
         <View style={styles.notificationCard}>
           <View style={styles.notificationHeader}>
             <View style={styles.avatar}>
@@ -531,29 +556,32 @@ console.log('Student ID:', global.Jid);
             </View>
           </View>
           <Text style={styles.notificationBody}>{item.description}</Text>
-          
+
           {item.media_type === 'image' && item.media && (
             <TouchableOpacity onPress={() => setFullscreenImage(item.media)}>
-              <Image 
-                source={{ uri: item.media }} 
-                style={styles.notificationImage} 
+              <Image
+                source={{uri: item.media}}
+                style={styles.notificationImage}
                 resizeMode="cover"
               />
             </TouchableOpacity>
           )}
-          
+
           {item.media_type === 'link' && item.media && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.linkContainer}
-              onPress={() => Linking.openURL(item.media)}
-            >
+              onPress={() => Linking.openURL(item.media)}>
               <Icon name="link" size={20} color="white" />
-              <Text style={styles.linkText} numberOfLines={1}>{item.media}</Text>
+              <Text style={styles.linkText} numberOfLines={1}>
+                {item.media}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
       )}
-      contentContainerStyle={notifications.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
+      contentContainerStyle={
+        notifications.length === 0 ? {flex: 1} : {paddingBottom: 20}
+      }
       keyboardShouldPersistTaps="always"
     />
   );
@@ -564,29 +592,37 @@ console.log('Student ID:', global.Jid);
   return (
     <SafeAreaView style={styles.container}>
       <Navbar
-                   title="Notifications"
-                   userName={userData.name}
-                   des={'Junior Lecturer'}
-                   showBackButton={true}
-                   onLogout={() => navigation.replace('Login')}
-                 />
-          
+        title="Notifications"
+        userName={userData.name}
+        des={'Junior Lecturer'}
+        showBackButton={true}
+        onLogout={() => navigation.replace('Login')}
+      />
 
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'send' && styles.activeTab]}
-          onPress={() => setActiveTab('send')}
-        >
-          <Text style={[styles.tabText, activeTab === 'send' && styles.activeTabText]}>
+          onPress={() => setActiveTab('send')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'send' && styles.activeTabText,
+            ]}>
             Send
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'receive' && styles.activeTab]}
-          onPress={() => setActiveTab('receive')}
-        >
-          <Text style={[styles.tabText, activeTab === 'receive' && styles.activeTabText]}>
-            Received 
+          style={[
+            styles.tabButton,
+            activeTab === 'receive' && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab('receive')}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'receive' && styles.activeTabText,
+            ]}>
+            Received
           </Text>
         </TouchableOpacity>
       </View>
@@ -595,14 +631,13 @@ console.log('Student ID:', global.Jid);
 
       <Modal visible={!!fullscreenImage} transparent>
         <View style={styles.modalContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setFullscreenImage(null)}
-          >
+            onPress={() => setFullscreenImage(null)}>
             <Icon name="close" size={30} color="white" />
           </TouchableOpacity>
-          <Image 
-            source={{ uri: fullscreenImage }} 
+          <Image
+            source={{uri: fullscreenImage}}
             style={styles.fullscreenImage}
             resizeMode="contain"
           />
@@ -628,7 +663,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
@@ -652,7 +687,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    
   },
   activeTab: {
     borderBottomWidth: 3,
@@ -663,7 +697,7 @@ const styles = StyleSheet.create({
     color: colors.black,
   },
   activeTabText: {
-  color:'black',
+    color: 'black',
     fontWeight: 'bold',
   },
   formContainer: {
@@ -692,9 +726,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputText: {
-
-
-    
     color: 'black',
     flex: 1,
   },
@@ -738,7 +769,7 @@ const styles = StyleSheet.create({
   },
   radioLabel: {
     fontSize: 16,
-    color:colors.primaryDark,
+    color: colors.primaryDark,
   },
   dropdownContainer: {
     backgroundColor: colors.white,
@@ -810,8 +841,7 @@ const styles = StyleSheet.create({
   imagePicker: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primaryDark
-    ,
+    backgroundColor: colors.primaryDark,
     borderWidth: 1,
     borderColor: '#333',
     borderRadius: 8,
@@ -840,7 +870,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
 
-
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
@@ -858,7 +887,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   notificationCard: {
-    backgroundColor: colors.white, elevation: 2,
+    backgroundColor: colors.white,
+    elevation: 2,
     borderRadius: 18,
     padding: 12,
     margin: 12,

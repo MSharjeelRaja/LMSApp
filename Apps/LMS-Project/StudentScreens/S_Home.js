@@ -338,7 +338,7 @@ const S_Home = ({navigation, route}) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.buttonRow}>
+          {/* <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('datesheet', {userData})}>
@@ -352,7 +352,7 @@ const S_Home = ({navigation, route}) => {
               <Icon name="lock" size={24} color="white" />
               <Text style={styles.actionButtonText}>Parent Restrictions</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
